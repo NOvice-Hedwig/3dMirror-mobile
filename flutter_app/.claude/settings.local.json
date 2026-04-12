@@ -1,0 +1,10 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(flutter pub:*)",
+      "Bash(python \"c:/Users/Dn254/Downloads/3dmirror_full/3dmirror_full/flutter_app/.claude/skills/ui-ux-pro-max/scripts/search.py\" \"fitness body visualization magazine editorial luxury model idol minimal\" --design-system -p \"3D Mirror\" -f markdown)",
+      "Bash(python \"c:/Users/Dn254/Downloads/3dmirror_full/3dmirror_full/flutter_app/.claude/skills/ui-ux-pro-max/scripts/search.py\" \"animation scroll reveal stagger entrance\" --domain ux -n 5)",
+      "Bash(python \"c:/Users/Dn254/Downloads/3dmirror_full/3dmirror_full/flutter_app/.claude/skills/ui-ux-pro-max/scripts/search.py\" \"magazine editorial luxury model\" --stack flutter)"
+    ]
+  }
+}

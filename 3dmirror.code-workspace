@@ -1,0 +1,65 @@
+{
+  "folders": [
+    { "name": "Root",        "path": "."               },
+    { "name": "Flutter App", "path": "./flutter_app"   },
+    { "name": "Backend",     "path": "./backend"        },
+    { "name": "Unity",       "path": "./unity_project"  }
+  ],
+  "settings": {
+    "editor.formatOnSave": true,
+    "editor.rulers": [100],
+    "[dart]": {
+      "editor.defaultFormatter": "Dart-Code.dart-code",
+      "editor.formatOnSave": true
+    },
+    "[python]": {
+      "editor.defaultFormatter": "ms-python.black-formatter",
+      "editor.formatOnSave": true
+    },
+    "python.defaultInterpreterPath": "./backend/venv/bin/python",
+    "dart.flutterSdkPath": "",
+    "files.exclude": {
+      "**/__pycache__": true,
+      "**/.dart_tool": true,
+      "**/build": false
+    }
+  },
+  "extensions": {
+    "recommendations": [
+      "Dart-Code.flutter",
+      "Dart-Code.dart-code",
+      "ms-python.python",
+      "ms-python.black-formatter",
+      "ms-azuretools.vscode-docker",
+      "humao.rest-client"
+    ]
+  },
+  "launch": {
+    "version": "0.2.0",
+    "configurations": [
+      {
+        "name": "Flutter (dev)",
+        "type": "dart",
+        "request": "launch",
+        "program": "lib/main.dart",
+        "args": ["--dart-define=API_BASE_URL=http://localhost:8000"],
+        "cwd": "${workspaceFolder:Flutter App}"
+      },
+      {
+        "name": "FastAPI (dev)",
+        "type": "python",
+        "request": "launch",
+        "module": "uvicorn",
+        "args": ["main:app", "--reload", "--port", "8000"],
+        "cwd": "${workspaceFolder:Backend}",
+        "envFile": "${workspaceFolder:Backend}/.env"
+      }
+    ],
+    "compounds": [
+      {
+        "name": "Full stack",
+        "configurations": ["Flutter (dev)", "FastAPI (dev)"]
+      }
+    ]
+  }
+}

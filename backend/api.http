@@ -1,0 +1,84 @@
+### 3D Mirror API — VS Code REST Client
+### Install "REST Client" extension, then click "Send Request" above each block
+
+@base = http://localhost:8000
+@token = PASTE_YOUR_JWT_HERE
+
+### Health check
+GET {{base}}/health
+
+### Send phone OTP (Aliyun CN)
+POST {{base}}/auth/phone/send
+Content-Type: application/json
+
+{
+  "phone": "+8613800138000"
+}
+
+### Verify phone OTP
+POST {{base}}/auth/phone/verify
+Content-Type: application/json
+
+{
+  "phone": "+8613800138000",
+  "code": "123456"
+}
+
+### Send email OTP
+POST {{base}}/auth/email/send
+Content-Type: application/json
+
+{
+  "email": "test@example.com"
+}
+
+### Verify email OTP
+POST {{base}}/auth/email/verify
+Content-Type: application/json
+
+{
+  "email": "test@example.com",
+  "code": "123456"
+}
+
+### Get current user
+GET {{base}}/auth/me
+Authorization: Bearer {{token}}
+
+### Create session
+POST {{base}}/sessions
+Content-Type: application/json
+Authorization: Bearer {{token}}
+
+{
+  "user_id": "test-user-id",
+  "body_data": {
+    "weight_kg": 68.4,
+    "body_fat_pct": 21.4,
+    "waist_cm": 78.0
+  },
+  "avatar_params": {
+    "height_norm": 0.4,
+    "weight_norm": 0.45,
+    "body_fat_norm": 0.35,
+    "waist_norm": 0.30,
+    "hip_norm": 0.38,
+    "shoulder_norm": 0.55,
+    "muscle_norm": 0.22,
+    "gender": "male",
+    "lighting_profile": "studio_minimal"
+  },
+  "activity_data": {
+    "workout_type": "strength",
+    "duration_min": 60,
+    "intensity": "medium"
+  }
+}
+
+### List sessions
+GET {{base}}/sessions
+Authorization: Bearer {{token}}
+
+### Get single session
+GET {{base}}/sessions/PASTE_SESSION_ID
+Authorization: Bearer {{token}}
