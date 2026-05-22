@@ -8,6 +8,7 @@ import 'package:sign_in_with_apple/sign_in_with_apple.dart';
 
 import '../../core/theme/design_tokens.dart';
 import '../../core/router/app_router.dart';
+import '../../core/widgets/animate_widgets.dart';
 import '../../services/api/auth_api.dart';
 
 class AuthScreen extends StatefulWidget {
@@ -21,9 +22,10 @@ class _AuthScreenState extends State<AuthScreen> with SingleTickerProviderStateM
   final _emailCtrl = TextEditingController();
   final _codeCtrl  = TextEditingController();
 
-  bool   _codeSent   = false;
-  bool   _loading    = false;
-  int    _resendSecs = 0;
+  bool   _codeSent    = false;
+  bool   _loading     = false;
+  bool   _ctaPressed  = false;
+  int    _resendSecs  = 0;
   Timer? _timer;
   String? _error;
 
@@ -43,144 +45,217 @@ class _AuthScreenState extends State<AuthScreen> with SingleTickerProviderStateM
     return Scaffold(
       backgroundColor: MirrorColors.bg,
       body: SafeArea(
-        child: GestureDetector(
-          onTap: () => FocusScope.of(context).unfocus(),
-          child: SingleChildScrollView(
-            padding: const EdgeInsets.symmetric(
-                horizontal: MirrorSpacing.pagePad),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                const SizedBox(height: 60),
-
-                // ── 标题入场（错位 fade + slideY）────────────────────────────
-                Text.rich(TextSpan(
-                  style: MirrorText.title,
-                  children: [
-                    const TextSpan(text: '开始\n'),
-                    TextSpan(text: '蜕变',
-                        style: MirrorText.title.copyWith(fontStyle: FontStyle.italic)),
-                  ],
-                ))
-                .animate()
-                .fadeIn(duration: const Duration(milliseconds: 600), curve: MirrorCurve.enter)
-                .slideY(begin: 0.1, end: 0, duration: const Duration(milliseconds: 600), curve: MirrorCurve.enter),
-
-                const SizedBox(height: 8),
-
-                const Text('你的身体，你来定义', style: MirrorText.body)
-                .animate(delay: const Duration(milliseconds: 120))
-                .fadeIn(duration: const Duration(milliseconds: 500), curve: MirrorCurve.enter)
-                .slideY(begin: 0.08, end: 0, duration: const Duration(milliseconds: 500), curve: MirrorCurve.enter),
-
-                const SizedBox(height: 40),
-
-                // ── Tab bar ───────────────────────────────────────────────────
-                _buildTabBar()
-                .animate(delay: const Duration(milliseconds: 240))
-                .fadeIn(duration: const Duration(milliseconds: 400), curve: MirrorCurve.enter),
-
-                const SizedBox(height: 24),
-
-                // ── Input（带升级版 AnimatedSwitcher）────────────────────────
-                AnimatedSwitcher(
-                  duration: MirrorDuration.normal,
-                  switchInCurve: MirrorCurve.enter,
-                  switchOutCurve: MirrorCurve.snap,
-                  transitionBuilder: (child, animation) => FadeTransition(
-                    opacity: animation,
-                    child: SlideTransition(
-                      position: Tween(
-                        begin: const Offset(0, -0.05),
-                        end: Offset.zero,
-                      ).animate(animation),
-                      child: child,
-                    ),
-                  ),
-                  child: _codeSent ? _codeField() : _identifierField(),
-                )
-                .animate(delay: const Duration(milliseconds: 360))
-                .fadeIn(duration: const Duration(milliseconds: 400), curve: MirrorCurve.enter)
-                .slideY(begin: 0.06, end: 0, duration: const Duration(milliseconds: 400), curve: MirrorCurve.enter),
-
-                if (_error != null) ...[
-                  const SizedBox(height: 10),
-                  Text(_error!,
-                      style: MirrorText.bodyS.copyWith(
-                          color: const Color(0xFFB00020))),
-                ],
-                const SizedBox(height: 20),
-
-                // ── 主 CTA ────────────────────────────────────────────────────
-                ElevatedButton(
-                  onPressed: _loading ? null : (_codeSent ? _verify : _send),
-                  child: _loading
-                      ? const SizedBox(width: 18, height: 18,
-                          child: CircularProgressIndicator(
-                              color: MirrorColors.bg, strokeWidth: 1.5))
-                      : Text(_codeSent ? '验证并登录' : '发送验证码'),
-                )
-                .animate(delay: const Duration(milliseconds: 460))
-                .fadeIn(duration: const Duration(milliseconds: 400), curve: MirrorCurve.enter)
-                .slideY(begin: 0.05, end: 0, duration: const Duration(milliseconds: 400), curve: MirrorCurve.enter),
-
-                const SizedBox(height: 28),
-
-                // ── 分隔线 + Apple（仅 iOS / macOS 显示）────────────────────
-                if (!kIsWeb && defaultTargetPlatform != TargetPlatform.android) ...[
-                  const Row(children: [
-                    Expanded(child: Divider(color: MirrorColors.divider)),
-                    Padding(
-                      padding: EdgeInsets.symmetric(horizontal: 12),
-                      child: Text('或', style: MirrorText.bodyS),
-                    ),
-                    Expanded(child: Divider(color: MirrorColors.divider)),
-                  ])
-                  .animate(delay: const Duration(milliseconds: 560))
-                  .fadeIn(duration: const Duration(milliseconds: 350), curve: MirrorCurve.enter),
-
-                  const SizedBox(height: 28),
-
-                  SignInWithAppleButton(
-                    onPressed: _appleSignIn,
-                    style: SignInWithAppleButtonStyle.black,
-                    borderRadius: const BorderRadius.all(Radius.circular(MirrorRadius.lg)),
-                    height: 54,
-                  )
-                  .animate(delay: const Duration(milliseconds: 560))
-                  .fadeIn(duration: const Duration(milliseconds: 350), curve: MirrorCurve.enter),
-                ],
-
-                const SizedBox(height: 40),
-
-                // ── 隐私说明 ──────────────────────────────────────────────────
-                Center(
-                  child: Text.rich(TextSpan(
-                    style: MirrorText.caption,
+        child: Column(
+          children: [
+            _buildMasthead(),
+            Expanded(
+              child: GestureDetector(
+                onTap: () => FocusScope.of(context).unfocus(),
+                child: SingleChildScrollView(
+                  padding: const EdgeInsets.symmetric(
+                      horizontal: MirrorSpacing.pagePad),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      const TextSpan(text: '登录即表示同意'),
-                      TextSpan(text: '隐私政策',
-                          style: MirrorText.caption.copyWith(
-                              decoration: TextDecoration.underline,
-                              color: MirrorColors.text2)),
-                      const TextSpan(text: '和'),
-                      TextSpan(text: '用户协议',
-                          style: MirrorText.caption.copyWith(
-                              decoration: TextDecoration.underline,
-                              color: MirrorColors.text2)),
-                    ],
-                  )),
-                )
-                .animate(delay: const Duration(milliseconds: 640))
-                .fadeIn(duration: const Duration(milliseconds: 300), curve: MirrorCurve.enter),
+                      const SizedBox(height: 40),
 
-                const SizedBox(height: 32),
-              ],
+                      // ── 标题入场（错位 fade + slideY）──────────────────────
+                      Text.rich(TextSpan(
+                        style: MirrorText.title,
+                        children: [
+                          const TextSpan(text: '开始\n'),
+                          TextSpan(text: '蜕变',
+                              style: MirrorText.title.copyWith(fontStyle: FontStyle.italic)),
+                        ],
+                      ))
+                      .animate()
+                      .fadeIn(duration: const Duration(milliseconds: 600), curve: MirrorCurve.enter)
+                      .slideY(begin: 0.1, end: 0, duration: const Duration(milliseconds: 600), curve: MirrorCurve.enter),
+
+                      const SizedBox(height: 8),
+
+                      Text('你的身体，你来定义', style: MirrorText.body)
+                      .animate(delay: const Duration(milliseconds: 120))
+                      .fadeIn(duration: const Duration(milliseconds: 500), curve: MirrorCurve.enter)
+                      .slideY(begin: 0.08, end: 0, duration: const Duration(milliseconds: 500), curve: MirrorCurve.enter),
+
+                      // ── Editorial divider: hero zone → form zone ────────────
+                      const EditorialDivider(topPad: 32, bottomPad: 24),
+
+                      // ── Form zone label ─────────────────────────────────────
+                      Text('CONTINUE WITH', style: MirrorText.overline)
+                      .animate(delay: const Duration(milliseconds: 200))
+                      .fadeIn(duration: const Duration(milliseconds: 400), curve: MirrorCurve.enter),
+
+                      const SizedBox(height: 14),
+
+                      // ── Tab bar ─────────────────────────────────────────────
+                      _buildTabBar()
+                      .animate(delay: const Duration(milliseconds: 280))
+                      .fadeIn(duration: const Duration(milliseconds: 400), curve: MirrorCurve.enter),
+
+                      const SizedBox(height: 24),
+
+                      // ── Input ───────────────────────────────────────────────
+                      AnimatedSwitcher(
+                        duration: MirrorDuration.normal,
+                        switchInCurve: MirrorCurve.enter,
+                        switchOutCurve: MirrorCurve.snap,
+                        transitionBuilder: (child, animation) => FadeTransition(
+                          opacity: animation,
+                          child: SlideTransition(
+                            position: Tween(
+                              begin: const Offset(0, -0.05),
+                              end: Offset.zero,
+                            ).animate(animation),
+                            child: child,
+                          ),
+                        ),
+                        child: _codeSent ? _codeField() : _identifierField(),
+                      )
+                      .animate(delay: const Duration(milliseconds: 400))
+                      .fadeIn(duration: const Duration(milliseconds: 400), curve: MirrorCurve.enter)
+                      .slideY(begin: 0.06, end: 0, duration: const Duration(milliseconds: 400), curve: MirrorCurve.enter),
+
+                      if (_error != null) ...[
+                        const SizedBox(height: 10),
+                        Text(_error!,
+                            style: MirrorText.bodyS.copyWith(
+                                color: MirrorColors.error)),
+                      ],
+                      const SizedBox(height: 20),
+
+                      // ── 主 CTA ─────────────────────────────────────────────
+                      GestureDetector(
+                        onTapDown: (_) => setState(() => _ctaPressed = true),
+                        onTapUp: (_) => setState(() => _ctaPressed = false),
+                        onTapCancel: () => setState(() => _ctaPressed = false),
+                        child: AnimatedScale(
+                          scale: _ctaPressed && !_loading ? 0.97 : 1.0,
+                          duration: const Duration(milliseconds: 120),
+                          curve: MirrorCurve.snap,
+                          child: ElevatedButton(
+                            onPressed: _loading ? null : (_codeSent ? _verify : _send),
+                            child: _loading
+                                ? const SizedBox(width: 18, height: 18,
+                                    child: CircularProgressIndicator(
+                                        color: MirrorColors.bg, strokeWidth: 1.5))
+                                : Text(_codeSent ? '验证并登录' : '发送验证码'),
+                          ),
+                        ),
+                      )
+                      .animate(delay: const Duration(milliseconds: 500))
+                      .fadeIn(duration: const Duration(milliseconds: 400), curve: MirrorCurve.enter)
+                      .slideY(begin: 0.05, end: 0, duration: const Duration(milliseconds: 400), curve: MirrorCurve.enter),
+
+                      const SizedBox(height: 20),
+
+                      // ── 分隔线 + Apple（仅 iOS / macOS 显示）───────────────
+                      if (!kIsWeb && defaultTargetPlatform != TargetPlatform.android) ...[
+                        Row(children: [
+                          const Expanded(child: Divider(color: MirrorColors.divider)),
+                          Padding(
+                            padding: const EdgeInsets.symmetric(horizontal: 16),
+                            child: Text('OR', style: MirrorText.overline),
+                          ),
+                          const Expanded(child: Divider(color: MirrorColors.divider)),
+                        ])
+                        .animate(delay: const Duration(milliseconds: 600))
+                        .fadeIn(duration: const Duration(milliseconds: 350), curve: MirrorCurve.enter),
+
+                        const SizedBox(height: 16),
+
+                        SignInWithAppleButton(
+                          onPressed: _appleSignIn,
+                          style: SignInWithAppleButtonStyle.black,
+                          borderRadius: const BorderRadius.all(Radius.circular(MirrorRadius.lg)),
+                          height: 54,
+                        )
+                        .animate(delay: const Duration(milliseconds: 640))
+                        .fadeIn(duration: const Duration(milliseconds: 350), curve: MirrorCurve.enter),
+                      ],
+
+                      // ── 隐私说明（链接可点击）──────────────────────────────
+                      const EditorialDivider(topPad: 32, bottomPad: 20),
+
+                      Center(
+                        child: Text.rich(TextSpan(
+                          style: MirrorText.caption,
+                          children: [
+                            const TextSpan(text: '登录即表示同意 '),
+                            WidgetSpan(
+                              alignment: PlaceholderAlignment.middle,
+                              child: GestureDetector(
+                                onTap: () => _openUrl('privacy'),
+                                child: Text('隐私政策',
+                                    style: MirrorText.caption.copyWith(
+                                        decoration: TextDecoration.underline,
+                                        color: MirrorColors.text2)),
+                              ),
+                            ),
+                            const TextSpan(text: ' 和 '),
+                            WidgetSpan(
+                              alignment: PlaceholderAlignment.middle,
+                              child: GestureDetector(
+                                onTap: () => _openUrl('terms'),
+                                child: Text('用户协议',
+                                    style: MirrorText.caption.copyWith(
+                                        decoration: TextDecoration.underline,
+                                        color: MirrorColors.text2)),
+                              ),
+                            ),
+                          ],
+                        )),
+                      )
+                      .animate(delay: const Duration(milliseconds: 700))
+                      .fadeIn(duration: const Duration(milliseconds: 300), curve: MirrorCurve.enter),
+
+                      const SizedBox(height: 32),
+                    ],
+                  ),
+                ),
+              ),
             ),
-          ),
+          ],
         ),
       ),
     );
+  }
+
+  Widget _buildMasthead() => Column(
+    children: [
+      Padding(
+        padding: const EdgeInsets.fromLTRB(
+            MirrorSpacing.pagePad, 20, MirrorSpacing.pagePad, 12),
+        child: Text(
+          '3D MIRROR',
+          style: MirrorText.overline.copyWith(
+            color: MirrorColors.gold,
+            fontSize: 11,
+            letterSpacing: 4.0,
+          ),
+          textAlign: TextAlign.center,
+        ),
+      ),
+      Container(
+        height: 1.5,
+        margin: const EdgeInsets.symmetric(horizontal: MirrorSpacing.pagePad),
+        color: MirrorColors.divider,
+      )
+      .animate()
+      .scale(
+        begin: const Offset(0, 1),
+        end: const Offset(1, 1),
+        alignment: Alignment.centerLeft,
+        duration: 600.ms,
+        curve: MirrorCurve.enter,
+      ),
+      const SizedBox(height: 4),
+    ],
+  );
+
+  void _openUrl(String type) {
+    // TODO: launch privacy policy / terms URL when available
   }
 
   Widget _buildTabBar() => Container(
@@ -242,10 +317,11 @@ Widget _identifierField() => SizedBox(
       GestureDetector(
         onTap: _resendSecs == 0 ? _send : null,
         child: Text(
-          _resendSecs > 0 ? '${_resendSecs}s 后重发' : '重新发送',
-          style: MirrorText.bodyS.copyWith(
-            color: _resendSecs > 0 ? MirrorColors.text3 : MirrorColors.text1,
+          _resendSecs > 0 ? '${_resendSecs}S  ·  重发' : '重新发送',
+          style: MirrorText.overline.copyWith(
+            color: _resendSecs > 0 ? MirrorColors.text3 : MirrorColors.text2,
             decoration: _resendSecs == 0 ? TextDecoration.underline : null,
+            decorationColor: MirrorColors.text2,
           ),
         ),
       ),
@@ -343,7 +419,15 @@ class _Field extends StatelessWidget {
     inputFormatters: formatters,
     maxLength: maxLength,
     autofocus: autofocus,
-    style: MirrorText.body.copyWith(color: MirrorColors.text1),
-    decoration: InputDecoration(hintText: placeholder, counterText: ''),
+    style: MirrorText.body.copyWith(
+      color: MirrorColors.text1,
+      fontSize: 16,
+      fontWeight: FontWeight.w300,
+    ),
+    decoration: InputDecoration(
+      hintText: placeholder,
+      counterText: '',
+      contentPadding: const EdgeInsets.symmetric(vertical: 14),
+    ),
   );
 }

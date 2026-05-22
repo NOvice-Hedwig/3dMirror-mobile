@@ -1,0 +1,11 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(python \"C:/Users/Dn254/.claude/skills/ui-ux-pro-max/scripts/search.py\" \"fitness body visualization luxury editorial women wellness AI fat loss\" --design-system --persist -p \"3D Mirror\" -f markdown)",
+      "Bash(python \"C:/Users/Dn254/.claude/skills/ui-ux-pro-max/scripts/search.py\" \"editorial luxury archive fashion magazine minimal ivory gold\" --domain style -n 5)",
+      "Bash(python \"C:/Users/Dn254/.claude/skills/ui-ux-pro-max/scripts/search.py\" \"luxury editorial serif cormorant fashion\" --domain typography -n 5)",
+      "Bash(flutter pub *)",
+      "PowerShell(Get-ChildItem -Path \"c:\\\\Users\\\\Dn254\\\\Downloads\\\\3dmirror_full\\\\3dmirror_full\" -Force | Select-Object Name, @{Name='Type';Expression={if\\($_.PSIsContainer\\){'Directory'}else{'File'}}} | Sort-Object Type, Name)"
+    ]
+  }
+}

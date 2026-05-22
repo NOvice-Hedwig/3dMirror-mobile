@@ -8,7 +8,7 @@ class SessionApi {
   static final SessionApi instance = SessionApi._();
 
   static const _base = String.fromEnvironment('API_BASE_URL',
-      defaultValue: 'http://localhost:8000');
+      defaultValue: 'http://10.0.2.2:8000');
 
   Future<Map<String, String>> _headers() async {
     final token  = await AuthApi.instance.getToken() ?? '';
@@ -26,9 +26,13 @@ class SessionApi {
       headers: await _headers(),
       body: json.encode(s.toJson()),
     );
+    print('CREATE SESSION URL: $_base/sessions');
+    print('CREATE SESSION STATUS: ${r.statusCode}');
+    print('CREATE SESSION BODY: ${r.body}');
     _assert(r);
     return SessionRecord.fromJson(json.decode(r.body) as Map<String, dynamic>);
   }
+
 
   Future<List<SessionRecord>> list({int limit = 30}) async {
     final r = await http.get(

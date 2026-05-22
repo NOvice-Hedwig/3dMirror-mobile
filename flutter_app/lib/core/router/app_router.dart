@@ -22,26 +22,37 @@ class MirrorRoute {
 final GoRouter appRouter = GoRouter(
   initialLocation: MirrorRoute.auth,
   redirect: (context, state) async {
-    final prefs = await SharedPreferences.getInstance();
-    final token     = prefs.getString('mirror_token');
-    final onboarded = prefs.getBool('mirror_onboarded') ?? false;
+  final prefs = await SharedPreferences.getInstance();
+  final token = prefs.getString('mirror_token');
+  final onboarded = prefs.getBool('mirror_onboarded') ?? false;
 
-    final isAuth = state.fullPath?.startsWith('/auth') ?? false;
+  final path = state.fullPath ?? '';
+  final isAuth = path == MirrorRoute.auth;
+  final isOnboarding = path == MirrorRoute.onboarding;
 
-    if (token == null) {
-      return isAuth ? null : MirrorRoute.auth;
-    }
-    if (!onboarded && state.fullPath != MirrorRoute.onboarding) {
-      return MirrorRoute.onboarding;
-    }
-    if (isAuth || state.fullPath == MirrorRoute.onboarding) {
-      return MirrorRoute.home;
-    }
-    return null;
-  },
+  // 1. 未登录：只能留在 auth，其他都跳去 auth
+  if (token == null) {
+    return isAuth ? null : MirrorRoute.auth;
+  }
+
+  // 2. 已登录但未完成 onboarding：只能留在 onboarding
+  if (!onboarded) {
+    return isOnboarding ? null : MirrorRoute.onboarding;
+  }
+
+  // 3. 已登录且已完成 onboarding：不该再去 auth / onboarding
+  if (isAuth || isOnboarding) {
+    return MirrorRoute.home;
+  }
+
+  // 4. 其他正常放行
+  return null;
+},
+
   routes: [
     GoRoute(
-      path: MirrorRoute.auth,
+      path:
+     MirrorRoute.auth,
       pageBuilder: (c, s) => _fade(s, const AuthScreen()),
     ),
     GoRoute(

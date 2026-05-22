@@ -24,7 +24,7 @@ class AuthApi {
   static final AuthApi instance = AuthApi._();
 
   static const _base = String.fromEnvironment('API_BASE_URL',
-      defaultValue: 'http://localhost:8000');
+      defaultValue: 'http://10.0.2.2:8000');
 
   Future<void> sendPhoneOtp(String phone) =>
       _post('/auth/phone/send', {'phone': phone});

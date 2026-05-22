@@ -466,7 +466,7 @@ abstract class S {
   /// No description provided for @ctaGenerate.
   ///
   /// In zh, this message translates to:
-  /// **'生成镜像'**
+  /// **'生成角色'**
   String get ctaGenerate;
 
   /// No description provided for @unitKg.

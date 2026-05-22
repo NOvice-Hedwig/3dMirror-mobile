@@ -1,5 +1,6 @@
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_animate/flutter_animate.dart';
 import 'package:go_router/go_router.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import '../../core/theme/design_tokens.dart';
@@ -20,98 +21,170 @@ class _InputScreenState extends State<InputScreen> {
   WorkoutType _workout = WorkoutType.rest;
   int     _duration = 0;
   Intensity? _intensity;
-  bool    _loading  = false;
+  bool    _loading    = false;
+  bool    _ctaPressed = false;
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: MirrorColors.bg,
-      body: CustomScrollView(slivers: [
-        SliverPadding(
-          padding: const EdgeInsets.fromLTRB(
-              MirrorSpacing.pagePad, 60, MirrorSpacing.pagePad, 0),
-          sliver: SliverToBoxAdapter(child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              FadeSlideIn(
-                delay: Duration.zero,
-                duration: const Duration(milliseconds: 400),
-                offsetY: 10,
-                child: Text(_dayLabel(),
-                    style: MirrorText.overline),
-              ),
-              const SizedBox(height: 12),
-              FadeSlideIn(
-                delay: const Duration(milliseconds: 80),
-                duration: MirrorDuration.slow,
-                offsetY: 16,
-                child: Text.rich(TextSpan(style: MirrorText.title, children: [
-                  const TextSpan(text: '告诉我\n你的'),
-                  TextSpan(text: '身体',
-                      style: MirrorText.title.copyWith(fontStyle: FontStyle.italic)),
-                ])),
-              ),
-              const SizedBox(height: 6),
-              const FadeSlideIn(
-                delay: Duration(milliseconds: 160),
-                duration: Duration(milliseconds: 400),
-                offsetY: 8,
-                child: Text('数据越多，镜像越准', style: MirrorText.body),
-              ),
-              const SizedBox(height: 32),
-            ],
-          )),
-        ),
+      body: SafeArea(
+        child: Column(
+          children: [
+            _buildMasthead(),
+            Expanded(
+              child: CustomScrollView(slivers: [
 
-        // Gender toggle
-        SliverPadding(
-          padding: const EdgeInsets.symmetric(horizontal: MirrorSpacing.pagePad),
-          sliver: SliverToBoxAdapter(child: FadeSlideIn(
-            delay: const Duration(milliseconds: 240),
-            duration: const Duration(milliseconds: 400),
-            offsetY: 8,
-            child: _genderToggle(),
-          )),
-        ),
-        const SliverToBoxAdapter(child: SizedBox(height: 28)),
+                // ── Header ──────────────────────────────────────────────────
+                SliverPadding(
+                  padding: const EdgeInsets.fromLTRB(
+                      MirrorSpacing.pagePad, 40, MirrorSpacing.pagePad, 0),
+                  sliver: SliverToBoxAdapter(child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      FadeSlideIn(
+                        delay: Duration.zero,
+                        duration: const Duration(milliseconds: 400),
+                        offsetY: 10,
+                        child: Text(_dayLabel(), style: MirrorText.overline),
+                      ),
+                      const SizedBox(height: 12),
+                      FadeSlideIn(
+                        delay: const Duration(milliseconds: 80),
+                        duration: MirrorDuration.slow,
+                        offsetY: 16,
+                        child: Text.rich(TextSpan(style: MirrorText.title, children: [
+                          const TextSpan(text: '告诉我\n你的'),
+                          TextSpan(text: '身体',
+                              style: MirrorText.title.copyWith(fontStyle: FontStyle.italic)),
+                        ])),
+                      ),
+                      const SizedBox(height: 6),
+                      FadeSlideIn(
+                        delay: const Duration(milliseconds: 160),
+                        duration: const Duration(milliseconds: 400),
+                        offsetY: 8,
+                        child: Text('数据越多，镜像越准', style: MirrorText.body),
+                      ),
+                      const SizedBox(height: 32),
+                    ],
+                  )),
+                ),
 
-        // Body fields
-        SliverPadding(
-          padding: const EdgeInsets.symmetric(horizontal: MirrorSpacing.pagePad),
-          sliver: SliverToBoxAdapter(child: FadeSlideIn(
-            delay: const Duration(milliseconds: 320),
-            duration: const Duration(milliseconds: 400),
-            offsetY: 8,
-            child: Column(children: [
-            _Row(label: '体重', value: _weight > 0 ? _weight.toStringAsFixed(1) : null,
-                unit: 'kg', onTap: () => _dec('体重 (kg)', 30, 200, _weight.clamp(30,200), 0.1,
-                    (v) => setState(() => _weight = v))),
-            _Row(label: '体脂率', value: _hasBf ? _bodyFat.toStringAsFixed(1) : null,
-                unit: '%', onTap: () => _dec('体脂率 (%)', 3, 60, _hasBf ? _bodyFat : 20, 0.1,
-                    (v) => setState(() { _bodyFat = v; _hasBf = true; }))),
-            _Row(label: '腰围', value: _hasWaist ? _waist.toStringAsFixed(1) : null,
-                unit: 'cm', isLast: true,
-                onTap: () => _dec('腰围 (cm)', 50, 160, _hasWaist ? _waist : 80, 0.5,
-                    (v) => setState(() { _waist = v; _hasWaist = true; }))),
-          ]))),
-        ),
+                // ── Gender toggle ────────────────────────────────────────────
+                SliverPadding(
+                  padding: const EdgeInsets.symmetric(horizontal: MirrorSpacing.pagePad),
+                  sliver: SliverToBoxAdapter(child: FadeSlideIn(
+                    delay: const Duration(milliseconds: 240),
+                    duration: const Duration(milliseconds: 400),
+                    offsetY: 8,
+                    child: _genderToggle(),
+                  )),
+                ),
+                const SliverToBoxAdapter(child: SizedBox(height: 24)),
 
-        // Activity
-        SliverPadding(
-          padding: const EdgeInsets.fromLTRB(
-              MirrorSpacing.pagePad, 28, MirrorSpacing.pagePad, 0),
-          sliver: SliverToBoxAdapter(child: _activitySection()),
-        ),
+                // ── "BODY · DATA" section label ──────────────────────────────
+                SliverPadding(
+                  padding: const EdgeInsets.symmetric(horizontal: MirrorSpacing.pagePad),
+                  sliver: SliverToBoxAdapter(child: FadeSlideIn(
+                    delay: const Duration(milliseconds: 300),
+                    duration: const Duration(milliseconds: 400),
+                    offsetY: 6,
+                    child: Text('BODY  ·  DATA', style: MirrorText.overline),
+                  )),
+                ),
+                const SliverToBoxAdapter(child: SizedBox(height: 12)),
 
-        // CTA
-        SliverPadding(
-          padding: const EdgeInsets.fromLTRB(
-              MirrorSpacing.pagePad, 32, MirrorSpacing.pagePad, 48),
-          sliver: SliverToBoxAdapter(child: _cta()),
+                // ── Body fields ──────────────────────────────────────────────
+                SliverPadding(
+                  padding: const EdgeInsets.symmetric(horizontal: MirrorSpacing.pagePad),
+                  sliver: SliverToBoxAdapter(child: FadeSlideIn(
+                    delay: const Duration(milliseconds: 360),
+                    duration: const Duration(milliseconds: 400),
+                    offsetY: 8,
+                    child: Column(children: [
+                      _Row(label: '体重', value: _weight > 0 ? _weight.toStringAsFixed(1) : null,
+                          unit: 'kg', onTap: () => _dec('体重 (kg)', 30, 200, _weight.clamp(30,200), 0.1,
+                              (v) => setState(() => _weight = v))),
+                      _Row(label: '体脂率', value: _hasBf ? _bodyFat.toStringAsFixed(1) : null,
+                          unit: '%', onTap: () => _dec('体脂率 (%)', 3, 60, _hasBf ? _bodyFat : 20, 0.1,
+                              (v) => setState(() { _bodyFat = v; _hasBf = true; }))),
+                      _Row(label: '腰围', value: _hasWaist ? _waist.toStringAsFixed(1) : null,
+                          unit: 'cm', isLast: true,
+                          onTap: () => _dec('腰围 (cm)', 50, 160, _hasWaist ? _waist : 80, 0.5,
+                              (v) => setState(() { _waist = v; _hasWaist = true; }))),
+                    ]),
+                  )),
+                ),
+
+                // ── Editorial divider ────────────────────────────────────────
+                const SliverPadding(
+                  padding: EdgeInsets.symmetric(horizontal: MirrorSpacing.pagePad),
+                  sliver: SliverToBoxAdapter(child: FadeSlideIn(
+                    delay: Duration(milliseconds: 440),
+                    duration: Duration(milliseconds: 350),
+                    offsetY: 0,
+                    child: EditorialDivider(topPad: 24, bottomPad: 0),
+                  )),
+                ),
+
+                // ── Activity ─────────────────────────────────────────────────
+                SliverPadding(
+                  padding: const EdgeInsets.fromLTRB(
+                      MirrorSpacing.pagePad, 24, MirrorSpacing.pagePad, 0),
+                  sliver: SliverToBoxAdapter(child: FadeSlideIn(
+                    delay: const Duration(milliseconds: 480),
+                    duration: const Duration(milliseconds: 400),
+                    offsetY: 8,
+                    child: _activitySection(),
+                  )),
+                ),
+
+                // ── CTA ──────────────────────────────────────────────────────
+                SliverPadding(
+                  padding: const EdgeInsets.fromLTRB(
+                      MirrorSpacing.pagePad, 32, MirrorSpacing.pagePad, 48),
+                  sliver: SliverToBoxAdapter(child: _cta()),
+                ),
+              ]),
+            ),
+          ],
         ),
-      ]),
+      ),
     );
   }
+
+  Widget _buildMasthead() => Column(
+    children: [
+      Padding(
+        padding: const EdgeInsets.fromLTRB(
+            MirrorSpacing.pagePad, 20, MirrorSpacing.pagePad, 12),
+        child: Text(
+          '3D MIRROR',
+          style: MirrorText.overline.copyWith(
+            color: MirrorColors.gold,
+            fontSize: 11,
+            letterSpacing: 4.0,
+          ),
+          textAlign: TextAlign.center,
+        ),
+      ),
+      Container(
+        height: 1.5,
+        margin: const EdgeInsets.symmetric(horizontal: MirrorSpacing.pagePad),
+        color: MirrorColors.divider,
+      )
+      .animate()
+      .scale(
+        begin: const Offset(0, 1),
+        end: const Offset(1, 1),
+        alignment: Alignment.centerLeft,
+        duration: 600.ms,
+        curve: MirrorCurve.enter,
+      ),
+      const SizedBox(height: 4),
+    ],
+  );
 
   Widget _genderToggle() {
     return Container(
@@ -121,11 +194,11 @@ class _InputScreenState extends State<InputScreen> {
           borderRadius: BorderRadius.circular(MirrorRadius.md)),
       padding: const EdgeInsets.all(3),
       child: Row(
-        children: ['male', 'female'].map((g) {
+        children: ['female', 'male'].map((g) {
           final sel = _gender == g;
           return Expanded(
             child: GestureDetector(
-              onTap: () => setState(() {}),
+              onTap: () => setState(() => _gender = g),
               child: AnimatedContainer(
                 duration: MirrorDuration.fast,
                 decoration: BoxDecoration(
@@ -146,7 +219,7 @@ class _InputScreenState extends State<InputScreen> {
     );
   }
 
-  final String _gender = 'male';
+  String _gender = 'female';
 
   Widget _activitySection() {
     final types = [
@@ -155,6 +228,8 @@ class _InputScreenState extends State<InputScreen> {
       (WorkoutType.yoga, '瑜伽'),    (WorkoutType.rest, '休息日'),
     ];
     return Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+      Text("TODAY'S ACTIVITY", style: MirrorText.overline),
+      const SizedBox(height: 12),
       Wrap(spacing: 8, runSpacing: 8, children: types.map((t) {
         final sel = _workout == t.$1;
         return GestureDetector(
@@ -181,7 +256,7 @@ class _InputScreenState extends State<InputScreen> {
                 (v) => setState(() => _duration = v))),
         const SizedBox(height: 14),
         Row(children: [
-          const Text('强度', style: MirrorText.body),
+          Text('强度', style: MirrorText.body),
           const Spacer(),
           ...Intensity.values.map((iv) {
             final lbl = {Intensity.low:'轻',Intensity.medium:'中',Intensity.high:'强'}[iv]!;
@@ -220,13 +295,23 @@ class _InputScreenState extends State<InputScreen> {
       ),
     ))),
     const SizedBox(height: 20),
-    ElevatedButton(
-      onPressed: (_weight > 0 && !_loading) ? _submit : null,
-      child: _loading
-          ? const SizedBox(width: 18, height: 18,
-              child: CircularProgressIndicator(
-                  color: MirrorColors.bg, strokeWidth: 1.5))
-          : const Text('生成镜像'),
+    GestureDetector(
+      onTapDown: (_) => setState(() => _ctaPressed = true),
+      onTapUp: (_) => setState(() => _ctaPressed = false),
+      onTapCancel: () => setState(() => _ctaPressed = false),
+      child: AnimatedScale(
+        scale: (_ctaPressed && _weight > 0 && !_loading) ? 0.97 : 1.0,
+        duration: const Duration(milliseconds: 120),
+        curve: MirrorCurve.snap,
+        child: ElevatedButton(
+          onPressed: (_weight > 0 && !_loading) ? _submit : null,
+          child: _loading
+              ? const SizedBox(width: 18, height: 18,
+                  child: CircularProgressIndicator(
+                      color: MirrorColors.bg, strokeWidth: 1.5))
+              : const Text('生成角色'),
+        ),
+      ),
     ),
   ]);
 
@@ -299,18 +384,18 @@ class _InputScreenState extends State<InputScreen> {
   }
 
   Future<void> _sheet(String lbl, Widget picker, VoidCallback onOk) =>
-      showCupertinoModalPopup(context: context, builder: (_) =>
+      showCupertinoModalPopup(context: context, builder: (ctx) =>
           Container(height: 280, color: MirrorColors.surface, child: Column(children: [
             Row(mainAxisAlignment: MainAxisAlignment.spaceBetween, children: [
               CupertinoButton(
                 child: Text('取消',
                     style: MirrorText.body.copyWith(color: MirrorColors.text3)),
-                onPressed: () => Navigator.pop(context)),
+                onPressed: () => Navigator.pop(ctx)),
               Text(lbl, style: MirrorText.bodyS.copyWith(color: MirrorColors.text2)),
               CupertinoButton(
                 child: Text('确认', style: MirrorText.body.copyWith(
                     color: MirrorColors.text1, fontWeight: FontWeight.w500)),
-                onPressed: () { onOk(); Navigator.pop(context); }),
+                onPressed: () { onOk(); Navigator.pop(ctx); }),
             ]),
             Expanded(child: picker),
           ])));
@@ -346,7 +431,7 @@ class _Row extends StatelessWidget {
             Text('—', style: MirrorText.body.copyWith(color: MirrorColors.text3)),
         ]),
       ),
-      if (!isLast) const Divider(),
+      if (!isLast) const Divider(color: MirrorColors.divider, thickness: 0.5, height: 0),
     ]),
   );
 }

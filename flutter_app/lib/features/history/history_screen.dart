@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_animate/flutter_animate.dart';
 import 'package:go_router/go_router.dart';
 import '../../core/theme/design_tokens.dart';
 import '../../core/router/app_router.dart';
@@ -31,38 +32,54 @@ class _HistoryScreenState extends State<HistoryScreen> {
   @override
   Widget build(BuildContext context) => Scaffold(
     backgroundColor: MirrorColors.bg,
-    body: CustomScrollView(slivers: [
+    bottomNavigationBar: _sessions.isNotEmpty ? Container(
+      padding: const EdgeInsets.fromLTRB(
+          MirrorSpacing.pagePad, 12, MirrorSpacing.pagePad, 28),
+      color: MirrorColors.bg,
+      child: Column(mainAxisSize: MainAxisSize.min, children: [
+        Container(height: 0.5, color: MirrorColors.divider),
+        const SizedBox(height: 12),
+        ElevatedButton(
+          onPressed: () => context.go(MirrorRoute.input),
+          child: Text('TODAY  ·  RECORD',
+              style: MirrorText.overline.copyWith(
+                  color: MirrorColors.bg, letterSpacing: 2.5)),
+        ),
+      ]),
+    ) : null,
+    body: SafeArea(
+      child: Column(
+        children: [
+          _buildMasthead(),
+          Expanded(
+            child: CustomScrollView(slivers: [
 
       // ── Header（入场错位） ────────────────────────────────────────────────────
-      const SliverPadding(
-        padding: EdgeInsets.fromLTRB(
-            MirrorSpacing.pagePad, 60, MirrorSpacing.pagePad, 0),
+      SliverPadding(
+        padding: const EdgeInsets.fromLTRB(
+            MirrorSpacing.pagePad, 40, MirrorSpacing.pagePad, 0),
         sliver: SliverToBoxAdapter(child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             FadeSlideIn(
               delay: Duration.zero,
-              duration: Duration(milliseconds: 400),
+              duration: const Duration(milliseconds: 400),
               offsetY: 10,
               child: Text('TRANSFORMATION',
                   style: MirrorText.overline),
             ),
-            SizedBox(height: 12),
+            const SizedBox(height: 12),
             FadeSlideIn(
-              delay: Duration(milliseconds: 80),
+              delay: const Duration(milliseconds: 80),
               duration: MirrorDuration.slow,
               offsetY: 16,
               child: Text.rich(TextSpan(style: MirrorText.titleSm, children: [
-                TextSpan(text: '每一次\n'),
+                const TextSpan(text: '每一次\n'),
                 TextSpan(text: '记录',
-                    style: TextStyle(
-                      fontFamily: MirrorText.serif, fontSize: 28,
-                      fontWeight: FontWeight.w400, color: MirrorColors.text1,
-                      height: 1.05, fontStyle: FontStyle.italic,
-                    )),
+                    style: MirrorText.titleSm.copyWith(fontStyle: FontStyle.italic)),
               ])),
             ),
-            SizedBox(height: 24),
+            const SizedBox(height: 24),
           ],
         )),
       ),
@@ -74,7 +91,7 @@ class _HistoryScreenState extends State<HistoryScreen> {
       else if (_error != null)
         SliverFillRemaining(child: Center(
           child: Column(mainAxisSize: MainAxisSize.min, children: [
-            const Text('加载失败', style: MirrorText.body),
+            Text('加载失败', style: MirrorText.body),
             const SizedBox(height: 12),
             ElevatedButton(
               onPressed: () { setState(() { _loading = true; _error = null; }); _load(); },
@@ -87,7 +104,7 @@ class _HistoryScreenState extends State<HistoryScreen> {
           mainAxisSize: MainAxisSize.min, children: [
             Text('还没有记录', style: MirrorText.body.copyWith(color: MirrorColors.text2)),
             const SizedBox(height: 6),
-            const Text('完成第一次输入开始追踪', style: MirrorText.caption),
+            Text('完成第一次输入开始追踪', style: MirrorText.caption),
             const SizedBox(height: 24),
             ElevatedButton(
               onPressed: () => context.go(MirrorRoute.input),
@@ -118,8 +135,8 @@ class _HistoryScreenState extends State<HistoryScreen> {
         const SliverToBoxAdapter(child: SizedBox(height: 8)),
 
         // Section label
-        const SliverPadding(
-          padding: EdgeInsets.fromLTRB(
+        SliverPadding(
+          padding: const EdgeInsets.fromLTRB(
               MirrorSpacing.pagePad, 24, MirrorSpacing.pagePad, 6),
           sliver: SliverToBoxAdapter(
             child: Text('RECORDS', style: MirrorText.overline),
@@ -141,16 +158,45 @@ class _HistoryScreenState extends State<HistoryScreen> {
           childCount: _sessions.length,
         )),
 
-        const SliverToBoxAdapter(child: SizedBox(height: 80)),
+        const SliverToBoxAdapter(child: SizedBox(height: 16)),
       ],
-    ]),
-
-    floatingActionButton: _sessions.isEmpty ? null : FloatingActionButton(
-      onPressed: () => context.go(MirrorRoute.input),
-      backgroundColor: MirrorColors.text1,
-      elevation: 0,
-      child: const Icon(Icons.add, color: MirrorColors.bg),
+            ]),
+          ),
+        ],
+      ),
     ),
+  );
+
+  Widget _buildMasthead() => Column(
+    children: [
+      Padding(
+        padding: const EdgeInsets.fromLTRB(
+            MirrorSpacing.pagePad, 20, MirrorSpacing.pagePad, 12),
+        child: Text(
+          '3D MIRROR',
+          style: MirrorText.overline.copyWith(
+            color: MirrorColors.gold,
+            fontSize: 11,
+            letterSpacing: 4.0,
+          ),
+          textAlign: TextAlign.center,
+        ),
+      ),
+      Container(
+        height: 1.5,
+        margin: const EdgeInsets.symmetric(horizontal: MirrorSpacing.pagePad),
+        color: MirrorColors.divider,
+      )
+      .animate()
+      .scale(
+        begin: const Offset(0, 1),
+        end: const Offset(1, 1),
+        alignment: Alignment.centerLeft,
+        duration: 600.ms,
+        curve: MirrorCurve.enter,
+      ),
+      const SizedBox(height: 4),
+    ],
   );
 }
 
@@ -203,7 +249,7 @@ class _SessionRow extends StatelessWidget {
                         Text(bd.weightKg.toStringAsFixed(1),
                             style: MirrorText.displayMd),
                         const SizedBox(width: 3),
-                        const Text('kg', style: MirrorText.unit),
+                        Text('kg', style: MirrorText.unit),
                       ]),
                   if (session.activityData != null) ...[
                     const SizedBox(height: 3),
@@ -227,12 +273,12 @@ class _SessionRow extends StatelessWidget {
                         color: delta < 0 ? MirrorColors.text1 : MirrorColors.text3),
                   ),
                   const SizedBox(height: 2),
-                  const Text('vs prev', style: MirrorText.caption),
+                  Text('vs prev', style: MirrorText.caption),
                 ],
               ),
             ]),
           ),
-          const Divider(),
+          const Divider(color: MirrorColors.divider, thickness: 0.5, height: 0),
         ]),
       ),
     );

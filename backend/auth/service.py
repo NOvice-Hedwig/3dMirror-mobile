@@ -31,6 +31,9 @@ EMAIL_FROM      = os.getenv("EMAIL_FROM", "noreply@3dmirror.app")
 
 APPLE_BUNDLE_ID = os.getenv("APPLE_BUNDLE_ID", "com.yourcompany.3dmirror")
 
+DEV_MODE    = os.getenv("DEV_MODE", "").lower() in ("1", "true", "yes")
+DEV_OTP     = "123456"   # 开发环境固定验证码
+
 OTP_TTL = 300   # 5 minutes
 
 # In-memory store (swap for Redis in production)
@@ -65,6 +68,9 @@ def _is_cn(phone: str) -> bool:
     return phone.startswith("+86") or bool(re.match(r"^1[3-9]\d{9}$", phone))
 
 async def send_sms_otp(phone: str) -> str:
+    if DEV_MODE:
+        _save_otp(phone, DEV_OTP)
+        return DEV_OTP
     otp = _gen_otp()
     _save_otp(phone, otp)
     if _is_cn(phone):
@@ -120,6 +126,9 @@ async def _twilio(phone: str, otp: str):
 # ── Email ─────────────────────────────────────────────────────────────────────
 
 async def send_email_otp(email: str) -> str:
+    if DEV_MODE:
+        _save_otp(email, DEV_OTP)
+        return DEV_OTP
     otp = _gen_otp()
     _save_otp(email, otp)
     async with httpx.AsyncClient() as c:

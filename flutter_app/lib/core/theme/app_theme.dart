@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:google_fonts/google_fonts.dart';
 import 'design_tokens.dart';
 
 class MirrorTheme {
@@ -15,7 +16,7 @@ class MirrorTheme {
       primary: MirrorColors.accent,
       onPrimary: MirrorColors.bg,
     ),
-    fontFamily: MirrorText.sans,
+    fontFamily: GoogleFonts.outfit().fontFamily,
     appBarTheme: const AppBarTheme(
       backgroundColor: MirrorColors.bg,
       foregroundColor: MirrorColors.text1,

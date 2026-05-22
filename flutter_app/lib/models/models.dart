@@ -29,8 +29,9 @@ class BodyData {
   };
 
   factory BodyData.fromJson(Map<String, dynamic> j) => BodyData(
-    id: j['id'] as String, userId: j['user_id'] as String,
-    date: DateTime.parse(j['date'] as String),
+    id: (j['id'] as String?) ?? '',
+    userId: (j['user_id'] as String?) ?? '',
+    date: j['date'] != null ? DateTime.parse(j['date'] as String) : DateTime.now(),
     weightKg: (j['weight_kg'] as num).toDouble(),
     bodyFatPct: (j['body_fat_pct'] as num?)?.toDouble(),
     waistCm: (j['waist_cm'] as num?)?.toDouble(),
@@ -64,8 +65,9 @@ class ActivityData {
   };
 
   factory ActivityData.fromJson(Map<String, dynamic> j) => ActivityData(
-    id: j['id'] as String, userId: j['user_id'] as String,
-    date: DateTime.parse(j['date'] as String),
+    id: (j['id'] as String?) ?? '',
+    userId: (j['user_id'] as String?) ?? '',
+    date: j['date'] != null ? DateTime.parse(j['date'] as String) : DateTime.now(),
     workoutType: WorkoutType.values.firstWhere(
       (e) => e.name == j['workout_type'], orElse: () => WorkoutType.other),
     durationMin: j['duration_min'] as int?,

@@ -194,7 +194,7 @@ class SZh extends S {
   String get workoutCycling => '骑行';
 
   @override
-  String get ctaGenerate => '生成镜像';
+  String get ctaGenerate => '生成角色';
 
   @override
   String get unitKg => 'kg';

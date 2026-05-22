@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_animate/flutter_animate.dart';
 import 'package:go_router/go_router.dart';
 import '../../core/theme/design_tokens.dart';
 import '../../core/widgets/animate_widgets.dart';
@@ -29,11 +30,14 @@ class _ResultScreenState extends State<ResultScreen> {
     try {
       final s = await SessionApi.instance.get(widget.sessionId);
       setState(() { _session = s; _loading = false; });
-      await UnityBridge.instance.loadAvatar('${s.avatarParams.gender}_base');
-      await UnityBridge.instance.applyBodyParams(s.avatarParams);
     } catch (e) {
       setState(() { _error = e.toString(); _loading = false; });
+      return;
     }
+    try {
+      await UnityBridge.instance.loadAvatar('${_session!.avatarParams.gender}_base');
+      await UnityBridge.instance.applyBodyParams(_session!.avatarParams);
+    } catch (_) {}
   }
 
   @override
@@ -41,19 +45,58 @@ class _ResultScreenState extends State<ResultScreen> {
     return Scaffold(
       backgroundColor: MirrorColors.bg,
       body: SafeArea(
-        child: _loading
-            ? const Center(child: CircularProgressIndicator(
-                color: MirrorColors.text1, strokeWidth: 1))
-            : _error != null
-                ? _buildError()
-                : _buildContent(),
+        child: Column(
+          children: [
+            _buildMasthead(),
+            Expanded(
+              child: _loading
+                  ? const Center(child: CircularProgressIndicator(
+                      color: MirrorColors.text1, strokeWidth: 1))
+                  : _error != null
+                      ? _buildError()
+                      : _buildContent(),
+            ),
+          ],
+        ),
       ),
     );
   }
 
+  Widget _buildMasthead() => Column(
+    children: [
+      Padding(
+        padding: const EdgeInsets.fromLTRB(
+            MirrorSpacing.pagePad, 20, MirrorSpacing.pagePad, 12),
+        child: Text(
+          '3D MIRROR',
+          style: MirrorText.overline.copyWith(
+            color: MirrorColors.gold,
+            fontSize: 11,
+            letterSpacing: 4.0,
+          ),
+          textAlign: TextAlign.center,
+        ),
+      ),
+      Container(
+        height: 1.5,
+        margin: const EdgeInsets.symmetric(horizontal: MirrorSpacing.pagePad),
+        color: MirrorColors.divider,
+      )
+      .animate()
+      .scale(
+        begin: const Offset(0, 1),
+        end: const Offset(1, 1),
+        alignment: Alignment.centerLeft,
+        duration: 600.ms,
+        curve: MirrorCurve.enter,
+      ),
+      const SizedBox(height: 4),
+    ],
+  );
+
   Widget _buildError() => Center(
     child: Column(mainAxisSize: MainAxisSize.min, children: [
-      const Text('加载失败', style: MirrorText.body),
+      Text('加载失败', style: MirrorText.body),
       const SizedBox(height: 12),
       ElevatedButton(
         onPressed: () { setState(() { _loading = true; _error = null; }); _load(); },
@@ -125,9 +168,9 @@ class _ResultScreenState extends State<ResultScreen> {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              const FadeSlideIn(
-                delay: Duration(milliseconds: 200),
-                duration: Duration(milliseconds: 400),
+              FadeSlideIn(
+                delay: const Duration(milliseconds: 200),
+                duration: const Duration(milliseconds: 400),
                 offsetY: 0,
                 child: Text('BODY  ·  METRICS', style: MirrorText.overline),
               ),
@@ -146,11 +189,11 @@ class _ResultScreenState extends State<ResultScreen> {
                       duration: MirrorDuration.xslow,
                     ),
                     const SizedBox(width: 8),
-                    const Padding(
-                      padding: EdgeInsets.only(bottom: 10),
+                    Padding(
+                      padding: const EdgeInsets.only(bottom: 10),
                       child: FadeSlideIn(
-                        delay: Duration(milliseconds: 400),
-                        duration: Duration(milliseconds: 300),
+                        delay: const Duration(milliseconds: 400),
+                        duration: const Duration(milliseconds: 300),
                         offsetY: 0,
                         child: Text('kg', style: MirrorText.unitLg),
                       ),
@@ -159,9 +202,9 @@ class _ResultScreenState extends State<ResultScreen> {
                 ),
               ),
               const SizedBox(height: 4),
-              const FadeSlideIn(
-                delay: Duration(milliseconds: 440),
-                duration: Duration(milliseconds: 350),
+              FadeSlideIn(
+                delay: const Duration(milliseconds: 440),
+                duration: const Duration(milliseconds: 350),
                 offsetY: 0,
                 child: Text('你的体重', style: MirrorText.body),
               ),
@@ -233,7 +276,7 @@ class _ResultScreenState extends State<ResultScreen> {
     crossAxisAlignment: CrossAxisAlignment.start,
     children: [
       Row(children: [
-        const Text('TIME  COMPARE', style: MirrorText.overline),
+        Text('TIME · COMPARE', style: MirrorText.overline),
         const Spacer(),
         ...[4, 8, 12].map((w) {
           final sel = _compareWeeks == w;
@@ -272,7 +315,7 @@ class _ResultScreenState extends State<ResultScreen> {
         ),
       ),
       Row(mainAxisAlignment: MainAxisAlignment.spaceBetween, children: [
-        const Text('NOW', style: MirrorText.caption),
+        Text('NOW', style: MirrorText.caption),
         Text('$_compareWeeks W', style: MirrorText.caption),
       ]),
     ],
@@ -310,7 +353,7 @@ class _Viewport extends StatelessWidget {
         child: Stack(children: [
           Center(child: CustomPaint(
               painter: _BodyPainter(), size: const Size(90, 220))),
-          const Positioned(
+          Positioned(
             bottom: 16, left: 0, right: 0,
             child: Text('拖动旋转', textAlign: TextAlign.center,
                 style: MirrorText.caption),
@@ -325,7 +368,7 @@ class _BodyPainter extends CustomPainter {
   @override
   void paint(Canvas canvas, Size size) {
     final p = Paint()
-      ..color = const Color(0xFFD4D0C8)
+      ..color = MirrorColors.bg2
       ..style  = PaintingStyle.fill;
     final cx = size.width / 2;
     canvas.drawOval(Rect.fromCenter(center: Offset(cx, 16), width: 26, height: 28), p);
@@ -370,7 +413,7 @@ class _EditorialMetricGrid extends StatelessWidget {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                const Text('体脂率', style: MirrorText.overline),
+                Text('体脂率', style: MirrorText.overline),
                 const SizedBox(height: 10),
                 Row(
                   crossAxisAlignment: CrossAxisAlignment.end,
@@ -382,10 +425,10 @@ class _EditorialMetricGrid extends StatelessWidget {
                             fractionDigits: 1,
                             duration: MirrorDuration.xslow,
                           )
-                        : const Text('—', style: MirrorText.displayXl),
+                        : Text('—', style: MirrorText.displayXl),
                     const SizedBox(width: 4),
-                    const Padding(
-                      padding: EdgeInsets.only(bottom: 6),
+                    Padding(
+                      padding: const EdgeInsets.only(bottom: 6),
                       child: Text('%', style: MirrorText.unitLg),
                     ),
                   ],
@@ -408,7 +451,7 @@ class _EditorialMetricGrid extends StatelessWidget {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 // 瘦体重
-                const Text('瘦体重', style: MirrorText.overline),
+                Text('瘦体重', style: MirrorText.overline),
                 const SizedBox(height: 8),
                 Row(
                   crossAxisAlignment: CrossAxisAlignment.baseline,
@@ -421,9 +464,9 @@ class _EditorialMetricGrid extends StatelessWidget {
                             fractionDigits: 1,
                             duration: MirrorDuration.xslow,
                           )
-                        : const Text('—', style: MirrorText.displayMd),
+                        : Text('—', style: MirrorText.displayMd),
                     const SizedBox(width: 3),
-                    const Text('kg', style: MirrorText.unit),
+                    Text('kg', style: MirrorText.unit),
                   ],
                 ),
 
@@ -434,7 +477,7 @@ class _EditorialMetricGrid extends StatelessWidget {
                 ),
 
                 // 腰围
-                const Text('腰围', style: MirrorText.overline),
+                Text('腰围', style: MirrorText.overline),
                 const SizedBox(height: 8),
                 Row(
                   crossAxisAlignment: CrossAxisAlignment.baseline,
@@ -447,9 +490,9 @@ class _EditorialMetricGrid extends StatelessWidget {
                             fractionDigits: 1,
                             duration: MirrorDuration.xslow,
                           )
-                        : const Text('—', style: MirrorText.displayMd),
+                        : Text('—', style: MirrorText.displayMd),
                     const SizedBox(width: 3),
-                    const Text('cm', style: MirrorText.unit),
+                    Text('cm', style: MirrorText.unit),
                   ],
                 ),
               ],
