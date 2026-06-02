@@ -34,6 +34,20 @@ CREATE TABLE IF NOT EXISTS sessions (
 CREATE INDEX IF NOT EXISTS sessions_user_date
     ON sessions (user_id, created_at DESC);
 
+-- ── Body Photos ───────────────────────────────────────────────────────────────
+CREATE TABLE IF NOT EXISTS body_photos (
+    id           UUID        PRIMARY KEY DEFAULT uuid_generate_v4(),
+    user_id      UUID        NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+    session_id   UUID        REFERENCES sessions(id) ON DELETE SET NULL,
+    angle        TEXT        NOT NULL CHECK (angle IN ('front', 'side', 'back')),
+    file_path    TEXT        NOT NULL,
+    llm_analysis JSONB,
+    created_at   TIMESTAMPTZ NOT NULL DEFAULT NOW()
+);
+
+CREATE INDEX IF NOT EXISTS body_photos_user
+    ON body_photos (user_id, created_at DESC);
+
 -- ── Summary view ──────────────────────────────────────────────────────────────
 CREATE OR REPLACE VIEW session_summary AS
 SELECT

@@ -84,6 +84,7 @@ class AvatarParams {
   final double waistNorm, hipNorm, shoulderNorm, muscleNorm;
   final String gender;
   final String lightingProfile;
+  final bool   photoEnhanced;
 
   const AvatarParams({
     required this.heightNorm, required this.weightNorm,
@@ -91,6 +92,7 @@ class AvatarParams {
     required this.hipNorm, required this.shoulderNorm,
     required this.muscleNorm, required this.gender,
     this.lightingProfile = 'studio_minimal',
+    this.photoEnhanced = false,
   });
 
   factory AvatarParams.fromBodyData(BodyData d,
@@ -121,12 +123,32 @@ class AvatarParams {
       ? (1.20 * bmi + 0.23 * 30 - 16.2).clamp(5, 45)
       : (1.20 * bmi + 0.23 * 30 - 5.4).clamp(15, 55);
 
+  // Overlay photo-analysis corrections on top of computed params.
+  // Each non-null field in [analysis] replaces the corresponding norm value.
+  AvatarParams applyPhotoAnalysis(Map<String, double?> analysis) {
+    double pick(String key, double fallback) =>
+        (analysis[key] ?? fallback).clamp(0.0, 1.0);
+    return AvatarParams(
+      heightNorm:   heightNorm,
+      weightNorm:   weightNorm,
+      bodyFatNorm:  bodyFatNorm,
+      waistNorm:    pick('waist_norm',    waistNorm),
+      hipNorm:      pick('hip_norm',      hipNorm),
+      shoulderNorm: pick('shoulder_norm', shoulderNorm),
+      muscleNorm:   muscleNorm,
+      gender:       gender,
+      lightingProfile: lightingProfile,
+      photoEnhanced:   true,
+    );
+  }
+
   Map<String, dynamic> toJson() => {
     'height_norm': heightNorm, 'weight_norm': weightNorm,
     'body_fat_norm': bodyFatNorm, 'waist_norm': waistNorm,
     'hip_norm': hipNorm, 'shoulder_norm': shoulderNorm,
     'muscle_norm': muscleNorm, 'gender': gender,
     'lighting_profile': lightingProfile,
+    'photo_enhanced': photoEnhanced,
   };
 
   factory AvatarParams.fromJson(Map<String, dynamic> j) => AvatarParams(
@@ -139,6 +161,7 @@ class AvatarParams {
     muscleNorm:   (j['muscle_norm']   as num).toDouble(),
     gender:       j['gender']         as String,
     lightingProfile: j['lighting_profile'] as String? ?? 'studio_minimal',
+    photoEnhanced:   j['photo_enhanced']  as bool?   ?? false,
   );
 }
 
@@ -150,11 +173,12 @@ class SessionRecord {
   final AvatarParams  avatarParams;
   final ActivityData? activityData;
   final String?       thumbnailUrl;
+  final List<String>  photoIds;
 
   const SessionRecord({
     required this.id, required this.userId, required this.createdAt,
     required this.bodyData, required this.avatarParams,
-    this.activityData, this.thumbnailUrl,
+    this.activityData, this.thumbnailUrl, this.photoIds = const [],
   });
 
   Map<String, dynamic> toJson() => {
@@ -164,6 +188,7 @@ class SessionRecord {
     'avatar_params': avatarParams.toJson(),
     'activity_data': activityData?.toJson(),
     'thumbnail_url': thumbnailUrl,
+    'photo_ids': photoIds,
   };
 
   factory SessionRecord.fromJson(Map<String, dynamic> j) => SessionRecord(
@@ -176,5 +201,7 @@ class SessionRecord {
         ? ActivityData.fromJson(j['activity_data'] as Map<String, dynamic>)
         : null,
     thumbnailUrl: j['thumbnail_url'] as String?,
+    photoIds: (j['photo_ids'] as List<dynamic>?)
+        ?.map((e) => e as String).toList() ?? [],
   );
 }

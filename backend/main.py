@@ -3,12 +3,15 @@
 Run locally: uvicorn main:app --reload --port 8000
 """
 
+from dotenv import load_dotenv
+load_dotenv()
+
 from contextlib import asynccontextmanager
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
 from database import Database
-from routers import sessions, users
+from routers import sessions, users, photos
 from auth.router import router as auth_router
 
 
@@ -35,6 +38,7 @@ app.add_middleware(
 app.include_router(auth_router,          prefix="/auth",     tags=["auth"])
 app.include_router(users.router,         prefix="/users",    tags=["users"])
 app.include_router(sessions.router,      prefix="/sessions", tags=["sessions"])
+app.include_router(photos.router,        prefix="/photos",   tags=["photos"])
 
 
 @app.get("/health")

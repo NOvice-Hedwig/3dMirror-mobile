@@ -200,7 +200,7 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
 
   static const _consentBullets = [
     '你的身体数据（身高、体重、三围）将用于生成专属 3D 体型模型',
-    '照片数据（如上传）仅用于本地分析，不会上传至服务器',
+    '体型照片将上传至服务器，由 AI 分析体型比例，仅用于建模，不作其他用途',
     '所有数据经过加密存储，我们不会出售或共享你的个人信息',
     'AI 预测结果仅供参考，不构成医疗建议',
   ];
@@ -389,7 +389,7 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
     await prefs.setDouble('mirror_weight', _weight);
     await prefs.setString('mirror_goal', _goal);
     if (!mounted) return;
-    context.go(MirrorRoute.home);
+    context.go(MirrorRoute.photoCapture);
   }
 
   Future<void> _pickInt(String label, int min, int max, int cur,

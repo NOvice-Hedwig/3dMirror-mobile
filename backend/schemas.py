@@ -47,3 +47,20 @@ class SessionOut(BaseModel):
     avatar_params: dict
     activity_data: Optional[dict] = None
     thumbnail_url: Optional[str]  = None
+
+
+class PhotoOut(BaseModel):
+    id:           str
+    user_id:      str
+    session_id:   Optional[str]  = None
+    angle:        str
+    file_path:    str
+    llm_analysis: Optional[dict] = None
+    created_at:   datetime
+
+
+class BodyAnalysisResult(BaseModel):
+    shoulder_width_norm:  Optional[float] = None
+    waist_norm:           Optional[float] = None
+    hip_norm:             Optional[float] = None
+    limb_proportion_norm: Optional[float] = None

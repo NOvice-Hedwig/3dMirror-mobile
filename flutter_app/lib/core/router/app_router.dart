@@ -4,6 +4,7 @@ import 'package:shared_preferences/shared_preferences.dart';
 
 import '../../features/auth/auth_screen.dart';
 import '../../features/onboarding/onboarding_screen.dart';
+import '../../features/onboarding/photo_capture_screen.dart';
 import '../../features/input/input_screen.dart';
 import '../../features/result/result_screen.dart';
 import '../../features/history/history_screen.dart';
@@ -11,43 +12,51 @@ import '../theme/design_tokens.dart';
 import '../widgets/root_shell.dart';
 
 class MirrorRoute {
-  static const String auth       = '/auth';
-  static const String onboarding = '/onboarding';
-  static const String home       = '/';
-  static const String input      = '/input';
-  static const String result     = '/result';
-  static const String history    = '/history';
+  static const String auth         = '/auth';
+  static const String onboarding   = '/onboarding';
+  static const String photoCapture = '/photo-capture';
+  static const String home         = '/';
+  static const String input        = '/input';
+  static const String result       = '/result';
+  static const String history      = '/history';
 }
 
 final GoRouter appRouter = GoRouter(
   initialLocation: MirrorRoute.auth,
   redirect: (context, state) async {
-  final prefs = await SharedPreferences.getInstance();
-  final token = prefs.getString('mirror_token');
-  final onboarded = prefs.getBool('mirror_onboarded') ?? false;
+    final prefs          = await SharedPreferences.getInstance();
+    final token          = prefs.getString('mirror_token');
+    final onboarded      = prefs.getBool('mirror_onboarded')      ?? false;
+    final photoCaptured  = prefs.getBool('mirror_photo_captured') ?? false;
 
-  final path = state.fullPath ?? '';
-  final isAuth = path == MirrorRoute.auth;
-  final isOnboarding = path == MirrorRoute.onboarding;
+    final path           = state.fullPath ?? '';
+    final isAuth         = path == MirrorRoute.auth;
+    final isOnboarding   = path == MirrorRoute.onboarding;
+    final isPhotoCapture = path == MirrorRoute.photoCapture;
 
-  // 1. 未登录：只能留在 auth，其他都跳去 auth
-  if (token == null) {
-    return isAuth ? null : MirrorRoute.auth;
-  }
+    // 1. 未登录：只能留在 auth
+    if (token == null) {
+      return isAuth ? null : MirrorRoute.auth;
+    }
 
-  // 2. 已登录但未完成 onboarding：只能留在 onboarding
-  if (!onboarded) {
-    return isOnboarding ? null : MirrorRoute.onboarding;
-  }
+    // 2. 已登录但未完成 onboarding
+    if (!onboarded) {
+      return isOnboarding ? null : MirrorRoute.onboarding;
+    }
 
-  // 3. 已登录且已完成 onboarding：不该再去 auth / onboarding
-  if (isAuth || isOnboarding) {
-    return MirrorRoute.home;
-  }
+    // 3. 完成 onboarding 但未拍照：引导到拍照页
+    if (!photoCaptured) {
+      return isPhotoCapture ? null : MirrorRoute.photoCapture;
+    }
 
-  // 4. 其他正常放行
-  return null;
-},
+    // 4. 全部完成：不该再去 auth / onboarding / photo-capture
+    if (isAuth || isOnboarding || isPhotoCapture) {
+      return MirrorRoute.home;
+    }
+
+    // 5. 其他正常放行
+    return null;
+  },
 
   routes: [
     GoRoute(
@@ -58,6 +67,10 @@ final GoRouter appRouter = GoRouter(
     GoRoute(
       path: MirrorRoute.onboarding,
       pageBuilder: (c, s) => _fade(s, const OnboardingScreen()),
+    ),
+    GoRoute(
+      path: MirrorRoute.photoCapture,
+      pageBuilder: (c, s) => _fade(s, const PhotoCaptureScreen()),
     ),
     ShellRoute(
       builder: (c, s, child) => RootShell(child: child),
