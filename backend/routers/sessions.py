@@ -1,23 +1,16 @@
-import json, uuid
+import uuid
 from datetime import datetime
-from fastapi import APIRouter, HTTPException, Header
+from fastapi import APIRouter, HTTPException, Depends
 from database import Database
 from schemas import SessionIn, SessionOut
-from auth.service import decode_jwt
+from auth.router import current_user
 
 router = APIRouter()
 
 
-def _uid(authorization: str) -> str:
-    try:
-        return decode_jwt(authorization.removeprefix("Bearer "))["sub"]
-    except Exception:
-        raise HTTPException(401, "Invalid token")
-
-
+# Auth runs as a dependency so a bad token is rejected (401) before body validation (422).
 @router.post("", response_model=SessionOut)
-async def create_session(body: SessionIn, authorization: str = Header(...)):
-    uid = _uid(authorization)
+async def create_session(body: SessionIn, uid: str = Depends(current_user)):
     sid = str(uuid.uuid4())
     now = datetime.utcnow()
     pool = Database.pool()
@@ -26,9 +19,9 @@ async def create_session(body: SessionIn, authorization: str = Header(...)):
            (id, user_id, body_data, avatar_params, activity_data, thumbnail_url, created_at)
            VALUES ($1,$2,$3,$4,$5,$6,$7)""",
         sid, uid,
-        json.dumps(body.body_data.model_dump()),
-        json.dumps(body.avatar_params.model_dump()),
-        json.dumps(body.activity_data.model_dump()) if body.activity_data else None,
+        body.body_data.model_dump(),
+        body.avatar_params.model_dump(),
+        body.activity_data.model_dump() if body.activity_data else None,
         body.thumbnail_url,
         now,
     )
@@ -42,8 +35,7 @@ async def create_session(body: SessionIn, authorization: str = Header(...)):
 
 
 @router.get("", response_model=list[SessionOut])
-async def list_sessions(limit: int = 30, authorization: str = Header(...)):
-    uid  = _uid(authorization)
+async def list_sessions(limit: int = 30, uid: str = Depends(current_user)):
     pool = Database.pool()
     rows = await pool.fetch(
         "SELECT * FROM sessions WHERE user_id=$1 ORDER BY created_at DESC LIMIT $2",
@@ -52,8 +44,7 @@ async def list_sessions(limit: int = 30, authorization: str = Header(...)):
 
 
 @router.get("/{sid}", response_model=SessionOut)
-async def get_session(sid: str, authorization: str = Header(...)):
-    uid  = _uid(authorization)
+async def get_session(sid: str, uid: str = Depends(current_user)):
     pool = Database.pool()
     row  = await pool.fetchrow(
         "SELECT * FROM sessions WHERE id=$1 AND user_id=$2", sid, uid)
@@ -67,8 +58,8 @@ def _to_out(row) -> SessionOut:
         id=str(row["id"]),
         user_id=str(row["user_id"]),
         created_at=row["created_at"],
-        body_data=json.loads(row["body_data"]),
-        avatar_params=json.loads(row["avatar_params"]),
-        activity_data=json.loads(row["activity_data"]) if row["activity_data"] else None,
+        body_data=row["body_data"],
+        avatar_params=row["avatar_params"],
+        activity_data=row["activity_data"],
         thumbnail_url=row["thumbnail_url"],
     )

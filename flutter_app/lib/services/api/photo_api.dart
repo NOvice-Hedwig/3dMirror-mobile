@@ -1,6 +1,7 @@
 import 'dart:convert';
 import 'dart:io';
 import 'package:http/http.dart' as http;
+import 'package:http_parser/http_parser.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 import '../../models/body_photo.dart';
@@ -31,6 +32,7 @@ class PhotoApi {
       request.files.add(await http.MultipartFile.fromPath(
         angle, file.path,
         filename: '$angle.jpg',
+        contentType: MediaType('image', 'jpeg'),
       ));
     }
 

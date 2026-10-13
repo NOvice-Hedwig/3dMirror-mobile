@@ -3,11 +3,19 @@ import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 import '../../features/auth/auth_screen.dart';
+import '../../features/home/home_screen.dart';
 import '../../features/onboarding/onboarding_screen.dart';
 import '../../features/onboarding/photo_capture_screen.dart';
 import '../../features/input/input_screen.dart';
 import '../../features/result/result_screen.dart';
 import '../../features/history/history_screen.dart';
+import '../../features/predict/predict_screen.dart';
+import '../../features/compare/compare_screen.dart';
+import '../../features/coach/coach_screen.dart';
+import '../../features/coach/exercise_library_screen.dart';
+import '../../features/me/challenge_screen.dart';
+import '../../features/me/me_screen.dart';
+import '../../features/snapshot/snapshot_screen.dart';
 import '../theme/design_tokens.dart';
 import '../widgets/root_shell.dart';
 
@@ -19,6 +27,13 @@ class MirrorRoute {
   static const String input        = '/input';
   static const String result       = '/result';
   static const String history      = '/history';
+  static const String predict      = '/predict';
+  static const String compare         = '/compare';
+  static const String coach           = '/coach';
+  static const String me              = '/me';
+  static const String exerciseLibrary = '/exercise-library';
+  static const String challenge        = '/challenge';
+  static const String snapshots        = '/snapshots';
 }
 
 final GoRouter appRouter = GoRouter(
@@ -60,6 +75,14 @@ final GoRouter appRouter = GoRouter(
 
   routes: [
     GoRoute(
+      path: MirrorRoute.challenge,
+      pageBuilder: (c, s) => _revealUp(s, const ChallengeScreen()),
+    ),
+    GoRoute(
+      path: MirrorRoute.snapshots,
+      pageBuilder: (c, s) => _revealUp(s, const SnapshotScreen()),
+    ),
+    GoRoute(
       path:
      MirrorRoute.auth,
       pageBuilder: (c, s) => _fade(s, const AuthScreen()),
@@ -77,7 +100,7 @@ final GoRouter appRouter = GoRouter(
       routes: [
         GoRoute(
           path: MirrorRoute.home,
-          pageBuilder: (c, s) => _fade(s, const HistoryScreen()),
+          pageBuilder: (c, s) => _fade(s, const HomeScreen()),
         ),
         GoRoute(
           path: MirrorRoute.input,
@@ -92,6 +115,29 @@ final GoRouter appRouter = GoRouter(
         GoRoute(
           path: MirrorRoute.history,
           pageBuilder: (c, s) => _fade(s, const HistoryScreen()),
+        ),
+        GoRoute(
+          path: MirrorRoute.predict,
+          pageBuilder: (c, s) => _revealUp(s, const PredictScreen()),
+        ),
+        GoRoute(
+          path: MirrorRoute.compare,
+          pageBuilder: (c, s) => _revealUp(s, CompareScreen(
+            idA: s.uri.queryParameters['a'] ?? '',
+            idB: s.uri.queryParameters['b'] ?? '',
+          )),
+        ),
+        GoRoute(
+          path: MirrorRoute.coach,
+          pageBuilder: (c, s) => _fade(s, const CoachScreen()),
+        ),
+        GoRoute(
+          path: MirrorRoute.me,
+          pageBuilder: (c, s) => _fade(s, const MeScreen()),
+        ),
+        GoRoute(
+          path: MirrorRoute.exerciseLibrary,
+          pageBuilder: (c, s) => _revealUp(s, const ExerciseLibraryScreen()),
         ),
       ],
     ),

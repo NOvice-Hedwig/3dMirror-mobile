@@ -163,6 +163,28 @@ class AvatarParams {
     lightingProfile: j['lighting_profile'] as String? ?? 'studio_minimal',
     photoEnhanced:   j['photo_enhanced']  as bool?   ?? false,
   );
+
+  AvatarParams copyWith({
+    double? heightNorm,
+    double? weightNorm,
+    double? bodyFatNorm,
+    double? waistNorm,
+    double? hipNorm,
+    double? shoulderNorm,
+    double? muscleNorm,
+    String? gender,
+  }) => AvatarParams(
+    heightNorm:      heightNorm   ?? this.heightNorm,
+    weightNorm:      weightNorm   ?? this.weightNorm,
+    bodyFatNorm:     bodyFatNorm  ?? this.bodyFatNorm,
+    waistNorm:       waistNorm    ?? this.waistNorm,
+    hipNorm:         hipNorm      ?? this.hipNorm,
+    shoulderNorm:    shoulderNorm ?? this.shoulderNorm,
+    muscleNorm:      muscleNorm   ?? this.muscleNorm,
+    gender:          gender       ?? this.gender,
+    lightingProfile: lightingProfile,
+    photoEnhanced:   photoEnhanced,
+  );
 }
 
 // ─── SessionRecord ────────────────────────────────────────────────────────────

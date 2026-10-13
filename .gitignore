@@ -38,6 +38,8 @@ build/
 *.iml
 *.swp
 **/.claude/settings.local.json
+# Third-party Claude skill (MIT, nextlevelbuilder/ui-ux-pro-max-skill) — local dev tool, not vendored
+flutter_app/.claude/skills/
 
 # ── Logs ──────────────────────────────────────────────────────────────────────
 *.log

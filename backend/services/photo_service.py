@@ -34,10 +34,9 @@ async def create_photo_record(
 async def update_photo_analysis(
     pool, *, photo_id: str, analysis: dict
 ) -> None:
-    import json
     await pool.execute(
         "UPDATE body_photos SET llm_analysis=$1 WHERE id=$2",
-        json.dumps(analysis), photo_id,
+        analysis, photo_id,
     )
 
 

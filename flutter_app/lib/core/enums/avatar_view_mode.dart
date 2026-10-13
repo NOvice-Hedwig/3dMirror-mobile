@@ -1,0 +1,1 @@
+enum AvatarViewMode { current, target }

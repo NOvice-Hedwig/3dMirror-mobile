@@ -13,7 +13,8 @@ async def get_me(authorization: str = Header(...)):
         raise HTTPException(401, "Invalid token")
     pool = Database.pool()
     row  = await pool.fetchrow(
-        "SELECT id, phone, email, display_name, locale, gender, height_cm, created_at"
+        "SELECT id, phone, email, display_name, locale, gender, height_cm,"
+        "       target_avatar_params, created_at"
         " FROM users WHERE id=$1", uid)
     if not row:
         raise HTTPException(404, "User not found")
@@ -27,7 +28,7 @@ async def update_me(body: dict, authorization: str = Header(...)):
     except Exception:
         raise HTTPException(401, "Invalid token")
 
-    allowed = {"display_name", "locale", "gender", "height_cm"}
+    allowed = {"display_name", "locale", "gender", "height_cm", "target_avatar_params"}
     updates = {k: v for k, v in body.items() if k in allowed}
     if not updates:
         raise HTTPException(400, "No valid fields to update")

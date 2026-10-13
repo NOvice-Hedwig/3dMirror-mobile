@@ -5,7 +5,6 @@ Photo routes:
   GET  /photos          — list photos for the current user (optionally by session)
 """
 
-import json
 from fastapi import APIRouter, HTTPException, Header, UploadFile, File, Form
 from typing import Optional
 
@@ -109,10 +108,5 @@ async def list_photos(
                 p[k] = v.isoformat()
             elif not isinstance(v, (str, int, float, bool, dict, list, type(None))):
                 p[k] = str(v)
-        if isinstance(p.get('llm_analysis'), str):
-            try:
-                p['llm_analysis'] = json.loads(p['llm_analysis'])
-            except Exception:
-                pass
 
     return {"photos": photos}

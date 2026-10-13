@@ -13,7 +13,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from database import Database
 from routers import sessions, users, photos
 from auth.router import router as auth_router
-
+from routers import logs, predict, coach, challenge
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
@@ -39,7 +39,10 @@ app.include_router(auth_router,          prefix="/auth",     tags=["auth"])
 app.include_router(users.router,         prefix="/users",    tags=["users"])
 app.include_router(sessions.router,      prefix="/sessions", tags=["sessions"])
 app.include_router(photos.router,        prefix="/photos",   tags=["photos"])
-
+app.include_router(logs.router,    prefix="/logs",    tags=["logs"])
+app.include_router(predict.router, prefix="/predict", tags=["predict"])
+app.include_router(coach.router,      prefix="/coach",      tags=["coach"])
+app.include_router(challenge.router,  prefix="/challenge",  tags=["challenge"])
 
 @app.get("/health")
 async def health():

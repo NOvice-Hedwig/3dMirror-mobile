@@ -3,6 +3,7 @@ import 'package:flutter_animate/flutter_animate.dart';
 import 'package:go_router/go_router.dart';
 import '../../core/theme/design_tokens.dart';
 import '../../core/widgets/animate_widgets.dart';
+import '../../core/widgets/body_viewport.dart';
 import '../../models/models.dart';
 import '../../services/api/session_api.dart';
 import '../../services/unity_bridge/unity_bridge.dart';
@@ -155,7 +156,10 @@ class _ResultScreenState extends State<ResultScreen> {
             delay: const Duration(milliseconds: 80),
             duration: const Duration(milliseconds: 550),
             offsetY: 24,
-            child: _Viewport(height: screenH * 0.50),
+            child: BodyViewport(
+              height: screenH * 0.50,
+              avatarParams: s.avatarParams,
+            ),
           ),
         ),
       ),
@@ -329,66 +333,6 @@ class _ResultScreenState extends State<ResultScreen> {
 
   String _formatDate(DateTime d) =>
       '${d.year}.${d.month.toString().padLeft(2,'0')}.${d.day.toString().padLeft(2,'0')}';
-}
-
-// ── 3D Viewport ────────────────────────────────────────────────────────────────
-
-class _Viewport extends StatelessWidget {
-  const _Viewport({required this.height});
-  final double height;
-
-  @override
-  Widget build(BuildContext context) {
-    return ClipRRect(
-      // 仅顶角圆弧，底部平齐产生出血效果
-      borderRadius: const BorderRadius.only(
-        topLeft:     Radius.circular(MirrorRadius.xl),
-        topRight:    Radius.circular(MirrorRadius.xl),
-        bottomLeft:  Radius.circular(MirrorRadius.sm),
-        bottomRight: Radius.circular(MirrorRadius.sm),
-      ),
-      child: Container(
-        height: height,
-        color: MirrorColors.viewport,
-        child: Stack(children: [
-          Center(child: CustomPaint(
-              painter: _BodyPainter(), size: const Size(90, 220))),
-          Positioned(
-            bottom: 16, left: 0, right: 0,
-            child: Text('拖动旋转', textAlign: TextAlign.center,
-                style: MirrorText.caption),
-          ),
-        ]),
-      ),
-    );
-  }
-}
-
-class _BodyPainter extends CustomPainter {
-  @override
-  void paint(Canvas canvas, Size size) {
-    final p = Paint()
-      ..color = MirrorColors.bg2
-      ..style  = PaintingStyle.fill;
-    final cx = size.width / 2;
-    canvas.drawOval(Rect.fromCenter(center: Offset(cx, 16), width: 26, height: 28), p);
-    canvas.drawRRect(RRect.fromRectAndRadius(
-        Rect.fromLTWH(cx - 20, 32, 40, 56), const Radius.circular(7)), p);
-    canvas.drawRRect(RRect.fromRectAndRadius(
-        Rect.fromLTWH(cx - 31, 34, 10, 42), const Radius.circular(5)), p);
-    canvas.drawRRect(RRect.fromRectAndRadius(
-        Rect.fromLTWH(cx + 21, 34, 10, 42), const Radius.circular(5)), p);
-    canvas.drawRRect(RRect.fromRectAndRadius(
-        Rect.fromLTWH(cx - 18, 90, 14, 58), const Radius.circular(6)), p);
-    canvas.drawRRect(RRect.fromRectAndRadius(
-        Rect.fromLTWH(cx + 4, 90, 14, 58), const Radius.circular(6)), p);
-    canvas.drawRRect(RRect.fromRectAndRadius(
-        Rect.fromLTWH(cx - 20, 145, 18, 9), const Radius.circular(4)), p);
-    canvas.drawRRect(RRect.fromRectAndRadius(
-        Rect.fromLTWH(cx + 2, 145, 18, 9), const Radius.circular(4)), p);
-  }
-
-  @override bool shouldRepaint(_) => false;
 }
 
 // ── 非对称指标网格 ─────────────────────────────────────────────────────────────
