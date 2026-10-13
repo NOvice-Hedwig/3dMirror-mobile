@@ -1,0 +1,55 @@
+# ── Secrets / environment ─────────────────────────────────────────────────────
+.env
+.env.*
+!.env.example
+**/.env
+**/.env.*
+!**/.env.example
+
+# ── Python ────────────────────────────────────────────────────────────────────
+__pycache__/
+*.py[cod]
+.pytest_cache/
+.coverage
+htmlcov/
+
+# Virtualenvs (backend/fastapi/ and backend/venv/ are local venvs, not code)
+backend/fastapi/
+backend/venv/
+venv/
+.venv/
+
+# ── User data ─────────────────────────────────────────────────────────────────
+# Uploaded body photos — personal data, never commit
+backend/uploads/
+
+# ── Flutter / Dart / Android build outputs ───────────────────────────────────
+# (flutter_app/.gitignore and its platform .gitignores still apply)
+build/
+.dart_tool/
+**/ephemeral/
+.gradle/
+.flutter-plugins
+.flutter-plugins-dependencies
+
+# ── IDE / local tool settings ────────────────────────────────────────────────
+.idea/
+.vscode/
+*.iml
+*.swp
+**/.claude/settings.local.json
+
+# ── Logs ──────────────────────────────────────────────────────────────────────
+*.log
+logs/
+
+# ── OS files ──────────────────────────────────────────────────────────────────
+.DS_Store
+Thumbs.db
+desktop.ini
+
+# ── Database dumps (schema migrations are kept) ──────────────────────────────
+*.sql
+*.dump
+!backend/migration.sql
+!**/migrations/*.sql
