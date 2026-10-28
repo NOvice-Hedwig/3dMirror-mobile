@@ -3,12 +3,12 @@ import 'package:flutter/material.dart';
 import 'package:flutter_animate/flutter_animate.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
-import 'package:http/http.dart' as http;
 
 import '../../core/router/app_router.dart';
 import '../../core/theme/design_tokens.dart';
 import '../../core/widgets/animate_widgets.dart';
 import '../../services/api/auth_api.dart';
+import '../../services/api/api_http.dart';
 
 class MeScreen extends ConsumerStatefulWidget {
   const MeScreen({super.key});
@@ -33,7 +33,7 @@ class _MeScreenState extends ConsumerState<MeScreen> {
   Future<void> _loadUser() async {
     try {
       final token = await AuthApi.instance.getToken() ?? '';
-      final r = await http.get(
+      final r = await ApiHttp.instance.get(
         Uri.parse('$_base/users/me'),
         headers: {'Authorization': 'Bearer $token'},
       );
@@ -71,10 +71,9 @@ class _MeScreenState extends ConsumerState<MeScreen> {
     return '****** $visible';
   }
 
-  Future<void> _signOut() async {
-    await AuthApi.instance.signOut();
-    if (mounted) context.go(MirrorRoute.auth);
-  }
+  // The app root (main.dart) reacts to the session ending: resets per-user state
+  // and navigates to the login screen.
+  Future<void> _signOut() => AuthApi.instance.signOut();
 
   @override
   Widget build(BuildContext context) => Scaffold(

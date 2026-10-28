@@ -2,6 +2,7 @@ import 'dart:convert';
 import 'package:http/http.dart' as http;
 import '../../models/challenge_models.dart';
 import 'auth_api.dart';
+import 'api_http.dart';
 
 class ChallengeApi {
   ChallengeApi._();
@@ -21,7 +22,7 @@ class ChallengeApi {
   }
 
   Future<void> setGoal(ChallengeGoal goal) async {
-    final r = await http.post(
+    final r = await ApiHttp.instance.post(
       Uri.parse('$_base/challenge/goal'),
       headers: await _headers(),
       body: json.encode(goal.toJson()),
@@ -31,7 +32,7 @@ class ChallengeApi {
 
   // Returns null when 404 (no goal set); throws on other errors.
   Future<ChallengeProgress?> fetchProgress() async {
-    final r = await http.get(
+    final r = await ApiHttp.instance.get(
       Uri.parse('$_base/challenge/progress'),
       headers: await _headers(),
     );
@@ -42,7 +43,7 @@ class ChallengeApi {
   }
 
   Future<void> abandonGoal() async {
-    final r = await http.delete(
+    final r = await ApiHttp.instance.delete(
       Uri.parse('$_base/challenge/goal'),
       headers: await _headers(),
     );

@@ -1,7 +1,7 @@
 import 'dart:convert';
-import 'package:http/http.dart' as http;
 import '../../models/predict_models.dart';
 import 'auth_api.dart';
+import 'api_http.dart';
 
 class PredictApi {
   PredictApi._();
@@ -23,7 +23,7 @@ class PredictApi {
   }
 
   Future<PredictedMetrics> fetchPredict(int weeks) async {
-    final r = await http.get(
+    final r = await ApiHttp.instance.get(
       Uri.parse('$_base/predict?weeks=$weeks'),
       headers: await _headers(),
     );

@@ -1,9 +1,9 @@
 import uuid
-from datetime import datetime
 from fastapi import APIRouter, HTTPException, Depends
 from database import Database
 from schemas import SessionIn, SessionOut
 from auth.router import current_user
+import clock
 
 router = APIRouter()
 
@@ -12,7 +12,7 @@ router = APIRouter()
 @router.post("", response_model=SessionOut)
 async def create_session(body: SessionIn, uid: str = Depends(current_user)):
     sid = str(uuid.uuid4())
-    now = datetime.utcnow()
+    now = clock.now_utc()   # aware UTC; a naive utcnow() was stored shifted by the host's offset
     pool = Database.pool()
     await pool.execute(
         """INSERT INTO sessions

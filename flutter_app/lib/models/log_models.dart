@@ -1,3 +1,8 @@
+import '../services/api/local_time.dart';
+
+// Dates: calendar dates sent to the API are the user's local 'YYYY-MM-DD';
+// instants are sent as UTC ('...Z') and converted back with toLocal() on parse.
+
 // ─── DietLogEntry ─────────────────────────────────────────────────────────────
 class DietLogEntry {
   final String   id;
@@ -22,7 +27,7 @@ class DietLogEntry {
   factory DietLogEntry.fromJson(Map<String, dynamic> j) => DietLogEntry(
     id:          j['id']          as String,
     userId:      j['user_id']     as String,
-    loggedAt:    DateTime.parse(j['logged_at'] as String),
+    loggedAt:    DateTime.parse(j['logged_at'] as String).toLocal(),
     meal:        j['meal']        as String,
     foodName:    j['food_name']   as String,
     calories:    (j['calories']   as num).toDouble(),
@@ -68,16 +73,17 @@ class SleepLogEntry {
     id:       j['id']       as String,
     userId:   j['user_id']  as String,
     date:     j['date']     as String,
-    bedtime:  DateTime.parse(j['bedtime']   as String),
-    wakeTime: DateTime.parse(j['wake_time'] as String),
+    bedtime:  DateTime.parse(j['bedtime']   as String).toLocal(),
+    wakeTime: DateTime.parse(j['wake_time'] as String).toLocal(),
     quality:  j['quality']  as int,
     source:   j['source']   as String? ?? 'manual',
   );
 
   Map<String, dynamic> toJson() => {
     'date': date,
-    'bedtime':   bedtime.toIso8601String(),
-    'wake_time': wakeTime.toIso8601String(),
+    // UTC with 'Z': the backend rejects datetimes without an offset (422)
+    'bedtime':   bedtime.toUtc().toIso8601String(),
+    'wake_time': wakeTime.toUtc().toIso8601String(),
     'quality': quality,
     'source':  source,
   };
@@ -171,15 +177,18 @@ class StrengthSet {
 
 // ─── PeriodLogEntry ───────────────────────────────────────────────────────────
 class PeriodLogEntry {
+  final String?      date;      // local 'YYYY-MM-DD'; null → today (local) when sent
   final String       phase;     // 'start'|'end'|'ongoing'
   final List<String> symptoms;  // ['痛经','情绪波动','水肿','长痘','疲劳']
   final int          intensity; // 1–3
 
   const PeriodLogEntry({
+    this.date,
     required this.phase, required this.symptoms, required this.intensity,
   });
 
   Map<String, dynamic> toJson() => {
+    'date': date ?? localIsoDate(),
     'phase': phase, 'symptoms': symptoms, 'intensity': intensity,
   };
 }
@@ -223,6 +232,7 @@ class BodySnapshot {
 
 // ─── BodyMeasurementUpdate ────────────────────────────────────────────────────
 class BodyMeasurementUpdate {
+  final String? date;      // local 'YYYY-MM-DD'; null → today (local) when sent
   final double? weightKg;
   final double? waistCm;
   final double? hipCm;
@@ -230,6 +240,7 @@ class BodyMeasurementUpdate {
   final double? thighCm;
 
   const BodyMeasurementUpdate({
+    this.date,
     this.weightKg, this.waistCm, this.hipCm, this.chestCm, this.thighCm,
   });
 
@@ -238,6 +249,7 @@ class BodyMeasurementUpdate {
       chestCm != null || thighCm != null;
 
   Map<String, dynamic> toJson() => {
+    'date': date ?? localIsoDate(),
     if (weightKg != null) 'weight_kg': weightKg,
     if (waistCm  != null) 'waist_cm':  waistCm,
     if (hipCm    != null) 'hip_cm':    hipCm,

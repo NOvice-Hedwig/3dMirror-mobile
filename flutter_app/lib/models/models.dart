@@ -216,7 +216,8 @@ class SessionRecord {
   factory SessionRecord.fromJson(Map<String, dynamic> j) => SessionRecord(
     id:           j['id']       as String,
     userId:       j['user_id']  as String,
-    createdAt:    DateTime.parse(j['created_at'] as String),
+    // Server sends a UTC instant; convert so .day/.month are the user's local calendar
+    createdAt:    DateTime.parse(j['created_at'] as String).toLocal(),
     bodyData:     BodyData.fromJson(j['body_data']         as Map<String, dynamic>),
     avatarParams: AvatarParams.fromJson(j['avatar_params'] as Map<String, dynamic>),
     activityData: j['activity_data'] != null

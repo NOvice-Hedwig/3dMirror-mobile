@@ -2,6 +2,7 @@ import 'dart:convert';
 import 'package:http/http.dart' as http;
 import '../../models/log_models.dart';
 import 'auth_api.dart';
+import 'api_http.dart';
 
 class LogApi {
   LogApi._();
@@ -28,7 +29,7 @@ class LogApi {
   }
 
   Future<void> saveWorkout(WorkoutLogEntry entry) async {
-    final r = await http.post(
+    final r = await ApiHttp.instance.post(
       Uri.parse('$_base/logs/workout'),
       headers: await _headers(),
       body: json.encode(entry.toJson()),
@@ -37,7 +38,7 @@ class LogApi {
   }
 
   Future<void> saveDiet(DietLogEntry entry) async {
-    final r = await http.post(
+    final r = await ApiHttp.instance.post(
       Uri.parse('$_base/logs/diet'),
       headers: await _headers(),
       body: json.encode(entry.toJson()),
@@ -46,7 +47,7 @@ class LogApi {
   }
 
   Future<void> saveSleep(SleepLogEntry entry) async {
-    final r = await http.post(
+    final r = await ApiHttp.instance.post(
       Uri.parse('$_base/logs/sleep'),
       headers: await _headers(),
       body: json.encode(entry.toJson()),
@@ -55,7 +56,7 @@ class LogApi {
   }
 
   Future<void> savePeriod(PeriodLogEntry entry) async {
-    final r = await http.post(
+    final r = await ApiHttp.instance.post(
       Uri.parse('$_base/logs/period'),
       headers: await _headers(),
       body: json.encode(entry.toJson()),
@@ -64,7 +65,7 @@ class LogApi {
   }
 
   Future<void> saveSupplements(List<SupplementLogEntry> items) async {
-    final r = await http.post(
+    final r = await ApiHttp.instance.post(
       Uri.parse('$_base/logs/supplements'),
       headers: await _headers(),
       body: json.encode(items.map((e) => e.toJson()).toList()),
@@ -73,7 +74,7 @@ class LogApi {
   }
 
   Future<void> updateMeasurements(BodyMeasurementUpdate m) async {
-    final r = await http.put(
+    final r = await ApiHttp.instance.put(
       Uri.parse('$_base/logs/measurements'),
       headers: await _headers(),
       body: json.encode(m.toJson()),
@@ -82,7 +83,7 @@ class LogApi {
   }
 
   Future<TodayStats> fetchTodayStats() async {
-    final r = await http.get(
+    final r = await ApiHttp.instance.get(
       Uri.parse('$_base/logs/today-stats'),
       headers: await _headers(),
     );

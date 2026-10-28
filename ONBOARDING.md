@@ -12,8 +12,9 @@
 
 ## ⚠️ Read first
 
-- **Resolved this week (2026-10-10 → 10-12):** the DB-layer runtime failures (JSON, dates, period date, duplicate-day logs), the incomplete `migration.sql`, the failing 401 test, and the tracked `backend/.env`. The `JWT_SECRET` was rotated and `backend/.env` is no longer tracked. Details in [§8.1](#81-resolved-this-week).
-- **Still open, most important first:** the Unity avatar isn't wired up, photo analysis results are unused, i18n strings aren't used, log dates mix timezones, and two test problems remain. See [§8.2](#82-open-issues).
+- **Resolved this week (2026-10-10 → 10-12):** the DB-layer runtime failures (JSON, dates, period date, duplicate-day logs), the incomplete `migration.sql`, the failing 401 test, the tracked `backend/.env`, and timezone handling of log dates. The `JWT_SECRET` was rotated and `backend/.env` is no longer tracked. Details in [§8.1](#81-resolved-this-week).
+- **Time rule:** calendar dates are always the user's local date. The app sends its IANA timezone in an `X-Timezone` header, and instants are timezone-aware UTC. See [§6 "Time rule"](#time-rule-since-2026-10-12) before touching anything date-related.
+- **Still open, most important first:** the Unity avatar isn't wired up, photo analysis results are unused, i18n strings aren't used, supplement reminders aren't scheduled, and two test problems remain. See [§8.2](#82-open-issues).
 
 ---
 
@@ -42,6 +43,7 @@
 | cryptography | 42.0.0 | Needed by PyJWT for RSA |
 | anthropic | 0.40.0 | Claude vision analysis of body photos (old SDK) |
 | python-multipart | 0.0.9 | Photo uploads, form fields |
+| tzdata | 2026.5 | IANA timezone database for `zoneinfo` (Windows and slim Docker images ship none) |
 
 Runtime: **Python 3.12** in the [Dockerfile](backend/Dockerfile). Both local venvs were built with **Python 3.14.2**. Postgres image: `postgres:16-alpine`. Not in requirements but needed for tests: `pytest` and `pytest-asyncio`.
 
@@ -60,6 +62,7 @@ Runtime: **Python 3.12** in the [Dockerfile](backend/Dockerfile). Both local ven
 | google_fonts | ^6.2.1 | 6.3.3 | Cormorant Garamond + Outfit (fetched at runtime) |
 | intl / flutter_localizations | ^0.20.2 / SDK | 0.20.2 | i18n (generated `S` class) |
 | path_provider | ^2.1.0 | 2.1.5 | |
+| flutter_timezone | ^5.1.1 | 5.1.1 | Device IANA timezone for the `X-Timezone` header (native plugin; needs a full rebuild, not hot reload) |
 | riverpod_annotation, riverpod_generator, build_runner | — | 2.6.1 / 2.6.5 / 2.5.4 | **Declared but unused.** No `@riverpod` or `.g.dart` anywhere |
 | flutter_lints | ^4.0.0 | 4.0.0 | |
 
@@ -160,6 +163,7 @@ flutter run                                                       # Android emul
 ├── backend/
 │   ├── main.py                    App factory: lifespan opens the DB pool, CORS *, mounts routers
 │   ├── database.py                Database class: global asyncpg pool with JSON/JSONB codecs
+│   ├── clock.py                   now_utc(), X-Timezone dependency, local_today(): the only time source
 │   ├── schemas.py                 Pydantic models for sessions and photos
 │   ├── auth/
 │   │   ├── service.py             OTP store (in-memory), SMS/email/Apple providers, JWT
@@ -169,10 +173,11 @@ flutter run                                                       # Android emul
 │   ├── services/
 │   │   ├── photo_service.py       Disk writes + body_photos SQL
 │   │   └── llm_service.py         Claude vision call + JSON parsing
-│   ├── scripts/                   run_migration.py + one-off upgrade scripts for old DBs
+│   ├── scripts/                   run_migration.py, one-off upgrade scripts for old DBs,
+│   │                              report_timezone_skew.py (read-only audit of pre-fix timestamps)
 │   ├── tests/
 │   │   ├── test_auth.py           Unit tests (mocked DB)
-│   │   └── integration/           HTTP tests against a live server + Postgres (see §7)
+│   │   └── integration/           Live-server HTTP tests + frozen-clock timezone tests (see §7)
 │   ├── migration.sql              Full schema
 │   ├── api.http                   VS Code REST Client samples
 │   └── uploads/                   User body photos (gitignored; keep it that way)
@@ -190,7 +195,8 @@ flutter run                                                       # Android emul
 │   │   ├── coach/ (+ exercise library)   me/ (+ challenge)
 │   ├── models/                    Hand-written fromJson/toJson classes (no freezed/json_serializable)
 │   ├── providers/                 Riverpod providers (a mix of APIs, see §6)
-│   ├── services/api/              One singleton per backend resource: XxxApi.instance
+│   ├── services/api/              One singleton per backend resource: XxxApi.instance;
+│   │                              local_time.dart adds X-Timezone and formats local dates
 │   ├── services/unity_bridge/     MethodChannel/EventChannel wrapper (no native side)
 │   └── constants/                 exercise_library.dart, food_library.dart (static data)
 ├── unity_project/
@@ -206,6 +212,7 @@ flutter run                                                       # Android emul
 `router (FastAPI handler)` → *(sometimes)* `services/*` → `Database.pool()` raw SQL.
 - Only photos go through a service layer. Every other router mixes validation, business rules (prediction maths, challenge progress, coach heuristics) and SQL in the handler.
 - JSON/JSONB columns are converted once, by codecs registered on every pooled connection in `database.py`. Routers pass and receive plain dicts and lists; **never** call `json.dumps`/`json.loads` on DB values.
+- Time comes only from `clock.py` (see §6, "Time rule"). Never use `datetime.utcnow()`, naive `datetime.now()`, `date.today()` or SQL `CURRENT_DATE` in request handling.
 - Auth: `sessions.py` uses `Depends(current_user)`. The other routers still define their own `_uid(authorization)` helper, so on those endpoints a bad token plus an invalid body returns 422 rather than 401.
 - No ORM, no migrations tool (Alembic etc.), no repository layer.
 
@@ -248,7 +255,7 @@ From home: FAB log sheets (workout, diet, sleep, health, supplements), `/predict
 - `Depends(current_user)` validates the JWT first (401 on a bad token) and yields `sub`, the user id. The `user_id` in the body is required by the schema but ignored.
 - FastAPI validates `SessionIn` ([schemas.py:34](backend/schemas.py#L34)): `weight_kg` 20–300, `body_fat_pct` 3–70, `waist_cm` 40–200. Extra client fields (`id`, `date`, `photo_ids`, `photo_enhanced`…) are dropped silently.
 
-**4. Data.** `INSERT INTO sessions (id, user_id, body_data, avatar_params, activity_data, thumbnail_url, created_at)`. The three JSONB columns receive `model_dump()` dicts, which the pool's JSON codec encodes.
+**4. Data.** `INSERT INTO sessions (id, user_id, body_data, avatar_params, activity_data, thumbnail_url, created_at)`. The three JSONB columns receive `model_dump()` dicts, which the pool's JSON codec encodes. `created_at` is `clock.now_utc()`, a timezone-aware UTC instant.
 Returns `SessionOut`. Flutter then does `context.push('/result?id=<id>')`.
 
 **5. Result.** [result_screen.dart:31](flutter_app/lib/features/result/result_screen.dart#L31): `GET /sessions/{id}`, then `UnityBridge.loadAvatar('<gender>_base')` and `applyBodyParams(...)`. Those throw `MissingPluginException` (no native handler), which is caught and ignored.
@@ -272,9 +279,11 @@ Returns `SessionOut`. Flutter then does `context.push('/result?id=<id>')`.
 | `workout_logs` | `type`, `sub_type`, `duration_min`, `intensity`, `with_weight`, `muscle_group`, `sets JSONB`, `estimated_kcal`, `logged_at` | |
 | `diet_logs` | `meal ∈ {早餐,午餐,晚餐,加餐}`, `food_name`, `grams`, `calories`, `protein_g`, `entry_method` | Enum values are Chinese literals |
 | `sleep_logs` | `date`, `bedtime`, `wake_time`, `quality 1–5`, `source`; `UNIQUE(user_id,date)` | Upserted: a repeat log for the same day overwrites it |
-| `period_logs` | `date NOT NULL`, `phase ∈ {start,ongoing,end}`, `symptoms text[]`, `intensity 1–3`; `UNIQUE(user_id,date)` | Upserted. `date` is optional in the API and defaults to the server's today |
-| `supplement_logs` | `name`, `dosage`, `reminder_time time`, `reminder_enabled` | |
-| `body_snapshots` | `date`, `measurements JSONB`; `UNIQUE(user_id,date)` | Upsert merges JSON. Nothing reads it |
+| `period_logs` | `date NOT NULL`, `phase ∈ {start,ongoing,end}`, `symptoms text[]`, `intensity 1–3`; `UNIQUE(user_id,date)` | Upserted. `date` is the user's local date; optional in the API, defaulting to today in `X-Timezone` |
+| `supplement_logs` | `name`, `dosage`, `reminder_time time`, `reminder_enabled` | `reminder_time` is a wall-clock time; nothing schedules it yet (§8.2) |
+| `body_snapshots` | `date`, `measurements JSONB`; `UNIQUE(user_id,date)` | Upsert merges JSON; `date` defaults like period. Nothing reads it |
+
+`DATE` columns hold the **user's local** calendar date. `TIMESTAMPTZ` columns hold UTC instants; `logged_at` and `sessions.created_at` are written by the backend from `clock.now_utc()` (the `DEFAULT NOW()` remains only as a fallback).
 
 **JSON shapes stored in `sessions`:**
 - `body_data`: `{weight_kg, body_fat_pct?, waist_cm?, hip_cm?, lean_mass_kg?, fat_mass_kg?}`
@@ -285,7 +294,15 @@ Workout data lives in **two places**: `sessions.activity_data` (Input screen) an
 
 ### 5.2 HTTP API
 
-All endpoints except `/health` and `/auth/*/send|verify|apple` need `Authorization: Bearer <jwt>`. Errors use FastAPI's `{"detail": ...}`, and some messages are in Chinese. Dates are `YYYY-MM-DD` and times `HH:MM[:SS]`; malformed values return **422**.
+All endpoints except `/health` and `/auth/*/send|verify|apple` need `Authorization: Bearer <jwt>`. Errors use FastAPI's `{"detail": ...}`, and some messages are in Chinese.
+
+The app sends **`X-Timezone: <IANA name>`** (e.g. `America/New_York`) on every request. It is **required (422 if missing or unknown)** on every endpoint that decides a calendar date: `/logs/period`, `/logs/measurements`, `/logs/today-stats`, `/challenge/progress` and `/coach/suggestions`. Other endpoints ignore it.
+
+Formats:
+- Dates are the user's local `YYYY-MM-DD`.
+- Times of day are `HH:MM[:SS]`.
+- Datetimes **must carry an offset** (`Z` or `±HH:MM`); a naive datetime returns 422.
+- Any malformed value returns **422**.
 
 | Method & path | Body / query | Response |
 |---|---|---|
@@ -306,11 +323,11 @@ All endpoints except `/health` and `/auth/*/send|verify|apple` need `Authorizati
 | `GET /photos?session_id=` | — | `{photos[]}` (`file_path` is a server-local path; no static serving) |
 | `POST /logs/workout` | `{type, sub_type, duration_min, intensity, with_weight, muscle_group?, sets?, estimated_kcal?}` | 201 `{id}` |
 | `POST /logs/diet` | `{meal, food_name, grams?, calories, protein_g?, entry_method}` | 201 `{id}` |
-| `POST /logs/sleep` | `{date, bedtime, wake_time, quality, source}` | 201 `{id}` created / 200 `{id}` same-day row updated |
-| `POST /logs/period` | `{date?, phase, symptoms[], intensity}` | 201 `{id}` created / 200 `{id}` same-day row updated |
+| `POST /logs/sleep` | `{date, bedtime, wake_time, quality, source}`; `bedtime`/`wake_time` offset-aware | 201 `{id}` created / 200 `{id}` same-day row updated |
+| `POST /logs/period` | `{date?, phase, symptoms[], intensity}` + `X-Timezone` | 201 `{id}` created / 200 `{id}` same-day row updated |
 | `POST /logs/supplements` | `[{name, dosage?, reminder_time?, reminder_enabled}]` | 201 `{count}` |
-| `PUT /logs/measurements` | `{weight_kg?, waist_cm?, hip_cm?, chest_cm?, thigh_cm?}` | `{date}` |
-| `GET /logs/today-stats` | — | `{total_kcal_in, sleep_hours, workout_minutes}` |
+| `PUT /logs/measurements` | `{date?, weight_kg?, waist_cm?, hip_cm?, chest_cm?, thigh_cm?}` + `X-Timezone` | `{date}` |
+| `GET /logs/today-stats` | `X-Timezone` | `{total_kcal_in, sleep_hours, workout_minutes}` for the user's local today |
 | `GET /predict?weeks=4` | — | `{weeks, predicted_weight_kg, weight_delta_kg, predicted_body_fat_pct, body_fat_delta_pct, predicted_waist_cm, waist_delta_cm, confidence, data_points}`; 400 if fewer than 2 sessions |
 | `GET /coach/suggestions` | — | `{cards[{category, title, body, priority}], data_points, generated_at}` |
 | `PUT /coach/target` | `AvatarParams` (no lighting) | `{ok}` |
@@ -348,6 +365,21 @@ Riverpod API styles are mixed: legacy `StateNotifier`, `Notifier`, `AsyncNotifie
 
 Environment variables only (§2.2), read at **import time** as module globals in `auth/service.py`, `llm_service.py` and `photo_service.py`. `load_dotenv()` runs at the top of `main.py`, before those imports. There is no settings object, no per-environment config and no logging configuration.
 
+### Time rule (since 2026-10-12)
+
+- **Calendar dates are the user's local date**, never the server's or the database's.
+  - The client sends the date explicitly where it matters (sleep, period, measurements, challenge start/end).
+  - Server-side defaults use `clock.local_today(tz)`, with `tz` taken from the `X-Timezone` header via the `clock.user_timezone` dependency.
+  - "Today" queries compare `(ts AT TIME ZONE <user tz>)::date`.
+- **Instants are timezone-aware UTC.** The backend takes "now" only from `clock.now_utc()`, so tests can freeze it, and accepts only offset-aware datetimes (`AwareDatetime`).
+- **Client side:**
+  - `lib/services/api/local_time.dart` adds `X-Timezone` (from `flutter_timezone`) to every request and formats local dates.
+  - Instants are sent with `toUtc().toIso8601String()`.
+  - Server timestamps are parsed with `.toLocal()` so `.day`/`.month` are local.
+  - Date arithmetic uses calendar math (`DateTime(y, m, d + n)`), not `Duration(days: n)`, which breaks across DST.
+- **Why:** asyncpg treats a naive datetime as the backend host's local time. Before this rule, sessions written from `datetime.utcnow()` on a New York host were stored 4 h (EDT) / 5 h (EST) in the future, and "today" meant a UTC day in SQL but a host-local day in Python.
+- **Pre-fix data:** `scripts/report_timezone_skew.py` is a read-only audit of rows written before the fix. On 2026-10-12 it found the 17 dev sessions correct (written by a UTC backend) and no sleep logs.
+
 ---
 
 ## 7. Tests
@@ -355,7 +387,8 @@ Environment variables only (§2.2), read at **import time** as module globals in
 | Suite | Location | Status (run 2026-10-12) |
 |---|---|---|
 | Backend unit | `backend/tests/test_auth.py`, 5 tests | **5 pass** with `DEV_MODE=true`. **3 pass, 2 fail** with `DEV_MODE=false` (open, see §8.2) |
-| Backend integration | `backend/tests/integration/test_api_integration.py`, 29 tests | **29 pass** against a live server and a disposable Postgres database |
+| Backend integration | `backend/tests/integration/test_api_integration.py`, 47 tests | **47 pass** against a live server and a disposable Postgres database |
+| Backend timezone rules | `backend/tests/integration/test_timezone_rules.py`, 10 tests | **10 pass** in-process with a frozen clock against the same disposable database |
 | Flutter | `flutter_app/test/widget_test.dart` | **Does not compile.** It's the default counter template and references `MyApp`, which doesn't exist (the app class is `MirrorApp`). Open, see §8.2 |
 | iOS/macOS | `RunnerTests.swift` | Xcode template stubs |
 
@@ -374,12 +407,24 @@ pytest tests/ -v                           # integration tests are skipped unles
 # terminal 1 (backend/)
 DATABASE_URL=postgresql://mirror:mirror@localhost:5432/3dmirror_test DEV_MODE=true uvicorn main:app --port 8765
 # terminal 2 (backend/)
-INTEGRATION_BASE_URL=http://127.0.0.1:8765 pytest tests/integration -v
+INTEGRATION_BASE_URL=http://127.0.0.1:8765 \
+INTEGRATION_DATABASE_URL=postgresql://mirror:mirror@localhost:5432/3dmirror_test \
+pytest tests -v                            # runs unit + live-server + frozen-clock suites
 ```
 
-They cover every `/logs/*` endpoint, the session save/read flow, JSON round-trips through predict, coach, challenge and `/users/me`, 422 validation for bad dates and times, same-day upserts, and the 401-before-422 auth order.
+**Live-server suite** covers:
+- every `/logs/*` endpoint and the session save/read flow
+- JSON round-trips through predict, coach, challenge and `/users/me`
+- 422 for bad dates, times, offset-less datetimes, and missing or unknown `X-Timezone`
+- same-day upserts, the 401-before-422 auth order, and `sessions.created_at` equal to the real UTC time
 
-**Coverage gaps:** photos and the LLM call, auth providers (SMS, email, Apple), and all Flutter code. There's no CI config in the repo.
+**Frozen-clock suite** (`test_timezone_rules.py`) runs the app in-process with `clock.now_utc()` pinned. It refuses to run unless the database is `3dmirror_test`. It covers:
+- 23:30 in New York, when the UTC date is already tomorrow: default dates, explicit dates, sleep instants, today-stats, session `created_at`, the challenge baseline and `days_remaining`, and coach day counting
+- 01:30 on 2026-11-01, the DST change, which occurs twice: both occurrences map to the same local day, and sleep duration across the repeated hour
+
+Mutation checks confirmed that each old behaviour (UTC dates, UTC "today" in SQL, naive `utcnow()`) makes at least one test fail.
+
+**Coverage gaps:** photos and the LLM call, auth providers (SMS, email, Apple), predict's date maths, and all Flutter code (including `local_time.dart` and the `.toLocal()` parsing). There's no CI config in the repo.
 
 **Run the Flutter suite** (once it's fixed): `cd flutter_app && flutter test`. Lints: `flutter analyze` (`flutter_lints` + `avoid_print`; `session_api.dart` violates it).
 
@@ -407,11 +452,12 @@ All verified by the integration tests in §7.
 |---|---|
 | **JSON/JSONB handling.** Dicts were passed to JSONB columns with no codec, causing 500s on session save/read, coach, challenge and `/users/me` | JSON/JSONB codecs are registered on every pool connection in `database.py`, and all manual `json.dumps`/`json.loads` for DB columns were removed |
 | **Date/time typing.** Strings were passed to `date`/`time` columns in sleep, measurements and supplements, causing 500s | Request models use `datetime.date`/`datetime.time` (also challenge goal dates), so bad formats return 422 at the API boundary |
-| **Period log date.** It was never inserted into a `NOT NULL` column | `date` is now optional in the request and defaults to the server's today |
+| **Period log date.** It was never inserted into a `NOT NULL` column | `date` is now optional in the request and defaults to the user's local today (from `X-Timezone`) |
 | **Duplicate same-day sleep/period logs** returned 500 on `UNIQUE(user_id, date)` | `INSERT … ON CONFLICT (user_id, date) DO UPDATE`: 201 when created, 200 with the existing `id` when updated |
 | **401 test** (`test_create_session_requires_auth` got 422) | `/sessions` endpoints use `Depends(current_user)`, so auth runs before body validation |
 | **Tracked `backend/.env`** | `JWT_SECRET` was rotated; `backend/.env` is no longer tracked and is covered by the root `.gitignore`, along with caches, venvs, build output, `uploads/` and local tool settings |
 | **`migration.sql` incomplete** (missing the five daily-log tables) | They were added to `migration.sql`; a fresh database built from it alone matches the live schema exactly |
+| **Log dates mixed timezones.** They used the backend host's local time, UTC in Postgres, offset-less device times, and UTC days in Flutter; sessions were stored 4 h (EDT) / 5 h (EST) in the future from naive `utcnow()` | One rule (§6 "Time rule"): the app sends `X-Timezone`, dates are the user's local date, and instants are aware UTC from `clock.now_utc()`. Applied to logs, sessions, challenge and coach, plus Flutter parsing and a DST-safe challenge end date |
 
 ### 8.2 Open issues
 
@@ -427,12 +473,9 @@ All verified by the integration tests in §7.
    - [photo_capture_screen.dart:234](flutter_app/lib/features/onboarding/photo_capture_screen.dart#L234) calls `analyzePhotos(...).ignore()`, discarding the result, and `AvatarParams.applyPhotoAnalysis` is never called.
    - Even if it were, it reads `'shoulder_norm'` ([models.dart:137](flutter_app/lib/models/models.dart#L137)) while the LLM returns `shoulder_width_norm`. `limb_proportion_norm` has no consumer.
 3. **i18n is scaffolded but unused.** No screen calls `S.of(context)`; all UI copy is hard-coded (mostly Chinese), so switching locale has no visible effect. Backend responses (coach cards, error details) are hard-coded Chinese too.
-4. **Log dates mix timezones.**
-   - Server-side defaults use Python `date.today()`, which is the backend host's local timezone (EDT locally). That applies to the period date when omitted and to the measurements snapshot date.
-   - `/logs/today-stats` uses Postgres `CURRENT_DATE` and `logged_at::date`, which use the database session timezone (UTC in the Docker container).
-   - Sleep `date` and naive `bedtime`/`wake_time` come from the device's local clock with no UTC offset.
-   - Example: at 22:00 EDT on 2026-10-12, a period logged without a date is stored for the 12th, while today-stats looks at the 13th.
-   - Pick one rule, e.g. the client always sends its local date with an offset, or the server uses one configured timezone.
+4. **Supplement reminders are not implemented.** The supplement sheet lets the user switch a reminder on and pick a time, and the backend stores `reminder_time`/`reminder_enabled`, but **nothing schedules a reminder**. There's no notification package, no Android notification permission, and no server scheduler or push.
+   - **Preferred approach:** schedule on the device (e.g. `flutter_local_notifications`) at the chosen wall-clock time. The phone's own timezone handles it, so **no server-side timezone** (`users.timezone`) is needed. That's only required if reminders are ever sent by server push.
+   - **Data model:** reminders are currently stored per log entry (`supplement_logs`). They should become a **standing reminder per supplement** (e.g. a `supplements` or `supplement_reminders` table: user, supplement, time, enabled), separate from the log of doses taken.
 5. **Two unit tests fail with `DEV_MODE=false`.** `test_phone_send_called` and `test_email_send_called` patch `auth.service.send_*_otp`, but the router imported those names directly, so the patch has no effect. They pass only when `DEV_MODE` skips the real Aliyun and SendGrid calls; otherwise they get a 500.
 6. **Default Flutter widget test.** `flutter_app/test/widget_test.dart` is the counter template, references a non-existent `MyApp`, and doesn't compile.
 
@@ -440,8 +483,7 @@ All verified by the integration tests in §7.
 - **`llm_service.analyze_body_photos`** uses the **sync** `anthropic.Anthropic` client inside an async route, which blocks the event loop for the whole call. Its docstring says it "falls back to empty dict on any error", but API errors aren't caught and surface as a 500. HEIC uploads are allowed but sent to Claude as `image/jpeg`. The same analysis is written to every photo in the batch.
 - **Coach recovery card never triggers:** it checks `activity_data.get("type") == "无氧"`, but `sessions.activity_data` uses `workout_type` with English enum values (`strength`…). Workouts logged via the FAB go to `workout_logs`, which coach doesn't read. "Training days" counts distinct session days, not workouts.
 - **Challenge:**
-  - The client's `start_date` is stored but the server uses `CURRENT_DATE` as the baseline day.
-  - The baseline needs a session on exactly that date. Otherwise it falls back to *current* values, which gives 0% progress.
+  - The baseline needs a session on exactly the (local) start date. Otherwise it falls back to *current* values, which gives 0% progress.
   - `_pct_single` assumes lower is better, so gain goals (muscle) clamp to 0.
 - **Predict:** missing body-fat or waist values are filled with made-up defaults (20 % / 75 cm) and still returned as predictions. `days_span` uses whole days, so two same-day sessions get treated as 1 day apart and extrapolate wildly. `body_snapshots` measurements are never used.
 - **Router onboarding state is device-local.** A returning user on a new device (`is_new_user=false`) gets sent back through onboarding by the redirect. `signOut()` clears only the token, so a different account on the same device skips onboarding and inherits the previous user's gender and height.
@@ -465,7 +507,6 @@ All verified by the integration tests in §7.
 - JWT: 90-day expiry, no refresh or revocation, stored in plain SharedPreferences.
 - `CORS allow_origins=["*"]`.
 - Body photos (sensitive biometric data) sit unencrypted on local disk, with no delete endpoint and no retention policy. `uploads/` is gitignored; keep real images out of the repo.
-- `datetime.utcnow()` (deprecated) used in sessions and coach.
 
 ### 8.5 Code smells and inconsistencies
 
@@ -488,7 +529,7 @@ All verified by the integration tests in §7.
 
 1. Decide the 3D path (flutter_unity_widget vs. a lighter in-Flutter renderer) before investing more in `UnityBridge`.
 2. Wire the photo analysis result into the avatar (fix the `shoulder_width_norm` key) or drop the feature.
-3. Settle one timezone rule for log dates (§8.2 #4).
+3. Build supplement reminders on-device with a per-supplement reminder model (§8.2 #4).
 4. Fix the two `DEV_MODE`-dependent unit tests by patching `auth.router.send_*_otp`; replace `widget_test.dart` with a real smoke test; add a CI workflow that runs unit tests plus the integration suite against a Postgres service container.
 5. Move the remaining routers to `Depends(current_user)`; centralise `API_BASE_URL` and the HTTP client in Flutter.
 6. Wire up i18n (`S.of(context)`) before the copy grows further.

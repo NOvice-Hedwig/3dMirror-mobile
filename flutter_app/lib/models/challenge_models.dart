@@ -35,7 +35,10 @@ class ChallengeGoal {
 
   static String defaultEndDate(String startDate) {
     final d = DateTime.parse(startDate);
-    return d.add(const Duration(days: 30)).toIso8601String().substring(0, 10);
+    // Calendar arithmetic, not Duration: adding 30×24h to local midnight lands on
+    // 23:00 of the previous day when the range crosses the November DST change.
+    final end = DateTime(d.year, d.month, d.day + 30);
+    return end.toIso8601String().substring(0, 10);
   }
 }
 

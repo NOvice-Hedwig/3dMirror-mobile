@@ -13,7 +13,11 @@ import 'package:go_router/go_router.dart';
 
 import '../../core/enums/avatar_view_mode.dart';
 import '../../core/router/app_router.dart';
+import '../../core/theme/design_tokens.dart';
 import '../../providers/coach_provider.dart';
+import '../../providers/log_provider.dart';
+import '../../providers/session_provider.dart';
+import '../../services/api/api_http.dart';
 import 'home_design.dart';
 import 'widgets/fab_button.dart';
 import 'widgets/mirror_hud.dart';
@@ -67,8 +71,20 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
     }
   }
 
+  void _retryLoad() {
+    ref.invalidate(sessionsProvider);
+    ref.invalidate(todayStatsProvider);
+  }
+
   @override
   Widget build(BuildContext context) {
+    // A 401 is handled once at the app root (redirect to login), so only other
+    // failures — e.g. server unreachable — need an error state here.
+    final sessions = ref.watch(sessionsProvider);
+    final loadFailed = sessions.hasError &&
+        !sessions.isLoading &&
+        sessions.error is! UnauthorizedException;
+
     return Scaffold(
       backgroundColor: kHomeBg,
       // extendBody 让视口内容延伸到 RootShell 的 BottomNav 下方，产生沉浸感
@@ -102,8 +118,48 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
               right: 115,
               child: HomeFABButton(),
             ),
+
+            // ── Layer 4: load error (data could not be fetched) ──────────────
+            if (loadFailed)
+              Positioned(
+                left: 24,
+                right: 24,
+                bottom: 168,
+                child: _LoadErrorBanner(onRetry: _retryLoad),
+              ),
           ],
         ),
+      ),
+    );
+  }
+}
+
+class _LoadErrorBanner extends StatelessWidget {
+  const _LoadErrorBanner({required this.onRetry});
+  final VoidCallback onRetry;
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.fromLTRB(16, 12, 8, 12),
+      decoration: BoxDecoration(
+        color: kHomeBg.withValues(alpha: 0.92),
+        border: Border.all(color: kBorderColor),
+        borderRadius: BorderRadius.circular(4),
+      ),
+      child: Row(
+        children: [
+          Expanded(
+            child: Text(
+              '数据加载失败，请检查网络连接',
+              style: MirrorText.bodyS.copyWith(color: kTextMid),
+            ),
+          ),
+          TextButton(
+            onPressed: onRetry,
+            child: Text('重试', style: MirrorText.label.copyWith(color: kGold)),
+          ),
+        ],
       ),
     );
   }

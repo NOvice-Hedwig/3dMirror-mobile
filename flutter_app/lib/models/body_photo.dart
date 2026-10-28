@@ -101,6 +101,6 @@ class BodyPhoto {
     analysis:  j['llm_analysis'] != null
         ? PhotoAnalysisResult.fromJson(j['llm_analysis'] as Map<String, dynamic>)
         : null,
-    createdAt: DateTime.parse(j['created_at'] as String),
+    createdAt: DateTime.parse(j['created_at'] as String).toLocal(),
   );
 }

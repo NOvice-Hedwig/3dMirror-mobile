@@ -42,5 +42,5 @@ class AuthNotifier extends AsyncNotifier<AuthState> {
 // ── Current user ID shortcut ──────────────────────────────────────────────────
 
 final currentUserIdProvider = Provider<String?>((ref) {
-  return ref.watch(authProvider).value?.userId;
+  return ref.watch(authProvider).valueOrNull?.userId;
 });

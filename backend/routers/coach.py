@@ -1,8 +1,10 @@
-from datetime import datetime
-from fastapi import APIRouter, Header, HTTPException
+from datetime import timedelta
+from zoneinfo import ZoneInfo
+from fastapi import APIRouter, Depends, Header, HTTPException
 from pydantic import BaseModel
 from database import Database
 from auth.service import decode_jwt
+import clock
 
 router = APIRouter()
 
@@ -39,22 +41,23 @@ class CoachSuggestionsResponse(BaseModel):
 
 
 @router.get("/suggestions", response_model=CoachSuggestionsResponse)
-async def get_suggestions(authorization: str = Header(...)):
+async def get_suggestions(authorization: str = Header(...),
+                          tz: ZoneInfo = Depends(clock.user_timezone)):
     uid  = _uid(authorization)
     pool = Database.pool()
     rows = await pool.fetch(
         "SELECT body_data, activity_data, created_at"
         " FROM sessions"
         " WHERE user_id = $1"
-        "   AND created_at >= now() - interval '7 days'"
+        "   AND created_at >= $2"
         " ORDER BY created_at DESC",
-        uid,
+        uid, clock.now_utc() - timedelta(days=7),
     )
 
     cards: list[SuggestionCard] = []
 
-    # 运动频率
-    workout_days = len({r["created_at"].date() for r in rows})
+    # 运动频率 — count distinct days in the user's local calendar, not UTC
+    workout_days = len({r["created_at"].astimezone(tz).date() for r in rows})
     if workout_days == 0:
         cards.append(SuggestionCard(
             category="training",
@@ -137,7 +140,7 @@ async def get_suggestions(authorization: str = Header(...)):
     return CoachSuggestionsResponse(
         cards=sorted(cards, key=lambda c: c.priority),
         data_points=len(rows),
-        generated_at=datetime.utcnow().isoformat(),
+        generated_at=clock.now_utc().isoformat(),
     )
 
 

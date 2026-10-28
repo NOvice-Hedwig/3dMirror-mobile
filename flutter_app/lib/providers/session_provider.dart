@@ -15,7 +15,7 @@ class SessionsNotifier extends AsyncNotifier<List<SessionRecord>> {
 
   Future<SessionRecord> create(SessionRecord session) async {
     final saved = await SessionApi.instance.create(session);
-    state = AsyncData([saved, ...state.value ?? []]);
+    state = AsyncData([saved, ...state.valueOrNull ?? []]);
     return saved;
   }
 

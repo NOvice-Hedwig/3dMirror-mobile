@@ -1,6 +1,7 @@
 import 'dart:convert';
 import 'package:http/http.dart' as http;
 import 'package:shared_preferences/shared_preferences.dart';
+import 'api_http.dart';
 
 class AuthResponse {
   final String userId, token;
@@ -64,22 +65,19 @@ class AuthApi {
 
   Future<bool> isLoggedIn() async => (await getToken()) != null;
 
-  Future<void> signOut() async {
-    final p = await SharedPreferences.getInstance();
-    await p.remove('mirror_token');
-    await p.remove('mirror_user_id');
-  }
+  /// Clears the stored session and notifies the app root (see [SessionEvents]).
+  Future<void> signOut() => SessionEvents.signOut();
 
   // ── internals ──────────────────────────────────────────────────────────────
   Future<void> _post(String path, Map<String, dynamic> body) async {
-    final r = await http.post(Uri.parse('$_base$path'),
+    final r = await ApiHttp.instance.post(Uri.parse('$_base$path'),
         headers: {'Content-Type': 'application/json'},
         body: json.encode(body));
     _assert(r);
   }
 
   Future<Map<String, dynamic>> _postRaw(String path, Map<String, dynamic> body) async {
-    final r = await http.post(Uri.parse('$_base$path'),
+    final r = await ApiHttp.instance.post(Uri.parse('$_base$path'),
         headers: {'Content-Type': 'application/json'},
         body: json.encode(body));
     _assert(r);

@@ -1,6 +1,10 @@
 // lib/providers/home_provider.dart
 // HomeScreen 数据聚合 — 全部派生自已有的 sessionsProvider
 // 不访问新 API，不新建 DB 表
+//
+// Read sessions with valueOrNull, never .value: on AsyncError, .value rethrows, which
+// made every widget watching these providers throw during build (red error screen).
+// Load errors are shown by HomeScreen from sessionsProvider directly.
 
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../models/models.dart';
@@ -19,7 +23,7 @@ DateTime _dateOf(DateTime dt) => DateTime(dt.year, dt.month, dt.day);
 // sessionsProvider 已按 created_at DESC 排序，first = 最新
 
 final latestSessionProvider = Provider<SessionRecord?>((ref) {
-  final sessions = ref.watch(sessionsProvider).value;
+  final sessions = ref.watch(sessionsProvider).valueOrNull;
   if (sessions == null || sessions.isEmpty) return null;
   return sessions.first;
 });
@@ -27,7 +31,7 @@ final latestSessionProvider = Provider<SessionRecord?>((ref) {
 // ── 最近 7 天各日期 → 当日运动分钟数合计 ─────────────────────────────────────────
 
 final weekWorkoutMinutesProvider = Provider<Map<DateTime, int>>((ref) {
-  final sessions = ref.watch(sessionsProvider).value ?? [];
+  final sessions = ref.watch(sessionsProvider).valueOrNull ?? [];
   final cutoff = _today().subtract(const Duration(days: 6));
 
   final Map<DateTime, int> map = {};
@@ -44,7 +48,7 @@ final weekWorkoutMinutesProvider = Provider<Map<DateTime, int>>((ref) {
 // 使用 sessionsProvider 中最多 30 条数据，约覆盖 30 天，满足常见场景
 
 final streakProvider = Provider<int>((ref) {
-  final sessions = ref.watch(sessionsProvider).value ?? [];
+  final sessions = ref.watch(sessionsProvider).valueOrNull ?? [];
   if (sessions.isEmpty) return 0;
 
   final days = sessions
@@ -70,7 +74,7 @@ final streakProvider = Provider<int>((ref) {
 // ── 今日运动分钟数合计 ────────────────────────────────────────────────────────
 
 final todayWorkoutMinProvider = Provider<int>((ref) {
-  final sessions = ref.watch(sessionsProvider).value ?? [];
+  final sessions = ref.watch(sessionsProvider).valueOrNull ?? [];
   final now = DateTime.now();
   return sessions
       .where((s) =>

@@ -31,9 +31,10 @@ class _HistoryScreenState extends ConsumerState<HistoryScreen> {
   Future<void> _load() async {
     try {
       final s = await SessionApi.instance.list();
-      setState(() { _sessions = s; _loading = false; });
+      if (mounted) setState(() { _sessions = s; _loading = false; });
     } catch (e) {
-      setState(() { _error = e.toString(); _loading = false; });
+      // On 401 the app root has already redirected to login and this screen may be gone.
+      if (mounted) setState(() { _error = e.toString(); _loading = false; });
     }
   }
 

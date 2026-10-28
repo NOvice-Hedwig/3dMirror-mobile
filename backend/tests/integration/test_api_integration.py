@@ -19,12 +19,20 @@ toJson()), including extra fields the server is expected to ignore.
 
 import os
 import uuid
-from datetime import date, datetime, timedelta
+from datetime import date, datetime, timedelta, timezone
+from zoneinfo import ZoneInfo
 
 import httpx
 import pytest
 
 BASE_URL = os.getenv("INTEGRATION_BASE_URL")
+
+# The simulated user lives in New York; every request carries this, like the Flutter client.
+USER_TZ = "America/New_York"
+
+
+def user_today() -> date:
+    return datetime.now(ZoneInfo(USER_TZ)).date()
 
 pytestmark = pytest.mark.skipif(
     not BASE_URL, reason="INTEGRATION_BASE_URL not set; integration tests need a live server"
@@ -44,14 +52,15 @@ def client():
 def _login(client: httpx.Client) -> dict:
     """Log in a brand-new user via email OTP (DEV_MODE code 123456)."""
     email = f"it-{uuid.uuid4().hex[:12]}@example.com"
-    r = client.post("/auth/email/send", json={"email": email})
+    tzh = {"X-Timezone": USER_TZ}
+    r = client.post("/auth/email/send", json={"email": email}, headers=tzh)
     assert r.status_code == 200, _describe(r)
-    r = client.post("/auth/email/verify", json={"email": email, "code": "123456"})
+    r = client.post("/auth/email/verify", json={"email": email, "code": "123456"}, headers=tzh)
     assert r.status_code == 200, _describe(r)
     body = r.json()
     assert body["is_new_user"] is True
     return {"Authorization": f"Bearer {body['token']}", "X-User-Id": body["user_id"],
-            "_user_id": body["user_id"]}
+            "X-Timezone": USER_TZ, "_user_id": body["user_id"]}
 
 
 @pytest.fixture(scope="module")
@@ -158,15 +167,21 @@ def test_log_diet(client, auth):
     assert r.status_code == 201, _describe(r)
 
 
+def _utc_z(d: datetime) -> str:
+    """Like Dart's DateTime.toUtc().toIso8601String(): '2026-10-13T03:30:00.000Z'."""
+    return d.astimezone(timezone.utc).isoformat(timespec="milliseconds").replace("+00:00", "Z")
+
+
 def _sleep_payload() -> dict:
-    # SleepLogSheet._doSave: local naive datetimes, date = wake day 'YYYY-MM-DD'
-    today = date.today()
-    bed = datetime.combine(today - timedelta(days=1), datetime.min.time()) + timedelta(hours=23)
+    # SleepLogSheet._doSave: local wall times sent as UTC instants, date = local wake day
+    tz = ZoneInfo(USER_TZ)
+    today = user_today()
+    bed = datetime.combine(today - timedelta(days=1), datetime.min.time(), tz) + timedelta(hours=23)
     wake = bed + timedelta(hours=8)
     return {
         "date": today.isoformat(),
-        "bedtime": bed.isoformat(timespec="milliseconds"),
-        "wake_time": wake.isoformat(timespec="milliseconds"),
+        "bedtime": _utc_z(bed),
+        "wake_time": _utc_z(wake),
         "quality": 4, "source": "manual",
     }
 
@@ -231,7 +246,7 @@ def test_update_measurements(client, fresh_auth):
 
 
 def test_log_period_with_explicit_date(client, fresh_auth):
-    payload = {"date": (date.today() - timedelta(days=3)).isoformat(),
+    payload = {"date": (user_today() - timedelta(days=3)).isoformat(),
                "phase": "end", "symptoms": [], "intensity": 1}
     r = client.post("/logs/period", json=payload, headers=fresh_auth)
     assert r.status_code == 201, _describe(r)
@@ -286,7 +301,7 @@ def test_coach_target_roundtrip_via_users_me(client, fresh_auth):
 def test_challenge_goal_roundtrip(client, fresh_auth):
     r = client.post("/sessions", json=_session_payload(), headers=fresh_auth)
     assert r.status_code == 200, _describe(r)
-    start = date.today()
+    start = user_today()
     goal = {"goal_type": "weight", "target_weight_kg": 60.0,
             "start_date": start.isoformat(),
             "end_date": (start + timedelta(days=30)).isoformat()}
@@ -320,3 +335,44 @@ def test_today_stats(client, fresh_auth):
     body = r.json()
     assert body["workout_minutes"] == 20
     assert body["total_kcal_in"] == 150.0
+
+
+# ── Timezone rule on the live server (real clock) ────────────────────────────
+
+def test_session_created_at_is_real_utc_instant(client, fresh_auth):
+    before = datetime.now(timezone.utc)
+    r = client.post("/sessions", json=_session_payload(), headers=fresh_auth)
+    after = datetime.now(timezone.utc)
+    assert r.status_code == 200, _describe(r)
+    stored = datetime.fromisoformat(r.json()["created_at"])
+    assert stored.tzinfo is not None, "created_at must carry an offset"
+    # Must equal the real UTC time — not shifted by the server host's UTC offset.
+    assert before - timedelta(seconds=2) <= stored <= after + timedelta(seconds=2), \
+        f"stored {stored.isoformat()} not within [{before.isoformat()}, {after.isoformat()}]"
+    r = client.get(f"/sessions/{r.json()['id']}", headers=fresh_auth)
+    assert datetime.fromisoformat(r.json()["created_at"]) == stored
+
+
+@pytest.mark.parametrize("method,path,body", [
+    ("POST", "/logs/period", {"phase": "start", "symptoms": [], "intensity": 1}),
+    ("PUT",  "/logs/measurements", {"weight_kg": 60.0}),
+    ("GET",  "/logs/today-stats", None),
+    ("GET",  "/challenge/progress", None),
+    ("GET",  "/coach/suggestions", None),
+])
+@pytest.mark.parametrize("tz_header", [None, "Mars/Olympus_Mons", "EDT"])
+def test_missing_or_unknown_timezone_returns_422(client, fresh_auth, method, path, body, tz_header):
+    headers = {k: v for k, v in fresh_auth.items() if k != "X-Timezone"}
+    if tz_header is not None:
+        headers["X-Timezone"] = tz_header
+    r = client.request(method, path, json=body, headers=headers)
+    assert r.status_code == 422, _describe(r)
+    assert "X-Timezone" in r.text
+
+
+@pytest.mark.parametrize("field", ["bedtime", "wake_time"])
+def test_sleep_naive_datetime_returns_422(client, fresh_auth, field):
+    payload = _sleep_payload()
+    payload[field] = "2026-10-12T23:30:00"   # no offset
+    r = client.post("/logs/sleep", json=payload, headers=fresh_auth)
+    assert r.status_code == 422, _describe(r)

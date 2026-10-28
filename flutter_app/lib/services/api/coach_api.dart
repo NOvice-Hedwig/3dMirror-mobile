@@ -3,6 +3,7 @@ import 'package:http/http.dart' as http;
 import '../../models/coach_models.dart';
 import '../../models/models.dart';
 import 'auth_api.dart';
+import 'api_http.dart';
 
 class CoachApi {
   CoachApi._();
@@ -22,7 +23,7 @@ class CoachApi {
   }
 
   Future<CoachSuggestionsResponse> fetchSuggestions() async {
-    final r = await http.get(
+    final r = await ApiHttp.instance.get(
       Uri.parse('$_base/coach/suggestions'),
       headers: await _headers(),
     );
@@ -32,7 +33,7 @@ class CoachApi {
   }
 
   Future<void> saveTarget(AvatarParams target) async {
-    final r = await http.put(
+    final r = await ApiHttp.instance.put(
       Uri.parse('$_base/coach/target'),
       headers: await _headers(),
       body: json.encode(target.toJson()),

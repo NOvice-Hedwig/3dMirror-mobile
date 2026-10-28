@@ -5,6 +5,7 @@ import 'package:http_parser/http_parser.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 import '../../models/body_photo.dart';
+import 'api_http.dart';
 
 class PhotoException implements Exception {
   final String message;
@@ -36,7 +37,7 @@ class PhotoApi {
       ));
     }
 
-    final streamed = await request.send();
+    final streamed = await ApiHttp.instance.send(request);
     final body     = await streamed.stream.bytesToString();
 
     if (streamed.statusCode != 200 && streamed.statusCode != 201) {
@@ -64,7 +65,7 @@ class PhotoApi {
 
     // Use form-encoded body instead to match FastAPI Form(...) list
     final formBody = photoIds.map((id) => 'photo_ids=${Uri.encodeComponent(id)}').join('&');
-    final r = await http.post(
+    final r = await ApiHttp.instance.post(
       Uri.parse('$_base/photos/analyze'),
       headers: {
         'Authorization': 'Bearer $token',
@@ -87,7 +88,7 @@ class PhotoApi {
     final token = await _token();
     final uri   = Uri.parse('$_base/photos').replace(
         queryParameters: sessionId != null ? {'session_id': sessionId} : null);
-    final r = await http.get(uri,
+    final r = await ApiHttp.instance.get(uri,
         headers: {'Authorization': 'Bearer $token'});
     if (r.statusCode != 200) throw PhotoException('获取失败 (${r.statusCode})');
     final decoded = json.decode(r.body) as Map<String, dynamic>;

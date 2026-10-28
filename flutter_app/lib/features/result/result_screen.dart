@@ -30,9 +30,11 @@ class _ResultScreenState extends State<ResultScreen> {
   Future<void> _load() async {
     try {
       final s = await SessionApi.instance.get(widget.sessionId);
+      if (!mounted) return;
       setState(() { _session = s; _loading = false; });
     } catch (e) {
-      setState(() { _error = e.toString(); _loading = false; });
+      // On 401 the app root has already redirected to login and this screen may be gone.
+      if (mounted) setState(() { _error = e.toString(); _loading = false; });
       return;
     }
     try {

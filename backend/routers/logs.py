@@ -1,10 +1,12 @@
 import uuid
 import datetime as dt
 from typing import Optional
-from fastapi import APIRouter, HTTPException, Header, Response
-from pydantic import BaseModel
+from zoneinfo import ZoneInfo
+from fastapi import APIRouter, Depends, HTTPException, Header, Response
+from pydantic import AwareDatetime, BaseModel
 from database import Database
 from auth.service import decode_jwt
+import clock
 
 router = APIRouter()
 
@@ -39,15 +41,15 @@ class DietPayload(BaseModel):
 
 
 class SleepPayload(BaseModel):
-    date: dt.date
-    bedtime: dt.datetime
-    wake_time: dt.datetime
+    date: dt.date                 # user's local date (the wake-up day)
+    bedtime: AwareDatetime        # must carry a UTC offset; naive → 422
+    wake_time: AwareDatetime
     quality: int
     source: str = 'manual'
 
 
 class PeriodPayload(BaseModel):
-    date: Optional[dt.date] = None   # omitted → server-side today
+    date: Optional[dt.date] = None   # user's local date; omitted → today in X-Timezone
     phase: str
     symptoms: list[str]
     intensity: int
@@ -56,11 +58,12 @@ class PeriodPayload(BaseModel):
 class SupplementPayload(BaseModel):
     name: str
     dosage: Optional[str] = None
-    reminder_time: Optional[dt.time] = None   # 'HH:MM' or 'HH:MM:SS'
+    reminder_time: Optional[dt.time] = None   # wall-clock 'HH:MM' or 'HH:MM:SS'
     reminder_enabled: bool = False
 
 
 class MeasurementPayload(BaseModel):
+    date: Optional[dt.date] = None   # user's local date; omitted → today in X-Timezone
     weight_kg: Optional[float] = None
     waist_cm: Optional[float] = None
     hip_cm: Optional[float] = None
@@ -77,11 +80,11 @@ async def log_workout(body: WorkoutPayload, authorization: str = Header(...)):
     wid = str(uuid.uuid4())
     await pool.execute(
         """INSERT INTO workout_logs
-           (id, user_id, type, sub_type, duration_min, intensity,
+           (id, user_id, logged_at, type, sub_type, duration_min, intensity,
             with_weight, muscle_group, sets, estimated_kcal)
-           VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10)""",
-        wid, uid, body.type, body.sub_type, body.duration_min, body.intensity,
-        body.with_weight, body.muscle_group,
+           VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11)""",
+        wid, uid, clock.now_utc(), body.type, body.sub_type, body.duration_min,
+        body.intensity, body.with_weight, body.muscle_group,
         body.sets,
         body.estimated_kcal,
     )
@@ -94,9 +97,10 @@ async def log_diet(body: DietPayload, authorization: str = Header(...)):
     pool = Database.pool()
     row_id = str(uuid.uuid4())
     await pool.execute(
-        """INSERT INTO diet_logs (id, user_id, meal, food_name, grams, calories, protein_g, entry_method)
-           VALUES ($1,$2,$3,$4,$5,$6,$7,$8)""",
-        row_id, uid, body.meal, body.food_name, body.grams,
+        """INSERT INTO diet_logs
+           (id, user_id, logged_at, meal, food_name, grams, calories, protein_g, entry_method)
+           VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9)""",
+        row_id, uid, clock.now_utc(), body.meal, body.food_name, body.grams,
         body.calories, body.protein_g, body.entry_method,
     )
     return {"id": row_id}
@@ -130,7 +134,8 @@ async def log_sleep(body: SleepPayload, response: Response,
 
 @router.post("/period", status_code=201)
 async def log_period(body: PeriodPayload, response: Response,
-                     authorization: str = Header(...)):
+                     authorization: str = Header(...),
+                     tz: ZoneInfo = Depends(clock.user_timezone)):
     uid = _uid(authorization)
     pool = Database.pool()
     row = await pool.fetchrow(
@@ -141,7 +146,7 @@ async def log_period(body: PeriodPayload, response: Response,
              symptoms  = EXCLUDED.symptoms,
              intensity = EXCLUDED.intensity
            RETURNING id, (xmax = 0) AS inserted""",
-        str(uuid.uuid4()), uid, body.date or dt.date.today(),
+        str(uuid.uuid4()), uid, body.date or clock.local_today(tz),
         body.phase, body.symptoms, body.intensity,
     )
     if not row["inserted"]:
@@ -153,50 +158,57 @@ async def log_period(body: PeriodPayload, response: Response,
 async def log_supplements(body: list[SupplementPayload], authorization: str = Header(...)):
     uid = _uid(authorization)
     pool = Database.pool()
+    logged_at = clock.now_utc()
     rows = [
-        (str(uuid.uuid4()), uid, item.name, item.dosage,
+        (str(uuid.uuid4()), uid, logged_at, item.name, item.dosage,
          item.reminder_time, item.reminder_enabled)
         for item in body
     ]
     await pool.executemany(
-        "INSERT INTO supplement_logs (id, user_id, name, dosage, reminder_time, reminder_enabled) VALUES ($1,$2,$3,$4,$5,$6)",
+        "INSERT INTO supplement_logs"
+        " (id, user_id, logged_at, name, dosage, reminder_time, reminder_enabled)"
+        " VALUES ($1,$2,$3,$4,$5,$6,$7)",
         rows,
     )
     return {"count": len(rows)}
 
 
 @router.put("/measurements", status_code=200)
-async def update_measurements(body: MeasurementPayload, authorization: str = Header(...)):
+async def update_measurements(body: MeasurementPayload, authorization: str = Header(...),
+                              tz: ZoneInfo = Depends(clock.user_timezone)):
     uid = _uid(authorization)
     pool = Database.pool()
-    today = dt.date.today()
+    day = body.date or clock.local_today(tz)
     snap_id = str(uuid.uuid4())
-    measurements = {k: v for k, v in body.model_dump().items() if v is not None}
+    measurements = {k: v for k, v in body.model_dump(exclude={"date"}).items() if v is not None}
     await pool.execute(
         """INSERT INTO body_snapshots (id, user_id, date, measurements)
-           VALUES ($1,$2,$3::date,$4::jsonb)
+           VALUES ($1,$2,$3,$4)
            ON CONFLICT (user_id, date) DO UPDATE SET
              measurements = body_snapshots.measurements || EXCLUDED.measurements""",
-        snap_id, uid, today, measurements,
+        snap_id, uid, day, measurements,
     )
-    return {"date": today.isoformat()}
+    return {"date": day.isoformat()}
 
 
 @router.get("/today-stats")
-async def today_stats(authorization: str = Header(...)):
+async def today_stats(authorization: str = Header(...),
+                      tz: ZoneInfo = Depends(clock.user_timezone)):
     uid = _uid(authorization)
     pool = Database.pool()
+    today = clock.local_today(tz)
 
+    # logged_at is a UTC instant; convert it to the user's local date before comparing.
     kcal_row = await pool.fetchrow(
         "SELECT COALESCE(SUM(calories), 0) AS total FROM diet_logs "
-        "WHERE user_id=$1 AND logged_at::date = CURRENT_DATE",
-        uid,
+        "WHERE user_id=$1 AND (logged_at AT TIME ZONE $2)::date = $3",
+        uid, tz.key, today,
     )
 
     sleep_row = await pool.fetchrow(
         "SELECT bedtime, wake_time FROM sleep_logs "
-        "WHERE user_id=$1 AND date = CURRENT_DATE LIMIT 1",
-        uid,
+        "WHERE user_id=$1 AND date = $2 LIMIT 1",
+        uid, today,
     )
     sleep_hours = 0.0
     if sleep_row and sleep_row["bedtime"] and sleep_row["wake_time"]:
@@ -204,9 +216,9 @@ async def today_stats(authorization: str = Header(...)):
         sleep_hours = round(delta.total_seconds() / 3600, 2)
 
     workout_row = await pool.fetchrow(
-        "SELECT COALESCE(SUM(duration_min), 0) AS total "
-        "FROM workout_logs WHERE user_id=$1 AND DATE(logged_at)=CURRENT_DATE",
-        uid,
+        "SELECT COALESCE(SUM(duration_min), 0) AS total FROM workout_logs "
+        "WHERE user_id=$1 AND (logged_at AT TIME ZONE $2)::date = $3",
+        uid, tz.key, today,
     )
 
     return {

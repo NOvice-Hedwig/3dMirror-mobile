@@ -1,11 +1,13 @@
-from datetime import date, datetime
+from datetime import date
 from typing import Optional
+from zoneinfo import ZoneInfo
 
-from fastapi import APIRouter, Header, HTTPException
+from fastapi import APIRouter, Depends, Header, HTTPException
 from pydantic import BaseModel
 
 from auth.service import decode_jwt
 from database import Database
+import clock
 
 router = APIRouter()
 
@@ -59,11 +61,13 @@ def _pct_single(start: Optional[float], current: Optional[float],
 async def set_goal(body: ChallengeGoal, authorization: str = Header(...)):
     uid  = _uid(authorization)
     pool = Database.pool()
+    # The baseline day is the client's local start_date, not the database's CURRENT_DATE.
     await pool.execute(
-        "UPDATE users SET challenge_goal = $2, challenge_start_date = CURRENT_DATE"
+        "UPDATE users SET challenge_goal = $2, challenge_start_date = $3"
         " WHERE id = $1",
         uid,
         body.model_dump(mode="json"),   # dates → ISO strings for the JSONB column
+        body.start_date,
     )
     return {"ok": True}
 
@@ -71,7 +75,8 @@ async def set_goal(body: ChallengeGoal, authorization: str = Header(...)):
 # ── GET /challenge/progress ───────────────────────────────────────────────────
 
 @router.get("/progress", response_model=ChallengeProgress)
-async def get_progress(authorization: str = Header(...)):
+async def get_progress(authorization: str = Header(...),
+                       tz: ZoneInfo = Depends(clock.user_timezone)):
     uid  = _uid(authorization)
     pool = Database.pool()
 
@@ -99,9 +104,9 @@ async def get_progress(authorization: str = Header(...)):
     # 3. Start-day session body data (baseline values)
     start_row = await pool.fetchrow(
         "SELECT body_data FROM sessions WHERE user_id = $1"
-        "   AND DATE(created_at) = $2"
+        "   AND (created_at AT TIME ZONE $3)::date = $2"
         " ORDER BY created_at LIMIT 1",
-        uid, start_date,
+        uid, start_date, tz.key,
     )
     start_body: dict = start_row["body_data"] if start_row else {}
 
@@ -133,7 +138,7 @@ async def get_progress(authorization: str = Header(...)):
     pct = max(0.0, min(100.0, pct))
 
     # 5. Days remaining
-    today    = date.today()
+    today    = clock.local_today(tz)
     days_remaining = max(0, (goal.end_date - today).days)
 
     return ChallengeProgress(

@@ -2,6 +2,7 @@ import 'dart:convert';
 import 'package:http/http.dart' as http;
 import '../../models/models.dart';
 import 'auth_api.dart';
+import 'api_http.dart';
 
 class SessionApi {
   SessionApi._();
@@ -21,7 +22,7 @@ class SessionApi {
   }
 
   Future<SessionRecord> create(SessionRecord s) async {
-    final r = await http.post(
+    final r = await ApiHttp.instance.post(
       Uri.parse('$_base/sessions'),
       headers: await _headers(),
       body: json.encode(s.toJson()),
@@ -35,7 +36,7 @@ class SessionApi {
 
 
   Future<List<SessionRecord>> list({int limit = 30}) async {
-    final r = await http.get(
+    final r = await ApiHttp.instance.get(
       Uri.parse('$_base/sessions?limit=$limit'),
       headers: await _headers(),
     );
@@ -46,7 +47,7 @@ class SessionApi {
   }
 
   Future<SessionRecord> get(String id) async {
-    final r = await http.get(
+    final r = await ApiHttp.instance.get(
       Uri.parse('$_base/sessions/$id'),
       headers: await _headers(),
     );
