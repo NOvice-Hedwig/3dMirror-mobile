@@ -71,6 +71,16 @@ def client():
             yield c
 
 
+@pytest.fixture(autouse=True)
+def fresh_send_limits(monkeypatch):
+    """Every test logs in a new user from the same test IP: reset counters, lift the IP limit."""
+    from auth import rate_limit
+    rate_limit.reset()
+    monkeypatch.setattr(rate_limit, "IP_RULES", [(rate_limit.MINUTE, 1000), (rate_limit.HOUR, 1000)])
+    yield
+    rate_limit.reset()
+
+
 @pytest.fixture
 def freeze(monkeypatch):
     import clock

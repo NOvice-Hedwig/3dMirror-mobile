@@ -13,6 +13,7 @@
 ## ⚠️ Read first
 
 - **Resolved this week (2026-10-10 → 10-12):** the DB-layer runtime failures (JSON, dates, period date, duplicate-day logs), the incomplete `migration.sql`, the failing 401 test, the tracked `backend/.env`, and timezone handling of log dates. The `JWT_SECRET` was rotated and `backend/.env` is no longer tracked. Details in [§8.1](#81-resolved-this-week).
+- **Login identifiers:** phones are validated per country (mobile numbers only) and stored as E.164; emails are trimmed and lowercased. Sending codes is rate-limited **in memory, so the backend must run as a single instance** until that moves to a shared store. See [§6 "Login identifiers"](#login-identifiers-and-send-limits-since-2026-10-27).
 - **Time rule:** calendar dates are always the user's local date. The app sends its IANA timezone in an `X-Timezone` header, and instants are timezone-aware UTC. See [§6 "Time rule"](#time-rule-since-2026-10-12) before touching anything date-related.
 - **Still open, most important first:** the Unity avatar isn't wired up, photo analysis results are unused, i18n strings aren't used, supplement reminders aren't scheduled, and two test problems remain. See [§8.2](#82-open-issues).
 
@@ -44,6 +45,7 @@
 | anthropic | 0.40.0 | Claude vision analysis of body photos (old SDK) |
 | python-multipart | 0.0.9 | Photo uploads, form fields |
 | tzdata | 2026.5 | IANA timezone database for `zoneinfo` (Windows and slim Docker images ship none) |
+| phonenumbers | 9.0.42 | Phone validation and E.164 normalization (Python port of Google's libphonenumber) |
 
 Runtime: **Python 3.12** in the [Dockerfile](backend/Dockerfile). Both local venvs were built with **Python 3.14.2**. Postgres image: `postgres:16-alpine`. Not in requirements but needed for tests: `pytest` and `pytest-asyncio`.
 
@@ -63,6 +65,7 @@ Runtime: **Python 3.12** in the [Dockerfile](backend/Dockerfile). Both local ven
 | intl / flutter_localizations | ^0.20.2 / SDK | 0.20.2 | i18n (generated `S` class) |
 | path_provider | ^2.1.0 | 2.1.5 | |
 | flutter_timezone | ^5.1.1 | 5.1.1 | Device IANA timezone for the `X-Timezone` header (native plugin; needs a full rebuild, not hot reload) |
+| phone_numbers_parser | ^9.0.28 | 9.0.28 | Phone validation, E.164, ISO and dialing codes for the country picker. It has no country names; those come from `lib/core/data/country_names.dart` (see §6) |
 | riverpod_annotation, riverpod_generator, build_runner | — | 2.6.1 / 2.6.5 / 2.5.4 | **Declared but unused.** No `@riverpod` or `.g.dart` anywhere |
 | flutter_lints | ^4.0.0 | 4.0.0 | |
 
@@ -74,8 +77,8 @@ Not present: `flutter_unity_widget`. [BRIDGE_SPEC.md](unity_project/BRIDGE_SPEC.
 | Service | Purpose | Needed when |
 |---|---|---|
 | Postgres 16 | Primary datastore | Always |
-| Aliyun SMS | OTP to +86 numbers | `DEV_MODE=false` and phone login for CN |
-| Twilio | OTP to international numbers | `DEV_MODE=false` and phone login outside CN |
+| Aliyun SMS | OTP to China numbers (sent the national number, e.g. `13800138000`) | `DEV_MODE=false` and phone login for CN |
+| Twilio | OTP to every other country (sent E.164) | `DEV_MODE=false` and phone login outside CN |
 | SendGrid | Email OTP | `DEV_MODE=false` and email login |
 | Apple Sign-In (`appleid.apple.com/auth/keys`) | Verify identity tokens | Apple login. Always live, no dev bypass |
 | Anthropic API | Estimate body proportions from photos | Optional. Without a key the analysis returns `{}` silently |
@@ -137,6 +140,7 @@ All of these are listed in [backend/.env.example](backend/.env.example).
 | `ANTHROPIC_API_KEY` | — | optional | Without it, photo analysis returns `{}` |
 | `VISION_MODEL` | `claude-haiku-4-5-20251001` | optional | Model id for photo analysis |
 | `UPLOAD_DIR` | `uploads` | optional | Photos go on local disk, relative to the CWD |
+| `AUTH_SEND_LIMIT_IP_PER_MINUTE`, `AUTH_SEND_LIMIT_IP_PER_HOUR` | `5` / `20` | optional | Per-client-IP limit on sending codes. Raise only for automated test runs from one IP (§7) |
 
 ### 2.3 Flutter app
 
@@ -151,7 +155,11 @@ flutter run                                                       # Android emul
 - `API_BASE_URL` is read via `String.fromEnvironment` in **eight places**: seven `services/api/*_api.dart` files plus `features/me/me_screen.dart`. They all default to the Android-emulator host.
 - Fonts come from `google_fonts` at runtime, so you **don't** need the `assets/fonts/` steps in the README. A device needs network on first launch.
 - Apple Sign-In: add the capability in Xcode (`ios/Runner.xcworkspace`) and match `APPLE_BUNDLE_ID`. The Android `applicationId` is still the template `com.example.mirror_3d` ([build.gradle.kts](flutter_app/android/app/build.gradle.kts) TODOs).
-- **Logging in locally:** set `DEV_MODE=true`, enter any phone or email, then use code `123456`.
+- **Logging in locally (`DEV_MODE=true`):**
+  - Log in with a **validly formatted mobile number** such as `+86 138 0013 8000` and code `123456`. Other countries work too, e.g. `+44 7400 123456`, as does any well-formed email.
+  - Arbitrary strings like `123` **no longer work**, because phone numbers are validated even in `DEV_MODE`.
+  - You can request a code for the same number at most once a minute.
+  - Accounts created earlier with such strings can't log in by phone; see §8.2 #7.
 
 ---
 
@@ -166,7 +174,9 @@ flutter run                                                       # Android emul
 │   ├── clock.py                   now_utc(), X-Timezone dependency, local_today(): the only time source
 │   ├── schemas.py                 Pydantic models for sessions and photos
 │   ├── auth/
-│   │   ├── service.py             OTP store (in-memory), SMS/email/Apple providers, JWT
+│   │   ├── identity.py            Phone (E.164, mobile only) and email normalization + legacy-number forms
+│   │   ├── rate_limit.py          In-memory limits on sending codes (per destination and per IP)
+│   │   ├── service.py             OTP store (in-memory), SMS routing (Aliyun CN / Twilio), email, Apple, JWT
 │   │   └── router.py              /auth/* + `current_user` dependency (used by /auth/me and /sessions)
 │   ├── routers/                   One file per resource; SQL inline in handlers
 │   │   ├── users.py  sessions.py  photos.py  logs.py  predict.py  coach.py  challenge.py
@@ -188,6 +198,8 @@ flutter run                                                       # Android emul
 │   │   ├── theme/                 design_tokens.dart (MirrorColors/Text/Duration/Curve), app_theme.dart
 │   │   ├── l10n/                  ARB files (zh template, en) + generated S class
 │   │   ├── widgets/               RootShell (3-tab bar), MirrorScaffold, BodyViewport, animations
+│   │   ├── validation/            login_identity.dart: phone/email checks, country search (UX only)
+│   │   ├── data/                  country_names.dart: GENERATED zh/en names (tool/gen_country_names.py)
 │   │   └── enums/
 │   ├── features/<feature>/        Screens. Mostly StatefulWidgets that call *Api directly
 │   │   ├── auth  onboarding  input  result  history  compare  predict  snapshot
@@ -307,10 +319,10 @@ Formats:
 | Method & path | Body / query | Response |
 |---|---|---|
 | `GET /health` | — | `{status, version}` |
-| `POST /auth/phone/send` | `{phone}` | `{message}` |
-| `POST /auth/phone/verify` | `{phone, code(6)}` | `AuthOut {user_id, token, is_new_user}` |
-| `POST /auth/email/send` | `{email}` | `{message}` |
-| `POST /auth/email/verify` | `{email, code(6)}` | `AuthOut` |
+| `POST /auth/phone/send` | `{phone}` with country code, e.g. `+86 138…` | `{message}`; 422 `{detail}` bad number; 429 `{detail}` + `Retry-After` when rate-limited |
+| `POST /auth/phone/verify` | `{phone, code(6)}` | `AuthOut {user_id, token, is_new_user}`; 422 bad number |
+| `POST /auth/email/send` | `{email}` | `{message}`; 422 bad email; 429 when rate-limited |
+| `POST /auth/email/verify` | `{email, code(6)}` | `AuthOut`; 422 bad email |
 | `POST /auth/apple` | `{identity_token, full_name?}` | `AuthOut` |
 | `GET /auth/me` | — | `{id, phone, email, display_name, created_at}` |
 | `GET /users/me` | — | the above plus `locale, gender, height_cm, target_avatar_params` (duplicates `/auth/me`) |
@@ -365,6 +377,39 @@ Riverpod API styles are mixed: legacy `StateNotifier`, `Notifier`, `AsyncNotifie
 
 Environment variables only (§2.2), read at **import time** as module globals in `auth/service.py`, `llm_service.py` and `photo_service.py`. `load_dotenv()` runs at the top of `main.py`, before those imports. There is no settings object, no per-environment config and no logging configuration.
 
+### Login identifiers and send limits (since 2026-10-27)
+
+**The backend (`auth/identity.py`) is the source of truth.** The app (`core/validation/login_identity.dart`) applies the same rules only for UX.
+
+- **Phone:**
+  - The input must carry a country code, so the app always sends `+…`. Spaces, dashes, dots and parentheses are ignored.
+  - The number must be valid for its region **and** be `MOBILE` or `FIXED_LINE_OR_MOBILE` (US/CA can't distinguish). Fixed line, toll-free, premium-rate, VoIP etc. are rejected.
+  - Normalized to **E.164**, which is used as the OTP key, the stored `users.phone` and the lookup key.
+- **Email:** trimmed and lowercased, then validated as `EmailStr` (no DNS). That value is the OTP key and the stored value; `users.email` is `CITEXT`.
+- **Errors:** 422 with a plain Chinese `detail`:
+  - 请输入手机号 (enter a phone number)
+  - 请选择国家/地区代码，例如 +86 (choose a country code, e.g. +86)
+  - 该国家/地区的手机号格式不正确 (invalid mobile format for this country)
+  - 仅支持手机号，不支持座机、免费电话等号码 (mobile numbers only, no landline or toll-free)
+  - 请输入邮箱 (enter an email)
+  - 邮箱格式不正确 (invalid email format)
+- **SMS routing:** China goes to Aliyun with the national number; every other country goes to Twilio in E.164.
+- **Legacy numbers:** older builds stored whatever was typed (`13800138000`, `8613800138000`, `+86 138 0013 8000`).
+  - Login matches stored values by digits: country code + national number for any country, and the bare national number **for China only**, since old input without a code was always China.
+  - A matched legacy row is rewritten to E.164 on login.
+  - If another row already holds that E.164 value, nothing is rewritten or merged: the collision is logged with the number masked, and the E.164 row wins.
+- **Send limits (`auth/rate_limit.py`), on `/auth/phone/send` and `/auth/email/send`:**
+  - **Per destination:** 1 per 60 s and 5 per hour.
+  - **Per client IP:** 5 per minute and 20 per hour, configurable via `AUTH_SEND_LIMIT_IP_*`.
+  - Exceeding a limit returns 429 "请求过于频繁，请稍后再试" (too many requests, try again later) with `Retry-After`.
+  - Only sends that pass every limit are counted; rejected and invalid requests use no quota.
+  - ⚠️ **The counters are in memory and per process.** With more than one backend instance (or `uvicorn --workers` > 1), each instance counts separately and the effective limit multiplies. **Move them to a shared store (e.g. Redis) before scaling out.** The same applies to the OTP store in `auth/service.py`.
+  - The client IP is the direct peer. Behind a reverse proxy, configure trusted forwarded-for headers, or every user will share the proxy's IP limit.
+- **Country picker:**
+  - Search covers Chinese name, English name, ISO code and dialing code. For a shared code (`+44`, `+1`), the main country comes first.
+  - The default comes from the device locale, falling back to China. Typing or pasting `+…` makes the picker follow.
+  - `phone_numbers_parser` has no country names, so `lib/core/data/country_names.dart` is **generated from Unicode CLDR** by `tool/gen_country_names.py` (dev-time Babel). Re-run it after upgrading `phone_numbers_parser`.
+
 ### Time rule (since 2026-10-12)
 
 - **Calendar dates are the user's local date**, never the server's or the database's.
@@ -389,6 +434,9 @@ Environment variables only (§2.2), read at **import time** as module globals in
 | Backend unit | `backend/tests/test_auth.py`, 5 tests | **5 pass** with `DEV_MODE=true`. **3 pass, 2 fail** with `DEV_MODE=false` (open, see §8.2) |
 | Backend integration | `backend/tests/integration/test_api_integration.py`, 47 tests | **47 pass** against a live server and a disposable Postgres database |
 | Backend timezone rules | `backend/tests/integration/test_timezone_rules.py`, 10 tests | **10 pass** in-process with a frozen clock against the same disposable database |
+| Backend login identifiers (unit) | `backend/tests/test_identity.py`, 45 tests | **45 pass**: phone and email rules, legacy forms, SMS routing, rate limiter (no DB) |
+| Backend login identifiers (integration) | `backend/tests/integration/test_auth_identity.py`, 41 tests | **41 pass** in-process against the disposable database: routes, 422/429, legacy rows, collisions |
+| Flutter | `test/login_identity_test.dart`, `api_http_test.dart`, `home_provider_error_test.dart`, 34 tests | **34 pass** (`widget_test.dart` still doesn't compile, see §8.2) |
 | Flutter | `flutter_app/test/widget_test.dart` | **Does not compile.** It's the default counter template and references `MyApp`, which doesn't exist (the app class is `MirrorApp`). Open, see §8.2 |
 | iOS/macOS | `RunnerTests.swift` | Xcode template stubs |
 
@@ -405,7 +453,9 @@ pytest tests/ -v                           # integration tests are skipped unles
 ```bash
 # create a scratch DB once:  CREATE DATABASE "3dmirror_test";  then apply migration.sql to it
 # terminal 1 (backend/)
-DATABASE_URL=postgresql://mirror:mirror@localhost:5432/3dmirror_test DEV_MODE=true uvicorn main:app --port 8765
+DATABASE_URL=postgresql://mirror:mirror@localhost:5432/3dmirror_test DEV_MODE=true \
+AUTH_SEND_LIMIT_IP_PER_MINUTE=1000 AUTH_SEND_LIMIT_IP_PER_HOUR=1000 \
+uvicorn main:app --port 8765               # ~50 test logins come from one IP
 # terminal 2 (backend/)
 INTEGRATION_BASE_URL=http://127.0.0.1:8765 \
 INTEGRATION_DATABASE_URL=postgresql://mirror:mirror@localhost:5432/3dmirror_test \
@@ -424,7 +474,18 @@ pytest tests -v                            # runs unit + live-server + frozen-cl
 
 Mutation checks confirmed that each old behaviour (UTC dates, UTC "today" in SQL, naive `utcnow()`) makes at least one test fail.
 
-**Coverage gaps:** photos and the LLM call, auth providers (SMS, email, Apple), predict's date maths, and all Flutter code (including `local_time.dart` and the `.toLocal()` parsing). There's no CI config in the repo.
+**Login identifier suites** (`test_identity.py`, `test_auth_identity.py`) cover:
+- mobile numbers from China, US, UK, Japan, Germany and India in several formats
+- rejected toll-free, premium-rate and fixed-line numbers, and the exact 422 messages
+- email case and whitespace
+- legacy China rows in four stored formats being matched and rewritten; bare national numbers never matching outside China
+- collisions with an existing E.164 row, and several legacy rows
+- SMS routing
+- 429 per destination and per IP, recovery after 60 s, and invalid input not using quota
+
+Mutation checks (no legacy rewrite, rewriting despite a collision, bare-number matching for every country, rejecting `FIXED_LINE_OR_MOBILE`, accepting any number type, no email lowercasing, no rate limit, OTP keyed by a non-E.164 value) each make at least one test fail.
+
+**Coverage gaps:** photos and the LLM call, the real SMS, email and Apple provider calls, predict's date maths, and Flutter UI and widget behaviour (the auth screen's inline errors, disabled button and country picker are untested; only their validation logic is). There's no CI config in the repo.
 
 **Run the Flutter suite** (once it's fixed): `cd flutter_app && flutter test`. Lints: `flutter analyze` (`flutter_lints` + `avoid_print`; `session_api.dart` violates it).
 
@@ -457,6 +518,7 @@ All verified by the integration tests in §7.
 | **401 test** (`test_create_session_requires_auth` got 422) | `/sessions` endpoints use `Depends(current_user)`, so auth runs before body validation |
 | **Tracked `backend/.env`** | `JWT_SECRET` was rotated; `backend/.env` is no longer tracked and is covered by the root `.gitignore`, along with caches, venvs, build output, `uploads/` and local tool settings |
 | **`migration.sql` incomplete** (missing the five daily-log tables) | They were added to `migration.sql`; a fresh database built from it alone matches the live schema exactly |
+| **Unvalidated phone/email at login.** Raw input was the OTP key and stored value, so `13800138000` and `+8613800138000` became two accounts; email OTP keys were case-sensitive; SMS routing used `lstrip("+86")`, which strips characters rather than a prefix; there was no limit on sending codes | Phone validated per country (mobile only) and normalized to E.164; email trimmed and lowercased; 422 with Chinese messages; legacy rows matched and rewritten on login; Aliyun receives the parsed national number; per-destination and per-IP send limits (429). App: country picker, inline errors, disabled send button (§6 "Login identifiers") |
 | **Log dates mixed timezones.** They used the backend host's local time, UTC in Postgres, offset-less device times, and UTC days in Flutter; sessions were stored 4 h (EDT) / 5 h (EST) in the future from naive `utcnow()` | One rule (§6 "Time rule"): the app sends `X-Timezone`, dates are the user's local date, and instants are aware UTC from `clock.now_utc()`. Applied to logs, sessions, challenge and coach, plus Flutter parsing and a DST-safe challenge end date |
 
 ### 8.2 Open issues
@@ -478,6 +540,11 @@ All verified by the integration tests in §7.
    - **Data model:** reminders are currently stored per log entry (`supplement_logs`). They should become a **standing reminder per supplement** (e.g. a `supplements` or `supplement_reminders` table: user, supplement, time, enabled), separate from the log of doses taken.
 5. **Two unit tests fail with `DEV_MODE=false`.** `test_phone_send_called` and `test_email_send_called` patch `auth.service.send_*_otp`, but the router imported those names directly, so the patch has no effect. They pass only when `DEV_MODE` skips the real Aliyun and SendGrid calls; otherwise they get a 500.
 6. **Default Flutter widget test.** `flutter_app/test/widget_test.dart` is the counter template, references a non-existent `MyApp`, and doesn't compile.
+7. **Stored phone values that aren't valid numbers (decision pending).** A read-only count on 2026-10-27 found 9 users in the dev `mirror_db`:
+   - 1 legacy-format China mobile (`86…` without `+`), which will be matched and rewritten to E.164 on its next login.
+   - **8 values that aren't valid numbers at all** (e.g. 3–12 digit test strings typed under `DEV_MODE`). Since login now requires a valid mobile number, **those accounts can no longer log in by phone.**
+   - No collisions.
+   - **Decision (2026-10-28): leave them unchanged for now.** They own 17 rows in total (6 sessions, 10 body photos, 1 workout log), and none has an email or Apple login as an alternative. Revisit before any production data exists: delete them, or map them in a one-off migration. No script exists yet, and nothing runs on `mirror_db` without approval.
 
 **Other logic bugs:**
 - **`llm_service.analyze_body_photos`** uses the **sync** `anthropic.Anthropic` client inside an async route, which blocks the event loop for the whole call. Its docstring says it "falls back to empty dict on any error", but API errors aren't caught and surface as a 500. HEIC uploads are allowed but sent to Claude as `image/jpeg`. The same analysis is written to every photo in the batch.
@@ -503,7 +570,10 @@ All verified by the integration tests in §7.
 ### 8.4 Security and ops smells
 
 - `DEV_MODE=true` in a local `backend/.env` reaches Docker Compose through `env_file`. If that config is ever deployed, **anyone can log in as any phone or email with `123456`.** Keep it false outside local development.
-- OTPs: no rate limiting or attempt counter (6 digits brute-forceable within 5 minutes); in-memory store isn't shared across workers and is lost on restart; `random` instead of `secrets`.
+- OTPs:
+  - **Sending** is rate-limited (§6), but **verifying** is not: there's no attempt counter, so a 6-digit code is brute-forceable within its 5 minutes. Add a per-destination attempt limit on `/auth/*/verify`.
+  - The OTP store and the rate-limit counters are in memory: not shared across instances and lost on restart.
+  - Codes use `random` instead of `secrets`.
 - JWT: 90-day expiry, no refresh or revocation, stored in plain SharedPreferences.
 - `CORS allow_origins=["*"]`.
 - Body photos (sensitive biometric data) sit unencrypted on local disk, with no delete endpoint and no retention policy. `uploads/` is gitignored; keep real images out of the repo.
@@ -530,6 +600,7 @@ All verified by the integration tests in §7.
 1. Decide the 3D path (flutter_unity_widget vs. a lighter in-Flutter renderer) before investing more in `UnityBridge`.
 2. Wire the photo analysis result into the avatar (fix the `shoulder_width_norm` key) or drop the feature.
 3. Build supplement reminders on-device with a per-supplement reminder model (§8.2 #4).
-4. Fix the two `DEV_MODE`-dependent unit tests by patching `auth.router.send_*_otp`; replace `widget_test.dart` with a real smoke test; add a CI workflow that runs unit tests plus the integration suite against a Postgres service container.
-5. Move the remaining routers to `Depends(current_user)`; centralise `API_BASE_URL` and the HTTP client in Flutter.
-6. Wire up i18n (`S.of(context)`) before the copy grows further.
+4. Add an attempt limit on OTP verify, and move the OTP store and send limits to a shared store before running more than one backend instance.
+5. Fix the two `DEV_MODE`-dependent unit tests by patching `auth.router.send_*_otp`; replace `widget_test.dart` with a real smoke test; add a CI workflow that runs unit tests plus the integration suite against a Postgres service container.
+6. Move the remaining routers to `Depends(current_user)`; centralise `API_BASE_URL` and the HTTP client in Flutter.
+7. Wire up i18n (`S.of(context)`) before the copy grows further.

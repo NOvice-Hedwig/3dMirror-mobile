@@ -3,13 +3,15 @@ auth/service.py
 Handles: Aliyun SMS (CN), Twilio SMS (intl), Email OTP, Apple JWT, JWT tokens
 """
 
-import os, re, random, string, time, hashlib, hmac, base64
+import os, random, string, time, hashlib, hmac, base64
 import urllib.parse
 from datetime import datetime, timedelta, timezone
 from typing import Optional
 
 import httpx
 import jwt
+
+from auth.identity import Phone
 
 # ── Config ────────────────────────────────────────────────────────────────────
 
@@ -64,19 +66,17 @@ def verify_code(key: str, code: str) -> bool:
 
 # ── SMS ───────────────────────────────────────────────────────────────────────
 
-def _is_cn(phone: str) -> bool:
-    return phone.startswith("+86") or bool(re.match(r"^1[3-9]\d{9}$", phone))
-
-async def send_sms_otp(phone: str) -> str:
+async def send_sms_otp(phone: Phone) -> str:
+    """OTP keyed by E.164. China → Aliyun with the national number; elsewhere → Twilio (E.164)."""
     if DEV_MODE:
-        _save_otp(phone, DEV_OTP)
+        _save_otp(phone.e164, DEV_OTP)
         return DEV_OTP
     otp = _gen_otp()
-    _save_otp(phone, otp)
-    if _is_cn(phone):
-        await _aliyun(phone.lstrip("+86").lstrip("+"), otp)
+    _save_otp(phone.e164, otp)
+    if phone.region == "CN":
+        await _aliyun(phone.national, otp)
     else:
-        await _twilio(phone, otp)
+        await _twilio(phone.e164, otp)
     return otp
 
 

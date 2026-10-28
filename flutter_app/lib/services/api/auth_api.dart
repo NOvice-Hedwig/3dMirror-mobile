@@ -84,13 +84,21 @@ class AuthApi {
     return json.decode(r.body) as Map<String, dynamic>;
   }
 
+  /// 400 (wrong code), 422 (bad phone/email format) and 429 (too many requests) carry a
+  /// user-facing Chinese `detail`; show it as is.
   void _assert(http.Response r) {
-    if (r.statusCode == 400) {
-      final b = json.decode(r.body) as Map<String, dynamic>;
-      throw AuthException(b['detail']?.toString() ?? '请求失败');
+    if (r.statusCode == 200 || r.statusCode == 201) return;
+    String? detail;
+    try {
+      final b = json.decode(r.body);
+      if (b is Map && b['detail'] is String) detail = b['detail'] as String;
+    } on FormatException {
+      // not JSON
     }
-    if (r.statusCode != 200 && r.statusCode != 201) {
-      throw AuthException('网络错误 (${r.statusCode})');
+    if (r.statusCode == 429) throw AuthException(detail ?? '请求过于频繁，请稍后再试');
+    if ((r.statusCode == 400 || r.statusCode == 422) && detail != null) {
+      throw AuthException(detail);
     }
+    throw AuthException('网络错误 (${r.statusCode})');
   }
 }

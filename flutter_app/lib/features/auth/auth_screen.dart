@@ -4,10 +4,12 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_animate/flutter_animate.dart';
 import 'package:go_router/go_router.dart';
+import 'package:phone_numbers_parser/phone_numbers_parser.dart' show IsoCode;
 import 'package:sign_in_with_apple/sign_in_with_apple.dart';
 
 import '../../core/theme/design_tokens.dart';
 import '../../core/router/app_router.dart';
+import '../../core/validation/login_identity.dart';
 import '../../core/widgets/animate_widgets.dart';
 import '../../services/api/auth_api.dart';
 
@@ -21,6 +23,8 @@ class _AuthScreenState extends State<AuthScreen> with SingleTickerProviderStateM
   final _phoneCtrl = TextEditingController();
   final _emailCtrl = TextEditingController();
   final _codeCtrl  = TextEditingController();
+  final _phoneFocus = FocusNode();
+  final _emailFocus = FocusNode();
 
   bool   _codeSent    = false;
   bool   _loading     = false;
@@ -29,16 +33,63 @@ class _AuthScreenState extends State<AuthScreen> with SingleTickerProviderStateM
   Timer? _timer;
   String? _error;
 
+  IsoCode _country = defaultCountry();
+  // Inline errors appear only after the field first loses focus or a submit attempt.
+  bool _phoneTouched = false;
+  bool _emailTouched = false;
+  String? _sentTo;   // normalized identifier the code was sent to (E.164 or lowercased email)
+
+  @override
+  void initState() {
+    super.initState();
+    _phoneCtrl.addListener(_onPhoneChanged);
+    _emailCtrl.addListener(_refresh);
+    _codeCtrl.addListener(_refresh);
+    _phoneFocus.addListener(() {
+      if (!_phoneFocus.hasFocus) setState(() => _phoneTouched = true);
+    });
+    _emailFocus.addListener(() {
+      if (!_emailFocus.hasFocus) setState(() => _emailTouched = true);
+    });
+  }
+
   @override
   void dispose() {
     _tab.dispose();
     _phoneCtrl.dispose(); _emailCtrl.dispose(); _codeCtrl.dispose();
+    _phoneFocus.dispose(); _emailFocus.dispose();
     _timer?.cancel();
     super.dispose();
   }
 
-  String get _id => _tab.index == 0
-      ? _phoneCtrl.text.trim() : _emailCtrl.text.trim();
+  void _refresh() => setState(() {});
+
+  /// A "+…" input decides the country; the picker follows it.
+  void _onPhoneChanged() {
+    final typed = checkPhone(_phoneCtrl.text, _country).typedCountry;
+    setState(() { if (typed != null) _country = typed; });
+  }
+
+  PhoneCheck get _phoneCheck => checkPhone(_phoneCtrl.text, _country);
+  String? get _emailError => emailError(_emailCtrl.text);
+  bool get _isPhoneTab => _tab.index == 0;
+
+  bool get _identifierValid => _isPhoneTab ? _phoneCheck.isValid : _emailError == null;
+
+  /// What is sent to the backend: E.164 phone or trimmed + lowercased email.
+  String get _normalizedId =>
+      _isPhoneTab ? _phoneCheck.e164! : normalizeEmail(_emailCtrl.text);
+
+  VoidCallback? get _ctaAction {
+    if (_loading) return null;
+    if (_codeSent) return _codeCtrl.text.length == 6 ? _verify : null;
+    return _identifierValid ? _send : null;
+  }
+
+  void _submitIdentifier() {
+    setState(() { if (_isPhoneTab) { _phoneTouched = true; } else { _emailTouched = true; } });
+    if (_identifierValid) _send();
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -135,7 +186,7 @@ class _AuthScreenState extends State<AuthScreen> with SingleTickerProviderStateM
                           duration: const Duration(milliseconds: 120),
                           curve: MirrorCurve.snap,
                           child: ElevatedButton(
-                            onPressed: _loading ? null : (_codeSent ? _verify : _send),
+                            onPressed: _ctaAction,
                             child: _loading
                                 ? const SizedBox(width: 18, height: 18,
                                     child: CircularProgressIndicator(
@@ -278,33 +329,63 @@ class _AuthScreenState extends State<AuthScreen> with SingleTickerProviderStateM
       labelStyle: MirrorText.bodyS.copyWith(
           fontWeight: FontWeight.w500, color: MirrorColors.text1),
       unselectedLabelStyle: MirrorText.bodyS.copyWith(color: MirrorColors.text3),
-      onTap: (_) => setState(() { _codeSent = false; _error = null; _codeCtrl.clear(); }),
+      onTap: (_) => setState(() {
+        _codeSent = false; _sentTo = null; _error = null; _codeCtrl.clear();
+      }),
       tabs: const [Tab(text: '手机号'), Tab(text: '邮箱')],
     ),
   );
 
-Widget _identifierField() => SizedBox(
-  key: const ValueKey('identifier'),
-  height: 72,
-  child: TabBarView(
-    controller: _tab,
-    children: [
-      _Field(
-        controller: _phoneCtrl,
-        placeholder: '+86 138 0000 0000',
-        keyboardType: TextInputType.phone,
-        formatters: [
-          FilteringTextInputFormatter.allow(RegExp(r'[+\d\s\-]')),
-        ],
-      ),
-      _Field(
-        controller: _emailCtrl,
-        placeholder: 'your@email.com',
-        keyboardType: TextInputType.emailAddress,
-      ),
-    ],
-  ),
-);
+  Widget _identifierField() => SizedBox(
+    key: const ValueKey('identifier'),
+    height: 96,   // room for the inline error under the field
+    child: TabBarView(
+      controller: _tab,
+      children: [
+        Row(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            _CountryButton(country: _country, onTap: _pickCountry),
+            const SizedBox(width: 12),
+            Expanded(
+              child: _Field(
+                controller: _phoneCtrl,
+                focusNode: _phoneFocus,
+                placeholder: '手机号',
+                keyboardType: TextInputType.phone,
+                formatters: [FilteringTextInputFormatter.allow(RegExp(r'[+\d\s\-()]'))],
+                errorText: _phoneTouched ? _phoneCheck.error : null,
+                onSubmitted: (_) => _submitIdentifier(),
+              ),
+            ),
+          ],
+        ),
+        _Field(
+          controller: _emailCtrl,
+          focusNode: _emailFocus,
+          placeholder: 'your@email.com',
+          keyboardType: TextInputType.emailAddress,
+          errorText: _emailTouched ? _emailError : null,
+          onSubmitted: (_) => _submitIdentifier(),
+        ),
+      ],
+    ),
+  );
+
+  Future<void> _pickCountry() async {
+    final picked = await showModalBottomSheet<IsoCode>(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: MirrorColors.bg,
+      builder: (_) => const _CountryPickerSheet(),
+    );
+    if (picked == null || !mounted) return;
+    setState(() {
+      _country = picked;
+      // A "+…" number that contradicts the new choice would snap the picker back; drop the prefix.
+      if (_phoneCtrl.text.trimLeft().startsWith('+')) _phoneCtrl.clear();
+    });
+  }
 
   Widget _codeField() => Column(
     key: const ValueKey('code'),
@@ -329,30 +410,32 @@ Widget _identifierField() => SizedBox(
   );
 
   Future<void> _send() async {
-    if (_id.isEmpty) return;
+    // Resend reuses the destination the first code went to.
+    final to = _codeSent ? _sentTo! : _normalizedId;
     setState(() { _loading = true; _error = null; });
     try {
-      if (_tab.index == 0) {
-        await AuthApi.instance.sendPhoneOtp(_id);
+      if (_isPhoneTab) {
+        await AuthApi.instance.sendPhoneOtp(to);
       } else {
-        await AuthApi.instance.sendEmailOtp(_id);
+        await AuthApi.instance.sendEmailOtp(to);
       }
-      setState(() { _codeSent = true; });
+      if (!mounted) return;
+      setState(() { _codeSent = true; _sentTo = to; });
       _startTimer();
     } on AuthException catch (e) {
-      setState(() { _error = e.message; });
+      if (mounted) setState(() { _error = e.message; });
     } finally {
       if (mounted) setState(() { _loading = false; });
     }
   }
 
   Future<void> _verify() async {
-    if (_codeCtrl.text.length != 6) return;
+    if (_codeCtrl.text.length != 6 || _sentTo == null) return;
     setState(() { _loading = true; _error = null; });
     try {
-      final res = _tab.index == 0
-          ? await AuthApi.instance.verifyPhoneOtp(_id, _codeCtrl.text)
-          : await AuthApi.instance.verifyEmailOtp(_id, _codeCtrl.text);
+      final res = _isPhoneTab
+          ? await AuthApi.instance.verifyPhoneOtp(_sentTo!, _codeCtrl.text)
+          : await AuthApi.instance.verifyEmailOtp(_sentTo!, _codeCtrl.text);
       await AuthApi.instance.persistToken(res.token, res.userId);
       if (!mounted) return;
       context.go(res.isNewUser ? MirrorRoute.onboarding : MirrorRoute.home);
@@ -403,7 +486,7 @@ class _Field extends StatelessWidget {
   const _Field({
     required this.controller, required this.placeholder,
     this.keyboardType, this.formatters, this.maxLength,
-    this.autofocus = false,
+    this.autofocus = false, this.focusNode, this.errorText, this.onSubmitted,
   });
   final TextEditingController controller;
   final String placeholder;
@@ -411,14 +494,20 @@ class _Field extends StatelessWidget {
   final List<TextInputFormatter>? formatters;
   final int? maxLength;
   final bool autofocus;
+  final FocusNode? focusNode;
+  final String? errorText;
+  final ValueChanged<String>? onSubmitted;
 
   @override
   Widget build(BuildContext context) => TextField(
     controller: controller,
+    focusNode: focusNode,
     keyboardType: keyboardType,
     inputFormatters: formatters,
     maxLength: maxLength,
     autofocus: autofocus,
+    textInputAction: onSubmitted != null ? TextInputAction.done : null,
+    onSubmitted: onSubmitted,
     style: MirrorText.body.copyWith(
       color: MirrorColors.text1,
       fontSize: 16,
@@ -427,7 +516,89 @@ class _Field extends StatelessWidget {
     decoration: InputDecoration(
       hintText: placeholder,
       counterText: '',
+      errorText: errorText,
+      errorStyle: MirrorText.bodyS.copyWith(color: MirrorColors.error),
+      errorMaxLines: 2,
       contentPadding: const EdgeInsets.symmetric(vertical: 14),
     ),
   );
+}
+
+/// Flag + dialing code; opens the country picker.
+class _CountryButton extends StatelessWidget {
+  const _CountryButton({required this.country, required this.onTap});
+  final IsoCode country;
+  final VoidCallback onTap;
+
+  @override
+  Widget build(BuildContext context) => InkWell(
+    onTap: onTap,
+    borderRadius: BorderRadius.circular(MirrorRadius.sm),
+    child: Padding(
+      padding: const EdgeInsets.symmetric(vertical: 14, horizontal: 4),
+      child: Row(mainAxisSize: MainAxisSize.min, children: [
+        Text(flagEmoji(country), style: const TextStyle(fontSize: 18)),
+        const SizedBox(width: 6),
+        Text('+${dialCode(country)}',
+            style: MirrorText.body.copyWith(color: MirrorColors.text1, fontSize: 16)),
+        const Icon(Icons.expand_more, size: 18, color: MirrorColors.text3),
+      ]),
+    ),
+  );
+}
+
+/// Searchable list of all countries: Chinese name, English name, ISO code or dialing code.
+class _CountryPickerSheet extends StatefulWidget {
+  const _CountryPickerSheet();
+  @override
+  State<_CountryPickerSheet> createState() => _CountryPickerSheetState();
+}
+
+class _CountryPickerSheetState extends State<_CountryPickerSheet> {
+  String _query = '';
+
+  @override
+  Widget build(BuildContext context) {
+    final results = searchCountries(_query);
+    return SafeArea(
+      child: SizedBox(
+        height: MediaQuery.of(context).size.height * 0.85,
+        child: Column(children: [
+          Padding(
+            padding: const EdgeInsets.fromLTRB(
+                MirrorSpacing.pagePad, 20, MirrorSpacing.pagePad, 8),
+            child: TextField(
+              autofocus: true,
+              onChanged: (v) => setState(() => _query = v),
+              style: MirrorText.body.copyWith(color: MirrorColors.text1),
+              decoration: InputDecoration(
+                hintText: '搜索国家/地区或区号',
+                prefixIcon: const Icon(Icons.search, color: MirrorColors.text3),
+                hintStyle: MirrorText.body.copyWith(color: MirrorColors.text3),
+              ),
+            ),
+          ),
+          Expanded(
+            child: results.isEmpty
+                ? Center(child: Text('没有找到匹配的国家/地区', style: MirrorText.caption))
+                : ListView.builder(
+                    itemCount: results.length,
+                    itemBuilder: (_, i) {
+                      final iso = results[i];
+                      return ListTile(
+                        leading: Text(flagEmoji(iso), style: const TextStyle(fontSize: 22)),
+                        title: Text(countryNameZh(iso),
+                            style: MirrorText.body.copyWith(color: MirrorColors.text1)),
+                        subtitle: Text(countryNameEn(iso), style: MirrorText.caption),
+                        trailing: Text('+${dialCode(iso)}',
+                            style: MirrorText.bodyS.copyWith(color: MirrorColors.text2)),
+                        onTap: () => Navigator.of(context).pop(iso),
+                      );
+                    },
+                  ),
+          ),
+        ]),
+      ),
+    );
+  }
 }
