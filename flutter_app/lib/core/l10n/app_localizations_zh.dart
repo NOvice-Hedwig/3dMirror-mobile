@@ -12,9 +12,6 @@ class SZh extends S {
   String get appName => '3D Mirror';
 
   @override
-  String get authTitle => '开始蜕变';
-
-  @override
   String get authSubtitle => '你的身体，你来定义';
 
   @override
@@ -31,7 +28,7 @@ class SZh extends S {
 
   @override
   String resendIn(int sec) {
-    return '${sec}s 后重发';
+    return '${sec}S  ·  重发';
   }
 
   @override
@@ -41,7 +38,7 @@ class SZh extends S {
   String get verifyLogin => '验证并登录';
 
   @override
-  String get orDivider => '或';
+  String get orDivider => 'OR';
 
   @override
   String get appleLogin => '使用 Apple 登录';
@@ -326,4 +323,57 @@ class SZh extends S {
 
   @override
   String get languageEn => 'English';
+
+  @override
+  String get brandMasthead => '3D MIRROR';
+
+  @override
+  String get authTitleLead => '开始\n';
+
+  @override
+  String get authTitleEmphasis => '蜕变';
+
+  @override
+  String get authContinueWith => 'CONTINUE WITH';
+
+  @override
+  String get phonePlaceholder => '手机号';
+
+  @override
+  String get countrySearchHint => '搜索国家/地区或区号';
+
+  @override
+  String get countryNoMatch => '没有找到匹配的国家/地区';
+
+  @override
+  String get errorPhoneEmpty => '请输入手机号';
+
+  @override
+  String get errorPhoneNeedsCountryCode => '请选择国家/地区代码，例如 +86';
+
+  @override
+  String get errorPhoneInvalid => '该国家/地区的手机号格式不正确';
+
+  @override
+  String get errorPhoneNotMobile => '仅支持手机号，不支持座机、免费电话等号码';
+
+  @override
+  String get errorEmailEmpty => '请输入邮箱';
+
+  @override
+  String get errorEmailInvalid => '邮箱格式不正确';
+
+  @override
+  String get errorRateLimited => '请求过于频繁，请稍后再试';
+
+  @override
+  String get errorAppleSignIn => 'Apple 登录失败，请重试';
+
+  @override
+  String errorNetworkStatus(int status) {
+    return '网络错误 ($status)';
+  }
+
+  @override
+  String get sessionExpired => '登录已过期，请重新登录';
 }

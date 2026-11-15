@@ -1,13 +1,12 @@
 {
   "@@locale": "zh",
   "appName": "3D Mirror",
-  "authTitle": "开始蜕变",
   "authSubtitle": "你的身体，你来定义",
   "tabPhone": "手机号",
   "tabEmail": "邮箱",
   "sendCode": "发送验证码",
   "resendCode": "重新发送",
-  "resendIn": "{sec}s 后重发",
+  "resendIn": "{sec}S  ·  重发",
   "@resendIn": {
     "placeholders": {
       "sec": {
@@ -17,7 +16,7 @@
   },
   "codePlaceholder": "6位验证码",
   "verifyLogin": "验证并登录",
-  "orDivider": "或",
+  "orDivider": "OR",
   "appleLogin": "使用 Apple 登录",
   "privacyNote": "登录即表示同意",
   "privacyLink": "隐私政策",
@@ -118,5 +117,29 @@
     }
   },
   "languageZh": "简体中文",
-  "languageEn": "English"
+  "languageEn": "English",
+  "brandMasthead": "3D MIRROR",
+  "authTitleLead": "开始\n",
+  "authTitleEmphasis": "蜕变",
+  "authContinueWith": "CONTINUE WITH",
+  "phonePlaceholder": "手机号",
+  "countrySearchHint": "搜索国家/地区或区号",
+  "countryNoMatch": "没有找到匹配的国家/地区",
+  "errorPhoneEmpty": "请输入手机号",
+  "errorPhoneNeedsCountryCode": "请选择国家/地区代码，例如 +86",
+  "errorPhoneInvalid": "该国家/地区的手机号格式不正确",
+  "errorPhoneNotMobile": "仅支持手机号，不支持座机、免费电话等号码",
+  "errorEmailEmpty": "请输入邮箱",
+  "errorEmailInvalid": "邮箱格式不正确",
+  "errorRateLimited": "请求过于频繁，请稍后再试",
+  "errorAppleSignIn": "Apple 登录失败，请重试",
+  "errorNetworkStatus": "网络错误 ({status})",
+  "@errorNetworkStatus": {
+    "placeholders": {
+      "status": {
+        "type": "int"
+      }
+    }
+  },
+  "sessionExpired": "登录已过期，请重新登录"
 }

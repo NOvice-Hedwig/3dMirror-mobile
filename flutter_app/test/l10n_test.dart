@@ -13,6 +13,10 @@ import 'package:shared_preferences/shared_preferences.dart';
 // batch is migrated; the test then keeps Chinese string literals from creeping back in.
 const migratedFiles = [
   'lib/features/me/me_screen.dart',
+  'lib/features/auth/auth_screen.dart',
+  'lib/core/validation/login_identity.dart',
+  'lib/services/api/auth_api.dart',
+  'lib/main.dart',
 ];
 
 Map<String, dynamic> readArb(String lang) =>

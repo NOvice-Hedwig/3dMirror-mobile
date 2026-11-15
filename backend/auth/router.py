@@ -6,6 +6,7 @@ import asyncpg
 from fastapi import APIRouter, HTTPException, Depends, Header, Request
 from pydantic import BaseModel, Field
 
+from api_errors import ApiError
 from database import Database
 from auth import rate_limit
 from auth.identity import (
@@ -67,21 +68,21 @@ def _phone(raw: str) -> Phone:
     try:
         return normalize_phone(raw)
     except IdentityError as e:
-        raise HTTPException(422, str(e))
+        raise ApiError(422, e.code, str(e))
 
 
 def _email(raw: str) -> str:
     try:
         return normalize_email(raw)
     except IdentityError as e:
-        raise HTTPException(422, str(e))
+        raise ApiError(422, e.code, str(e))
 
 
 def _limit(destination: str, request: Request) -> None:
     try:
         rate_limit.check_and_record(destination, request.client.host if request.client else None)
     except rate_limit.RateLimited as e:
-        raise HTTPException(429, MSG_TOO_MANY, headers={"Retry-After": str(e.retry_after_s)})
+        raise ApiError(429, "rate_limited", MSG_TOO_MANY, headers={"Retry-After": str(e.retry_after_s)})
 
 
 def _mask(e164: str) -> str:
@@ -132,7 +133,7 @@ async def phone_send(req: PhoneSendReq, request: Request):
     try:
         await send_sms_otp(phone)
     except Exception as e:
-        raise HTTPException(500, f"SMS failed: {e}")
+        raise ApiError(500, "sms_send_failed", f"SMS failed: {e}")
     return {"message": "OTP sent"}
 
 
@@ -140,7 +141,7 @@ async def phone_send(req: PhoneSendReq, request: Request):
 async def phone_verify(req: PhoneVerifyReq):
     phone = _phone(req.phone)
     if not verify_code(phone.e164, req.code):
-        raise HTTPException(400, "Invalid or expired code")
+        raise ApiError(400, "code_invalid", "Invalid or expired code")
     pool = Database.pool()
     uid = await _find_phone_user(pool, phone)
     is_new = uid is None
@@ -161,7 +162,7 @@ async def email_send(req: EmailSendReq, request: Request):
     try:
         await send_email_otp(email)
     except Exception as e:
-        raise HTTPException(500, f"Email failed: {e}")
+        raise ApiError(500, "email_send_failed", f"Email failed: {e}")
     return {"message": "OTP sent"}
 
 
@@ -169,7 +170,7 @@ async def email_send(req: EmailSendReq, request: Request):
 async def email_verify(req: EmailVerifyReq):
     email = _email(req.email)
     if not verify_code(email, req.code):
-        raise HTTPException(400, "Invalid or expired code")
+        raise ApiError(400, "code_invalid", "Invalid or expired code")
     pool = Database.pool()
     # users.email is CITEXT, so rows stored with uppercase letters by older builds still match.
     row  = await pool.fetchrow("SELECT id FROM users WHERE email=$1", email)
@@ -191,7 +192,7 @@ async def apple_sign_in(req: AppleReq):
     try:
         payload = await verify_apple_token(req.identity_token)
     except Exception as e:
-        raise HTTPException(400, f"Apple token invalid: {e}")
+        raise ApiError(400, "apple_token_invalid", f"Apple token invalid: {e}")
     apple_id = payload["sub"]
     email    = (payload.get("email") or "").strip().lower() or None
     pool = Database.pool()
@@ -216,5 +217,5 @@ async def me(uid: str = Depends(current_user)):
     row  = await pool.fetchrow(
         "SELECT id, phone, email, display_name, created_at FROM users WHERE id=$1", uid)
     if not row:
-        raise HTTPException(404, "User not found")
+        raise ApiError(404, "user_not_found", "User not found")
     return dict(row)

@@ -63,6 +63,7 @@ async def test_invalid_code_returns_400(mock_db):
         r = await c.post("/auth/phone/verify",
                          json={"phone": "+8613800138000", "code": "000000"})
     assert r.status_code == 400
+    assert r.json() == {"detail": "Invalid or expired code", "code": "code_invalid"}
 
 
 @pytest.mark.asyncio

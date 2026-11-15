@@ -1,6 +1,7 @@
 import 'dart:convert';
 import 'package:http/http.dart' as http;
 import 'package:shared_preferences/shared_preferences.dart';
+import '../../core/l10n/error_text.dart';
 import 'api_http.dart';
 
 class AuthResponse {
@@ -14,10 +15,28 @@ class AuthResponse {
   );
 }
 
-class AuthException implements Exception {
-  final String message;
-  const AuthException(this.message);
-  @override String toString() => message;
+/// A rejected auth request. Show it with `serverErrorText(S.of(context), e)`.
+class AuthException implements Exception, ServerError {
+  @override final int status;
+  @override final String? code;     // stable key, e.g. 'phone_invalid' (backend/api_errors.py)
+  @override final String? detail;   // the server's own (Chinese) text, fallback for unknown codes
+  const AuthException(this.status, {this.code, this.detail});
+
+  factory AuthException.fromResponse(http.Response r) {
+    String? code, detail;
+    try {
+      final b = json.decode(utf8.decode(r.bodyBytes));
+      if (b is Map) {
+        if (b['code'] is String) code = b['code'] as String;
+        if (b['detail'] is String) detail = b['detail'] as String;
+      }
+    } on FormatException {
+      // not JSON
+    }
+    return AuthException(r.statusCode, code: code, detail: detail);
+  }
+
+  @override String toString() => 'AuthException($status, $code, $detail)';
 }
 
 class AuthApi {
@@ -84,21 +103,8 @@ class AuthApi {
     return json.decode(r.body) as Map<String, dynamic>;
   }
 
-  /// 400 (wrong code), 422 (bad phone/email format) and 429 (too many requests) carry a
-  /// user-facing Chinese `detail`; show it as is.
   void _assert(http.Response r) {
     if (r.statusCode == 200 || r.statusCode == 201) return;
-    String? detail;
-    try {
-      final b = json.decode(r.body);
-      if (b is Map && b['detail'] is String) detail = b['detail'] as String;
-    } on FormatException {
-      // not JSON
-    }
-    if (r.statusCode == 429) throw AuthException(detail ?? '请求过于频繁，请稍后再试');
-    if ((r.statusCode == 400 || r.statusCode == 422) && detail != null) {
-      throw AuthException(detail);
-    }
-    throw AuthException('网络错误 (${r.statusCode})');
+    throw AuthException.fromResponse(r);
   }
 }

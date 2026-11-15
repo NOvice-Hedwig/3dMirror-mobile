@@ -36,27 +36,28 @@ def test_valid_mobile_numbers_normalize_to_e164(raw, e164, region, national):
 
 # ── Phone: rejected ───────────────────────────────────────────────────────────
 
-@pytest.mark.parametrize("raw,message", [
-    ("",                 MSG_PHONE_EMPTY),
-    ("   ",              MSG_PHONE_EMPTY),
-    ("13812345678",      MSG_PHONE_NEEDS_CODE),   # no country code
-    ("8613812345678",    MSG_PHONE_NEEDS_CODE),
-    ("+86 123",          MSG_PHONE_INVALID),      # too short
-    ("+8612345678901",   MSG_PHONE_INVALID),      # 11 digits but no CN range starts with 12
-    ("+1 012 555 0123",  MSG_PHONE_INVALID),      # US area code can't start with 0
-    ("+999 1234567",     MSG_PHONE_INVALID),      # unassigned country code
-    ("+86 abc",          MSG_PHONE_INVALID),
-    ("+18002345678",     MSG_PHONE_NOT_MOBILE),   # US toll-free
-    ("+19002345678",     MSG_PHONE_NOT_MOBILE),   # US premium-rate
-    ("+441212345678",    MSG_PHONE_NOT_MOBILE),   # UK fixed line (Birmingham)
-    ("+4930123456",      MSG_PHONE_NOT_MOBILE),   # Germany fixed line (Berlin)
-    ("+861012345678",    MSG_PHONE_NOT_MOBILE),   # China fixed line (Beijing)
-    ("+448001234567",    MSG_PHONE_NOT_MOBILE),   # UK toll-free
+@pytest.mark.parametrize("raw,message,code", [
+    ("",                 MSG_PHONE_EMPTY, "phone_empty"),
+    ("   ",              MSG_PHONE_EMPTY, "phone_empty"),
+    ("13812345678",      MSG_PHONE_NEEDS_CODE, "phone_needs_country_code"),   # no country code
+    ("8613812345678",    MSG_PHONE_NEEDS_CODE, "phone_needs_country_code"),
+    ("+86 123",          MSG_PHONE_INVALID, "phone_invalid"),      # too short
+    ("+8612345678901",   MSG_PHONE_INVALID, "phone_invalid"),      # 11 digits but no CN range starts with 12
+    ("+1 012 555 0123",  MSG_PHONE_INVALID, "phone_invalid"),      # US area code can't start with 0
+    ("+999 1234567",     MSG_PHONE_INVALID, "phone_invalid"),      # unassigned country code
+    ("+86 abc",          MSG_PHONE_INVALID, "phone_invalid"),
+    ("+18002345678",     MSG_PHONE_NOT_MOBILE, "phone_not_mobile"),   # US toll-free
+    ("+19002345678",     MSG_PHONE_NOT_MOBILE, "phone_not_mobile"),   # US premium-rate
+    ("+441212345678",    MSG_PHONE_NOT_MOBILE, "phone_not_mobile"),   # UK fixed line (Birmingham)
+    ("+4930123456",      MSG_PHONE_NOT_MOBILE, "phone_not_mobile"),   # Germany fixed line (Berlin)
+    ("+861012345678",    MSG_PHONE_NOT_MOBILE, "phone_not_mobile"),   # China fixed line (Beijing)
+    ("+448001234567",    MSG_PHONE_NOT_MOBILE, "phone_not_mobile"),   # UK toll-free
 ])
-def test_invalid_or_non_mobile_numbers_are_rejected(raw, message):
+def test_invalid_or_non_mobile_numbers_are_rejected(raw, message, code):
     with pytest.raises(IdentityError) as e:
         normalize_phone(raw)
     assert str(e.value) == message
+    assert e.value.code == code
 
 
 # ── Legacy matching forms ─────────────────────────────────────────────────────
@@ -83,20 +84,21 @@ def test_email_is_trimmed_lowercased_and_validated(raw, expected):
     assert normalize_email(raw) == expected
 
 
-@pytest.mark.parametrize("raw,message", [
-    ("",               MSG_EMAIL_EMPTY),
-    ("   ",            MSG_EMAIL_EMPTY),
-    ("foo",            MSG_EMAIL_INVALID),
-    ("foo@",           MSG_EMAIL_INVALID),
-    ("@example.com",   MSG_EMAIL_INVALID),
-    ("foo bar@x.com",  MSG_EMAIL_INVALID),
-    ("foo@bar",        MSG_EMAIL_INVALID),
-    ("foo@@bar.com",   MSG_EMAIL_INVALID),
+@pytest.mark.parametrize("raw,message,code", [
+    ("",               MSG_EMAIL_EMPTY, "email_empty"),
+    ("   ",            MSG_EMAIL_EMPTY, "email_empty"),
+    ("foo",            MSG_EMAIL_INVALID, "email_invalid"),
+    ("foo@",           MSG_EMAIL_INVALID, "email_invalid"),
+    ("@example.com",   MSG_EMAIL_INVALID, "email_invalid"),
+    ("foo bar@x.com",  MSG_EMAIL_INVALID, "email_invalid"),
+    ("foo@bar",        MSG_EMAIL_INVALID, "email_invalid"),
+    ("foo@@bar.com",   MSG_EMAIL_INVALID, "email_invalid"),
 ])
-def test_invalid_emails_are_rejected(raw, message):
+def test_invalid_emails_are_rejected(raw, message, code):
     with pytest.raises(IdentityError) as e:
         normalize_email(raw)
     assert str(e.value) == message
+    assert e.value.code == code
 
 
 # ── SMS routing ───────────────────────────────────────────────────────────────

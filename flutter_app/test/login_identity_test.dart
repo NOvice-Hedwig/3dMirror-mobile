@@ -1,5 +1,6 @@
 import 'package:flutter_test/flutter_test.dart';
 import 'package:mirror_3d/core/data/country_names.dart';
+import 'package:mirror_3d/core/l10n/error_text.dart';
 import 'package:mirror_3d/core/validation/login_identity.dart';
 import 'package:phone_numbers_parser/phone_numbers_parser.dart' show IsoCode;
 
@@ -27,16 +28,16 @@ void main() {
 
   group('checkPhone — rejected', () {
     final cases = <(String, IsoCode, String)>[
-      ('',                 IsoCode.CN, msgPhoneEmpty),
-      ('  ',               IsoCode.CN, msgPhoneEmpty),
-      ('123',              IsoCode.CN, msgPhoneInvalid),
-      ('+86 123',          IsoCode.CN, msgPhoneInvalid),
-      ('+1 012 555 0123',  IsoCode.CN, msgPhoneInvalid),
-      ('138 1234 5678',    IsoCode.GB, msgPhoneInvalid),     // a China number, UK picked
-      ('+18002345678',     IsoCode.CN, msgPhoneNotMobile),   // US toll-free
-      ('+441212345678',    IsoCode.CN, msgPhoneNotMobile),   // UK fixed line
-      ('+4930123456',      IsoCode.CN, msgPhoneNotMobile),   // Germany fixed line
-      ('010 1234 5678',    IsoCode.CN, msgPhoneNotMobile),   // China fixed line (Beijing)
+      ('',                 IsoCode.CN, ErrorCode.phoneEmpty),
+      ('  ',               IsoCode.CN, ErrorCode.phoneEmpty),
+      ('123',              IsoCode.CN, ErrorCode.phoneInvalid),
+      ('+86 123',          IsoCode.CN, ErrorCode.phoneInvalid),
+      ('+1 012 555 0123',  IsoCode.CN, ErrorCode.phoneInvalid),
+      ('138 1234 5678',    IsoCode.GB, ErrorCode.phoneInvalid),     // a China number, UK picked
+      ('+18002345678',     IsoCode.CN, ErrorCode.phoneNotMobile),   // US toll-free
+      ('+441212345678',    IsoCode.CN, ErrorCode.phoneNotMobile),   // UK fixed line
+      ('+4930123456',      IsoCode.CN, ErrorCode.phoneNotMobile),   // Germany fixed line
+      ('010 1234 5678',    IsoCode.CN, ErrorCode.phoneNotMobile),   // China fixed line (Beijing)
     ];
     for (final (input, selected, message) in cases) {
       test('"$input" (picker ${selected.name}) → $message', () {
@@ -63,9 +64,9 @@ void main() {
       }
     });
     test('invalid', () {
-      expect(emailError(''), msgEmailEmpty);
+      expect(emailError(''), ErrorCode.emailEmpty);
       for (final e in ['foo', 'foo@', '@example.com', 'foo bar@x.com', 'foo@bar', 'foo@@bar.com']) {
-        expect(emailError(e), msgEmailInvalid, reason: e);
+        expect(emailError(e), ErrorCode.emailInvalid, reason: e);
       }
     });
   });

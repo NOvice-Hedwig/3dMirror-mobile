@@ -15,7 +15,8 @@
 - **Resolved this week (2026-10-10 → 10-12):** the DB-layer runtime failures (JSON, dates, period date, duplicate-day logs), the incomplete `migration.sql`, the failing 401 test, the tracked `backend/.env`, and timezone handling of log dates. The `JWT_SECRET` was rotated and `backend/.env` is no longer tracked. Details in [§8.1](#81-resolved-this-week).
 - **Login identifiers:** phones are validated per country (mobile numbers only) and stored as E.164; emails are trimmed and lowercased. Sending codes is rate-limited **in memory, so the backend must run as a single instance** until that moves to a shared store. See [§6 "Login identifiers"](#login-identifiers-and-send-limits-since-2026-10-27).
 - **Time rule:** calendar dates are always the user's local date. The app sends its IANA timezone in an `X-Timezone` header, and instants are timezone-aware UTC. See [§6 "Time rule"](#time-rule-since-2026-10-12) before touching anything date-related.
-- **Still open, most important first:** the Unity avatar isn't wired up (photo analysis is now stored and returned, but no avatar code applies it yet), i18n strings aren't used, supplement reminders aren't scheduled, and two test problems remain. See [§8.2](#82-open-issues).
+- **Still open, most important first:** the Unity avatar isn't wired up (photo analysis is now stored and returned, but no avatar code applies it yet), i18n is only partly migrated (login and Me so far), supplement reminders aren't scheduled, and two test problems remain. See [§8.2](#82-open-issues).
+- **i18n:** UI text goes in the ARB files, never in Dart literals. Errors the user sees carry a stable `code` next to `detail`, and the app translates the code. See [§6 "i18n"](#i18n-since-2026-11-15).
 - **Photo analysis** results live in `body_analyses`. Their shape is documented in [§6 "Photo analysis data contract"](#photo-analysis-data-contract-since-2026-11-14), including a note for the avatar owner about the `shoulder_norm` / `shoulder_width_norm` naming.
 
 ---
@@ -308,7 +309,7 @@ Workout data lives in **two places**: `sessions.activity_data` (Input screen) an
 
 ### 5.2 HTTP API
 
-All endpoints except `/health` and `/auth/*/send|verify|apple` need `Authorization: Bearer <jwt>`. Errors use FastAPI's `{"detail": ...}`, and some messages are in Chinese.
+All endpoints except `/health` and `/auth/*/send|verify|apple` need `Authorization: Bearer <jwt>`. Errors use FastAPI's `{"detail": ...}`, and some messages are in Chinese. Errors meant for the user also carry a stable **`code`**, e.g. `{"detail": "邮箱格式不正确", "code": "email_invalid"}`. The app translates the code and falls back to `detail` (codes listed in §6 "i18n").
 
 The app sends **`X-Timezone: <IANA name>`** (e.g. `America/New_York`) on every request. It is **required (422 if missing or unknown)** on every endpoint that decides a calendar date: `/logs/period`, `/logs/measurements`, `/logs/today-stats`, `/challenge/progress` and `/coach/suggestions`. Other endpoints ignore it.
 
@@ -321,7 +322,7 @@ Formats:
 | Method & path | Body / query | Response |
 |---|---|---|
 | `GET /health` | — | `{status, version}` |
-| `POST /auth/phone/send` | `{phone}` with country code, e.g. `+86 138…` | `{message}`; 422 `{detail}` bad number; 429 `{detail}` + `Retry-After` when rate-limited |
+| `POST /auth/phone/send` | `{phone}` with country code, e.g. `+86 138…` | `{message}`; 422 `{detail, code}` bad number; 429 `{detail, code}` + `Retry-After` when rate-limited |
 | `POST /auth/phone/verify` | `{phone, code(6)}` | `AuthOut {user_id, token, is_new_user}`; 422 bad number |
 | `POST /auth/email/send` | `{email}` | `{message}`; 422 bad email; 429 when rate-limited |
 | `POST /auth/email/verify` | `{email, code(6)}` | `AuthOut`; 422 bad email |
@@ -363,7 +364,7 @@ Contract drift between client and server (fields the server drops silently): `Wo
 | Auth token and user id | SharedPreferences `mirror_token`, `mirror_user_id` (plain, **not** secure storage) | Read directly by every `XxxApi._headers()` and by the router |
 | Onboarding progress | prefs `mirror_onboarded`, `mirror_photo_captured`, `mirror_terms_accepted` | Router redirect |
 | Profile | prefs `mirror_gender`, `mirror_age`, `mirror_height`, `mirror_weight`, `mirror_goal` | Local only; never sent to the backend |
-| Locale | prefs `locale` → `localeProvider` (StateNotifier) | Drives `MaterialApp.locale` |
+| Language | prefs `locale` (`system`\|`zh`\|`en`) → `appLanguageProvider` (Notifier), loaded in `main()` before `runApp` | Drives `MaterialApp.locale`; see §6 "i18n" |
 | Sessions | `sessionsProvider` (AsyncNotifier) and the derived `latestSessionProvider`, `streakProvider`, `weekWorkoutMinutesProvider`, `todayWorkoutMinProvider` | home_provider.dart |
 | Logs | `todayStatsProvider` (FutureProvider); log sheets `ref.invalidate` it after saving | |
 | Predict, coach, challenge | `predictMetricsProvider.family(weeks)`, `coachSuggestionsProvider`, `challengeProgressProvider` (autoDispose FutureProviders) | |
@@ -374,7 +375,7 @@ Riverpod API styles are mixed: legacy `StateNotifier`, `Notifier`, `AsyncNotifie
 
 **Theming.** Tokens live in `core/theme/design_tokens.dart` (`MirrorColors`, `MirrorText`, `MirrorDuration`, `MirrorCurve`) and the home-specific `features/home/home_design.dart` (`kHomeBg`, `kGold`…). There's only a light theme, while the home screen is a dark "immersive" page. The brief asks for light and dark.
 
-**i18n.** `l10n.yaml` generates `S` from `lib/core/l10n/app_{zh,en}.arb`, and the delegate is registered. **However, no screen calls `S.of(context)`.** All UI copy is hard-coded, mostly Chinese, so switching locale has no visible effect.
+**i18n.** See "i18n" below. Only some screens are migrated so far.
 
 ### Backend configuration
 
@@ -389,13 +390,13 @@ Environment variables only (§2.2), read at **import time** as module globals in
   - The number must be valid for its region **and** be `MOBILE` or `FIXED_LINE_OR_MOBILE` (US/CA can't distinguish). Fixed line, toll-free, premium-rate, VoIP etc. are rejected.
   - Normalized to **E.164**, which is used as the OTP key, the stored `users.phone` and the lookup key.
 - **Email:** trimmed and lowercased, then validated as `EmailStr` (no DNS). That value is the OTP key and the stored value; `users.email` is `CITEXT`.
-- **Errors:** 422 with a plain Chinese `detail`:
-  - 请输入手机号 (enter a phone number)
-  - 请选择国家/地区代码，例如 +86 (choose a country code, e.g. +86)
-  - 该国家/地区的手机号格式不正确 (invalid mobile format for this country)
-  - 仅支持手机号，不支持座机、免费电话等号码 (mobile numbers only, no landline or toll-free)
-  - 请输入邮箱 (enter an email)
-  - 邮箱格式不正确 (invalid email format)
+- **Errors:** 422 with a Chinese `detail` and a `code` (the app's own checks return the same codes):
+  - `phone_empty`: 请输入手机号 (enter a phone number)
+  - `phone_needs_country_code`: 请选择国家/地区代码，例如 +86 (choose a country code, e.g. +86)
+  - `phone_invalid`: 该国家/地区的手机号格式不正确 (invalid mobile format for this country)
+  - `phone_not_mobile`: 仅支持手机号，不支持座机、免费电话等号码 (mobile numbers only, no landline or toll-free)
+  - `email_empty`: 请输入邮箱 (enter an email)
+  - `email_invalid`: 邮箱格式不正确 (invalid email format)
 - **SMS routing:** China goes to Aliyun with the national number; every other country goes to Twilio in E.164.
 - **Legacy numbers:** older builds stored whatever was typed (`13800138000`, `8613800138000`, `+86 138 0013 8000`).
   - Login matches stored values by digits: country code + national number for any country, and the bare national number **for China only**, since old input without a code was always China.
@@ -404,7 +405,7 @@ Environment variables only (§2.2), read at **import time** as module globals in
 - **Send limits (`auth/rate_limit.py`), on `/auth/phone/send` and `/auth/email/send`:**
   - **Per destination:** 1 per 60 s and 5 per hour.
   - **Per client IP:** 5 per minute and 20 per hour, configurable via `AUTH_SEND_LIMIT_IP_*`.
-  - Exceeding a limit returns 429 "请求过于频繁，请稍后再试" (too many requests, try again later) with `Retry-After`.
+  - Exceeding a limit returns 429 "请求过于频繁，请稍后再试" (too many requests, try again later), code `rate_limited`, with `Retry-After`.
   - Only sends that pass every limit are counted; rejected and invalid requests use no quota.
   - ⚠️ **The counters are in memory and per process.** With more than one backend instance (or `uvicorn --workers` > 1), each instance counts separately and the effective limit multiplies. **Move them to a shared store (e.g. Redis) before scaling out.** The same applies to the OTP store in `auth/service.py`.
   - The client IP is the direct peer. Behind a reverse proxy, configure trusted forwarded-for headers, or every user will share the proxy's IP limit.
@@ -412,6 +413,48 @@ Environment variables only (§2.2), read at **import time** as module globals in
   - Search covers Chinese name, English name, ISO code and dialing code. For a shared code (`+44`, `+1`), the main country comes first.
   - The default comes from the device locale, falling back to China. Typing or pasting `+…` makes the picker follow.
   - `phone_numbers_parser` has no country names, so `lib/core/data/country_names.dart` is **generated from Unicode CLDR** by `tool/gen_country_names.py` (dev-time Babel). Re-run it after upgrading `phone_numbers_parser`.
+  - Each row shows the name in the app language, with the other language underneath. The list is sorted by English name in both languages: Dart has no pinyin collation built in, so a Chinese order would need sort keys added by the generator.
+
+### i18n (since 2026-11-15)
+
+- **Setup:**
+  - `l10n.yaml` generates the `S` class from `lib/core/l10n/app_zh.arb` (template) and `app_en.arb`.
+  - The generated `app_localizations*.dart` files are committed. `flutter gen-l10n` (or any build) refreshes them.
+- **Language:**
+  - With **Follow system** (the default), any Chinese variant (`zh-Hant` and `zh-TW` included) gets Simplified Chinese, and English gets English. Any other device language falls back to Chinese (`resolveAppLocale` in `providers/locale_provider.dart`).
+  - The Me screen's LANGUAGE row overrides this with Follow system, 简体中文 or English. The choice is saved in prefs `locale` and read in `main()` before `runApp`, so the first frame is already in the right language.
+- **Adding text:**
+  - Add the key to **both** ARB files and use `S.of(context).key`.
+  - All-caps decorative labels (`SIGN  ·  OUT`, `CONTINUE WITH`…) are in the ARB files too, with the **same English value in both languages for now**. To translate them, change only `app_zh.arb`.
+- **Checks:** `test/l10n_test.dart` fails if:
+  - the two ARB files have different keys or placeholders;
+  - an English message contains Chinese;
+  - any file listed in `migratedFiles` gets a Chinese string literal back. Add each file to that list when you migrate it.
+- **Server errors:**
+  - Raise `api_errors.ApiError(status, code, detail)` for any error the user may see. The response is `{detail, code}`, and `detail` stays the Chinese text older builds display.
+  - The app maps codes in `lib/core/l10n/error_text.dart` (`errorCodeText`, `serverErrorText`). For a code the app doesn't know, it shows `detail` on 400/422/429, and otherwise a network error with the status.
+  - Codes are API contract: add new ones, never rename or reuse one.
+  - Current codes:
+    - `phone_empty`, `phone_needs_country_code`, `phone_invalid`, `phone_not_mobile`, `email_empty`, `email_invalid` (422)
+    - `rate_limited` (429)
+    - `code_invalid`, `apple_token_invalid` (400)
+    - `sms_send_failed`, `email_send_failed` (500)
+    - `user_not_found` (404, `/auth/me`; not shown by the app)
+- **Stored values stay Chinese:** some values are data, not display text, so translate only how they are shown, never the value sent to the server:
+  - meal type (`早餐`…): `diet_logs.meal` has a CHECK on the Chinese values;
+  - workout type (`有氧`, `无氧`…): compared in `routers/coach.py`;
+  - period symptoms.
+- **Migrated so far:** Me, login (screen, validation messages, country picker, server errors) and the expired-session snackbar.
+- **Remaining batches:** home FAB and log sheets; onboarding and photo capture; input, history, snapshot, compare and predict; challenge, coach and exercise library; backend coach suggestion templates (as `code` + `params`). `UnauthorizedException.toString()` in `api_http.dart` is still Chinese and moves with the screens that display exception text.
+- **Avatar-owned files (not migrated, for the avatar owner):** these files belong to the 3D avatar work and were left untouched. Each string needs an ARB key; `loadFailed` and `retry` already exist.
+
+  | File | Strings |
+  |---|---|
+  | `features/home/home_screen.dart` | `数据加载失败，请检查网络连接` (154), `重试` (160) |
+  | `features/home/widgets/mirror_hud.dart` | `NOW` (79), `TARGET` (97), `摄入` (114), `消耗` (124), `运动` (138), `睡眠` (144), `连续 $streak 天` (184, needs a placeholder) |
+  | `features/result/result_screen.dart` | `加载失败` (102), `重试` (106), `返回` (138), `BODY  ·  METRICS` (181), `你的体重` (215), `SAVE  ·  SHARE` (271), `TIME · COMPARE` (285), `NOW` (324), `体脂率` (362), `瘦体重` (400), `腰围` (426) |
+  | `core/widgets/body_viewport.dart` | `拖动旋转` (56) |
+  | `features/home/widgets/unity_view_wrapper.dart` | `UNITY ✓` (178, debug badge) |
 
 ### Photo analysis data contract (since 2026-11-14)
 
@@ -487,7 +530,9 @@ Environment variables only (§2.2), read at **import time** as module globals in
 | Backend login identifiers (integration) | `backend/tests/integration/test_auth_identity.py`, 41 tests | **41 pass** in-process against the disposable database: routes, 422/429, legacy rows, collisions |
 | Backend photo analysis (unit) | `backend/tests/test_photo_analysis.py`, 26 tests | **26 pass**: image type detection, reply parsing, every outcome, using a fake Anthropic client (no network, no cost) |
 | Backend photo analysis (integration) | `backend/tests/integration/test_photo_analysis_api.py`, 9 tests | **9 pass** in-process against the disposable database (needs `body_analyses`, i.e. `migration.sql` applied); uploads go to a temp dir |
+| Backend API error codes | `backend/tests/test_api_errors.py`, 4 tests | **4 pass**: `{detail, code}` shape and headers; plain `HTTPException` and validation errors unchanged |
 | Flutter | `test/body_analysis_test.dart`, `login_identity_test.dart`, `api_http_test.dart`, `home_provider_error_test.dart`, 41 tests | **41 pass** (`widget_test.dart` still doesn't compile, see §8.2) |
+| Flutter i18n (2026-11-15) | `test/l10n_test.dart` (ARB parity, Chinese-literal check, locale resolution, persistence, runtime switch) and `test/error_text_test.dart` (code → text in both languages, response parsing, fallbacks), 23 tests | **23 pass** |
 | Flutter | `flutter_app/test/widget_test.dart` | **Does not compile.** It's the default counter template and references `MyApp`, which doesn't exist (the app class is `MirrorApp`). Open, see §8.2 |
 | iOS/macOS | `RunnerTests.swift` | Xcode template stubs |
 
@@ -588,7 +633,7 @@ All verified by the integration tests in §7.
    - It reads `'shoulder_norm'` while the analysis field is `shoulder_width_norm`; `toAvatarOverrides()` bridges this until the avatar owner decides.
    - `limb_proportion_norm` has no consumer.
    - HEIC photos are skipped rather than converted; the app itself only uploads JPEG (#8).
-3. **i18n is scaffolded but unused.** No screen calls `S.of(context)`; all UI copy is hard-coded (mostly Chinese), so switching locale has no visible effect. Backend responses (coach cards, error details) are hard-coded Chinese too.
+3. **i18n is partly migrated.** The language switch, Me and login are done, and login errors are translated from codes. The other screens are still hard-coded (mostly Chinese), and so are the backend coach cards. Remaining batches and the avatar-owned strings are listed in §6 "i18n".
 4. **Supplement reminders are not implemented.** The supplement sheet lets the user switch a reminder on and pick a time, and the backend stores `reminder_time`/`reminder_enabled`, but **nothing schedules a reminder**. There's no notification package, no Android notification permission, and no server scheduler or push.
    - **Preferred approach:** schedule on the device (e.g. `flutter_local_notifications`) at the chosen wall-clock time. The phone's own timezone handles it, so **no server-side timezone** (`users.timezone`) is needed. That's only required if reminders are ever sent by server push.
    - **Data model:** reminders are currently stored per log entry (`supplement_logs`). They should become a **standing reminder per supplement** (e.g. a `supplements` or `supplement_reminders` table: user, supplement, time, enabled), separate from the log of doses taken.
@@ -607,6 +652,11 @@ All verified by the integration tests in §7.
    - **If gallery picking is added later:** keep using `image_picker` (it converts HEIC on both platforms), or call it with an `imageQuality` below 100.
    - **To support HEIC from other clients:** either reject `image/heic` at upload (415), or convert server-side with `pillow-heif`.
    - **Optional:** add `maxWidth: 2000, maxHeight: 2000` to `pickImage`. Claude downscales to about 1568 px on the long edge anyway, so this would cut upload size with no loss in analysis.
+9. **Exercise and food library names are Chinese only (out of i18n scope for now, 2026-11-15).** `constants/exercise_library.dart` (71 distinct exercise names) and `constants/food_library.dart` (48 foods) are content data and stay Chinese in the English UI. Options:
+   - add an English name next to each entry and pick by locale;
+   - move the libraries to the backend with per-locale names.
+
+   If these names are ever stored in logs, keep the stored value stable (see "Stored values stay Chinese" in §6 "i18n").
 
 **Other logic bugs:**
 - **Coach recovery card never triggers:** it checks `activity_data.get("type") == "无氧"`, but `sessions.activity_data` uses `workout_type` with English enum values (`strength`…). Workouts logged via the FAB go to `workout_logs`, which coach doesn't read. "Training days" counts distinct session days, not workouts.
@@ -664,4 +714,4 @@ All verified by the integration tests in §7.
 4. Add an attempt limit on OTP verify, and move the OTP store and send limits to a shared store before running more than one backend instance.
 5. Fix the two `DEV_MODE`-dependent unit tests by patching `auth.router.send_*_otp`; replace `widget_test.dart` with a real smoke test; add a CI workflow that runs unit tests plus the integration suite against a Postgres service container.
 6. Move the remaining routers to `Depends(current_user)`; centralise `API_BASE_URL` and the HTTP client in Flutter.
-7. Wire up i18n (`S.of(context)`) before the copy grows further.
+7. Finish the i18n batches (§6 "i18n"), including coach suggestions as `code` + `params`.

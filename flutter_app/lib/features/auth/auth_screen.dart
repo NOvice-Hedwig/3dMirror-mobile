@@ -7,6 +7,8 @@ import 'package:go_router/go_router.dart';
 import 'package:phone_numbers_parser/phone_numbers_parser.dart' show IsoCode;
 import 'package:sign_in_with_apple/sign_in_with_apple.dart';
 
+import '../../core/l10n/app_localizations.dart';
+import '../../core/l10n/error_text.dart';
 import '../../core/theme/design_tokens.dart';
 import '../../core/router/app_router.dart';
 import '../../core/validation/login_identity.dart';
@@ -31,7 +33,7 @@ class _AuthScreenState extends State<AuthScreen> with SingleTickerProviderStateM
   bool   _ctaPressed  = false;
   int    _resendSecs  = 0;
   Timer? _timer;
-  String? _error;
+  String? Function(S)? _error;   // built per frame so a language switch re-translates it
 
   IsoCode _country = defaultCountry();
   // Inline errors appear only after the field first loses focus or a submit attempt.
@@ -93,6 +95,8 @@ class _AuthScreenState extends State<AuthScreen> with SingleTickerProviderStateM
 
   @override
   Widget build(BuildContext context) {
+    final s = S.of(context);
+    final error = _error?.call(s);
     return Scaffold(
       backgroundColor: MirrorColors.bg,
       body: SafeArea(
@@ -114,8 +118,8 @@ class _AuthScreenState extends State<AuthScreen> with SingleTickerProviderStateM
                       Text.rich(TextSpan(
                         style: MirrorText.title,
                         children: [
-                          const TextSpan(text: '开始\n'),
-                          TextSpan(text: '蜕变',
+                          TextSpan(text: s.authTitleLead),
+                          TextSpan(text: s.authTitleEmphasis,
                               style: MirrorText.title.copyWith(fontStyle: FontStyle.italic)),
                         ],
                       ))
@@ -125,7 +129,7 @@ class _AuthScreenState extends State<AuthScreen> with SingleTickerProviderStateM
 
                       const SizedBox(height: 8),
 
-                      Text('你的身体，你来定义', style: MirrorText.body)
+                      Text(s.authSubtitle, style: MirrorText.body)
                       .animate(delay: const Duration(milliseconds: 120))
                       .fadeIn(duration: const Duration(milliseconds: 500), curve: MirrorCurve.enter)
                       .slideY(begin: 0.08, end: 0, duration: const Duration(milliseconds: 500), curve: MirrorCurve.enter),
@@ -134,7 +138,7 @@ class _AuthScreenState extends State<AuthScreen> with SingleTickerProviderStateM
                       const EditorialDivider(topPad: 32, bottomPad: 24),
 
                       // ── Form zone label ─────────────────────────────────────
-                      Text('CONTINUE WITH', style: MirrorText.overline)
+                      Text(s.authContinueWith, style: MirrorText.overline)
                       .animate(delay: const Duration(milliseconds: 200))
                       .fadeIn(duration: const Duration(milliseconds: 400), curve: MirrorCurve.enter),
 
@@ -168,9 +172,9 @@ class _AuthScreenState extends State<AuthScreen> with SingleTickerProviderStateM
                       .fadeIn(duration: const Duration(milliseconds: 400), curve: MirrorCurve.enter)
                       .slideY(begin: 0.06, end: 0, duration: const Duration(milliseconds: 400), curve: MirrorCurve.enter),
 
-                      if (_error != null) ...[
+                      if (error != null) ...[
                         const SizedBox(height: 10),
-                        Text(_error!,
+                        Text(error,
                             style: MirrorText.bodyS.copyWith(
                                 color: MirrorColors.error)),
                       ],
@@ -191,7 +195,7 @@ class _AuthScreenState extends State<AuthScreen> with SingleTickerProviderStateM
                                 ? const SizedBox(width: 18, height: 18,
                                     child: CircularProgressIndicator(
                                         color: MirrorColors.bg, strokeWidth: 1.5))
-                                : Text(_codeSent ? '验证并登录' : '发送验证码'),
+                                : Text(_codeSent ? s.verifyLogin : s.sendCode),
                           ),
                         ),
                       )
@@ -207,7 +211,7 @@ class _AuthScreenState extends State<AuthScreen> with SingleTickerProviderStateM
                           const Expanded(child: Divider(color: MirrorColors.divider)),
                           Padding(
                             padding: const EdgeInsets.symmetric(horizontal: 16),
-                            child: Text('OR', style: MirrorText.overline),
+                            child: Text(s.orDivider, style: MirrorText.overline),
                           ),
                           const Expanded(child: Divider(color: MirrorColors.divider)),
                         ])
@@ -233,23 +237,23 @@ class _AuthScreenState extends State<AuthScreen> with SingleTickerProviderStateM
                         child: Text.rich(TextSpan(
                           style: MirrorText.caption,
                           children: [
-                            const TextSpan(text: '登录即表示同意 '),
+                            TextSpan(text: '${s.privacyNote} '),
                             WidgetSpan(
                               alignment: PlaceholderAlignment.middle,
                               child: GestureDetector(
                                 onTap: () => _openUrl('privacy'),
-                                child: Text('隐私政策',
+                                child: Text(s.privacyLink,
                                     style: MirrorText.caption.copyWith(
                                         decoration: TextDecoration.underline,
                                         color: MirrorColors.text2)),
                               ),
                             ),
-                            const TextSpan(text: ' 和 '),
+                            TextSpan(text: ' ${s.and} '),
                             WidgetSpan(
                               alignment: PlaceholderAlignment.middle,
                               child: GestureDetector(
                                 onTap: () => _openUrl('terms'),
-                                child: Text('用户协议',
+                                child: Text(s.termsLink,
                                     style: MirrorText.caption.copyWith(
                                         decoration: TextDecoration.underline,
                                         color: MirrorColors.text2)),
@@ -279,7 +283,7 @@ class _AuthScreenState extends State<AuthScreen> with SingleTickerProviderStateM
         padding: const EdgeInsets.fromLTRB(
             MirrorSpacing.pagePad, 20, MirrorSpacing.pagePad, 12),
         child: Text(
-          '3D MIRROR',
+          S.of(context).brandMasthead,
           style: MirrorText.overline.copyWith(
             color: MirrorColors.gold,
             fontSize: 11,
@@ -332,11 +336,13 @@ class _AuthScreenState extends State<AuthScreen> with SingleTickerProviderStateM
       onTap: (_) => setState(() {
         _codeSent = false; _sentTo = null; _error = null; _codeCtrl.clear();
       }),
-      tabs: const [Tab(text: '手机号'), Tab(text: '邮箱')],
+      tabs: [Tab(text: S.of(context).tabPhone), Tab(text: S.of(context).tabEmail)],
     ),
   );
 
-  Widget _identifierField() => SizedBox(
+  Widget _identifierField() {
+    final s = S.of(context);
+    return SizedBox(
     key: const ValueKey('identifier'),
     height: 96,   // room for the inline error under the field
     child: TabBarView(
@@ -351,10 +357,10 @@ class _AuthScreenState extends State<AuthScreen> with SingleTickerProviderStateM
               child: _Field(
                 controller: _phoneCtrl,
                 focusNode: _phoneFocus,
-                placeholder: '手机号',
+                placeholder: s.phonePlaceholder,
                 keyboardType: TextInputType.phone,
                 formatters: [FilteringTextInputFormatter.allow(RegExp(r'[+\d\s\-()]'))],
-                errorText: _phoneTouched ? _phoneCheck.error : null,
+                errorText: _phoneTouched ? errorCodeText(s, _phoneCheck.error) : null,
                 onSubmitted: (_) => _submitIdentifier(),
               ),
             ),
@@ -365,12 +371,13 @@ class _AuthScreenState extends State<AuthScreen> with SingleTickerProviderStateM
           focusNode: _emailFocus,
           placeholder: 'your@email.com',
           keyboardType: TextInputType.emailAddress,
-          errorText: _emailTouched ? _emailError : null,
+          errorText: _emailTouched ? errorCodeText(s, _emailError) : null,
           onSubmitted: (_) => _submitIdentifier(),
         ),
       ],
     ),
   );
+  }
 
   Future<void> _pickCountry() async {
     final picked = await showModalBottomSheet<IsoCode>(
@@ -387,18 +394,20 @@ class _AuthScreenState extends State<AuthScreen> with SingleTickerProviderStateM
     });
   }
 
-  Widget _codeField() => Column(
+  Widget _codeField() {
+    final s = S.of(context);
+    return Column(
     key: const ValueKey('code'),
     crossAxisAlignment: CrossAxisAlignment.start,
     children: [
-      _Field(controller: _codeCtrl, placeholder: '6位验证码',
+      _Field(controller: _codeCtrl, placeholder: s.codePlaceholder,
           keyboardType: TextInputType.number, maxLength: 6, autofocus: true,
           formatters: [FilteringTextInputFormatter.digitsOnly]),
       const SizedBox(height: 12),
       GestureDetector(
         onTap: _resendSecs == 0 ? _send : null,
         child: Text(
-          _resendSecs > 0 ? '${_resendSecs}S  ·  重发' : '重新发送',
+          _resendSecs > 0 ? s.resendIn(_resendSecs) : s.resendCode,
           style: MirrorText.overline.copyWith(
             color: _resendSecs > 0 ? MirrorColors.text3 : MirrorColors.text2,
             decoration: _resendSecs == 0 ? TextDecoration.underline : null,
@@ -408,6 +417,7 @@ class _AuthScreenState extends State<AuthScreen> with SingleTickerProviderStateM
       ),
     ],
   );
+  }
 
   Future<void> _send() async {
     // Resend reuses the destination the first code went to.
@@ -423,7 +433,9 @@ class _AuthScreenState extends State<AuthScreen> with SingleTickerProviderStateM
       setState(() { _codeSent = true; _sentTo = to; });
       _startTimer();
     } on AuthException catch (e) {
-      if (mounted) setState(() { _error = e.message; });
+      if (mounted) setState(() { _error = (s) => serverErrorText(s, e); });
+    } catch (_) {
+      if (mounted) setState(() { _error = (s) => s.errorNetwork; });
     } finally {
       if (mounted) setState(() { _loading = false; });
     }
@@ -440,7 +452,9 @@ class _AuthScreenState extends State<AuthScreen> with SingleTickerProviderStateM
       if (!mounted) return;
       context.go(res.isNewUser ? MirrorRoute.onboarding : MirrorRoute.home);
     } on AuthException catch (e) {
-      setState(() { _error = e.message; });
+      if (mounted) setState(() { _error = (s) => serverErrorText(s, e); });
+    } catch (_) {
+      if (mounted) setState(() { _error = (s) => s.errorNetwork; });
     } finally {
       if (mounted) setState(() { _loading = false; });
     }
@@ -465,7 +479,7 @@ class _AuthScreenState extends State<AuthScreen> with SingleTickerProviderStateM
     } on AuthorizationErrorCode catch (_) {
       // user cancelled
     } on AuthException catch (e) {
-      setState(() { _error = e.message; });
+      if (mounted) setState(() { _error = (s) => serverErrorText(s, e); });
     } finally {
       if (mounted) setState(() { _loading = false; });
     }
@@ -548,6 +562,7 @@ class _CountryButton extends StatelessWidget {
 }
 
 /// Searchable list of all countries: Chinese name, English name, ISO code or dialing code.
+/// Shows the name in the app language, with the other language underneath.
 class _CountryPickerSheet extends StatefulWidget {
   const _CountryPickerSheet();
   @override
@@ -560,6 +575,7 @@ class _CountryPickerSheetState extends State<_CountryPickerSheet> {
   @override
   Widget build(BuildContext context) {
     final results = searchCountries(_query);
+    final lang = Localizations.localeOf(context).languageCode;
     return SafeArea(
       child: SizedBox(
         height: MediaQuery.of(context).size.height * 0.85,
@@ -572,7 +588,7 @@ class _CountryPickerSheetState extends State<_CountryPickerSheet> {
               onChanged: (v) => setState(() => _query = v),
               style: MirrorText.body.copyWith(color: MirrorColors.text1),
               decoration: InputDecoration(
-                hintText: '搜索国家/地区或区号',
+                hintText: S.of(context).countrySearchHint,
                 prefixIcon: const Icon(Icons.search, color: MirrorColors.text3),
                 hintStyle: MirrorText.body.copyWith(color: MirrorColors.text3),
               ),
@@ -580,16 +596,16 @@ class _CountryPickerSheetState extends State<_CountryPickerSheet> {
           ),
           Expanded(
             child: results.isEmpty
-                ? Center(child: Text('没有找到匹配的国家/地区', style: MirrorText.caption))
+                ? Center(child: Text(S.of(context).countryNoMatch, style: MirrorText.caption))
                 : ListView.builder(
                     itemCount: results.length,
                     itemBuilder: (_, i) {
                       final iso = results[i];
                       return ListTile(
                         leading: Text(flagEmoji(iso), style: const TextStyle(fontSize: 22)),
-                        title: Text(countryNameZh(iso),
+                        title: Text(countryName(iso, lang),
                             style: MirrorText.body.copyWith(color: MirrorColors.text1)),
-                        subtitle: Text(countryNameEn(iso), style: MirrorText.caption),
+                        subtitle: Text(countryNameOther(iso, lang), style: MirrorText.caption),
                         trailing: Text('+${dialCode(iso)}',
                             style: MirrorText.bodyS.copyWith(color: MirrorColors.text2)),
                         onTap: () => Navigator.of(context).pop(iso),

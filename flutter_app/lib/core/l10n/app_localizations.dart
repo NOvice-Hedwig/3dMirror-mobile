@@ -103,12 +103,6 @@ abstract class S {
   /// **'3D Mirror'**
   String get appName;
 
-  /// No description provided for @authTitle.
-  ///
-  /// In zh, this message translates to:
-  /// **'开始蜕变'**
-  String get authTitle;
-
   /// No description provided for @authSubtitle.
   ///
   /// In zh, this message translates to:
@@ -142,7 +136,7 @@ abstract class S {
   /// No description provided for @resendIn.
   ///
   /// In zh, this message translates to:
-  /// **'{sec}s 后重发'**
+  /// **'{sec}S  ·  重发'**
   String resendIn(int sec);
 
   /// No description provided for @codePlaceholder.
@@ -160,7 +154,7 @@ abstract class S {
   /// No description provided for @orDivider.
   ///
   /// In zh, this message translates to:
-  /// **'或'**
+  /// **'OR'**
   String get orDivider;
 
   /// No description provided for @appleLogin.
@@ -726,6 +720,108 @@ abstract class S {
   /// In zh, this message translates to:
   /// **'English'**
   String get languageEn;
+
+  /// No description provided for @brandMasthead.
+  ///
+  /// In zh, this message translates to:
+  /// **'3D MIRROR'**
+  String get brandMasthead;
+
+  /// No description provided for @authTitleLead.
+  ///
+  /// In zh, this message translates to:
+  /// **'开始\n'**
+  String get authTitleLead;
+
+  /// No description provided for @authTitleEmphasis.
+  ///
+  /// In zh, this message translates to:
+  /// **'蜕变'**
+  String get authTitleEmphasis;
+
+  /// No description provided for @authContinueWith.
+  ///
+  /// In zh, this message translates to:
+  /// **'CONTINUE WITH'**
+  String get authContinueWith;
+
+  /// No description provided for @phonePlaceholder.
+  ///
+  /// In zh, this message translates to:
+  /// **'手机号'**
+  String get phonePlaceholder;
+
+  /// No description provided for @countrySearchHint.
+  ///
+  /// In zh, this message translates to:
+  /// **'搜索国家/地区或区号'**
+  String get countrySearchHint;
+
+  /// No description provided for @countryNoMatch.
+  ///
+  /// In zh, this message translates to:
+  /// **'没有找到匹配的国家/地区'**
+  String get countryNoMatch;
+
+  /// No description provided for @errorPhoneEmpty.
+  ///
+  /// In zh, this message translates to:
+  /// **'请输入手机号'**
+  String get errorPhoneEmpty;
+
+  /// No description provided for @errorPhoneNeedsCountryCode.
+  ///
+  /// In zh, this message translates to:
+  /// **'请选择国家/地区代码，例如 +86'**
+  String get errorPhoneNeedsCountryCode;
+
+  /// No description provided for @errorPhoneInvalid.
+  ///
+  /// In zh, this message translates to:
+  /// **'该国家/地区的手机号格式不正确'**
+  String get errorPhoneInvalid;
+
+  /// No description provided for @errorPhoneNotMobile.
+  ///
+  /// In zh, this message translates to:
+  /// **'仅支持手机号，不支持座机、免费电话等号码'**
+  String get errorPhoneNotMobile;
+
+  /// No description provided for @errorEmailEmpty.
+  ///
+  /// In zh, this message translates to:
+  /// **'请输入邮箱'**
+  String get errorEmailEmpty;
+
+  /// No description provided for @errorEmailInvalid.
+  ///
+  /// In zh, this message translates to:
+  /// **'邮箱格式不正确'**
+  String get errorEmailInvalid;
+
+  /// No description provided for @errorRateLimited.
+  ///
+  /// In zh, this message translates to:
+  /// **'请求过于频繁，请稍后再试'**
+  String get errorRateLimited;
+
+  /// No description provided for @errorAppleSignIn.
+  ///
+  /// In zh, this message translates to:
+  /// **'Apple 登录失败，请重试'**
+  String get errorAppleSignIn;
+
+  /// No description provided for @errorNetworkStatus.
+  ///
+  /// In zh, this message translates to:
+  /// **'网络错误 ({status})'**
+  String errorNetworkStatus(int status);
+
+  /// No description provided for @sessionExpired.
+  ///
+  /// In zh, this message translates to:
+  /// **'登录已过期，请重新登录'**
+  String get sessionExpired;
 }
 
 class _SDelegate extends LocalizationsDelegate<S> {

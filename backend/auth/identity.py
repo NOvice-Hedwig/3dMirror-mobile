@@ -12,7 +12,8 @@ Phone
 Email
 - Trimmed, lowercased, then validated as EmailStr (format only, no DNS lookup).
 
-Errors are IdentityError with a user-facing Chinese message; routers turn them into 422.
+Errors are IdentityError with a stable code and a user-facing Chinese message; routers turn
+them into 422 {detail, code}.
 """
 
 import re
@@ -35,7 +36,12 @@ _EMAIL = TypeAdapter(EmailStr)
 
 
 class IdentityError(ValueError):
-    """Invalid login identifier; str(error) is the message shown to the user."""
+    """Invalid login identifier. str(error) is the Chinese message; .code is the stable
+    key the app translates (see api_errors.py)."""
+
+    def __init__(self, code: str, message: str):
+        super().__init__(message)
+        self.code = code
 
 
 @dataclass(frozen=True)
@@ -49,17 +55,17 @@ class Phone:
 def normalize_phone(raw: str) -> Phone:
     s = _FORMATTING.sub("", raw or "")
     if not s:
-        raise IdentityError(MSG_PHONE_EMPTY)
+        raise IdentityError("phone_empty", MSG_PHONE_EMPTY)
     if not s.startswith("+"):
-        raise IdentityError(MSG_PHONE_NEEDS_CODE)
+        raise IdentityError("phone_needs_country_code", MSG_PHONE_NEEDS_CODE)
     try:
         n = phonenumbers.parse(s, None)
     except phonenumbers.NumberParseException:
-        raise IdentityError(MSG_PHONE_INVALID)
+        raise IdentityError("phone_invalid", MSG_PHONE_INVALID)
     if not phonenumbers.is_valid_number(n):
-        raise IdentityError(MSG_PHONE_INVALID)
+        raise IdentityError("phone_invalid", MSG_PHONE_INVALID)
     if phonenumbers.number_type(n) not in _ACCEPTED_TYPES:
-        raise IdentityError(MSG_PHONE_NOT_MOBILE)
+        raise IdentityError("phone_not_mobile", MSG_PHONE_NOT_MOBILE)
     return Phone(
         e164=phonenumbers.format_number(n, PhoneNumberFormat.E164),
         region=phonenumbers.region_code_for_number(n),
@@ -71,11 +77,11 @@ def normalize_phone(raw: str) -> Phone:
 def normalize_email(raw: str) -> str:
     s = (raw or "").strip().lower()
     if not s:
-        raise IdentityError(MSG_EMAIL_EMPTY)
+        raise IdentityError("email_empty", MSG_EMAIL_EMPTY)
     try:
         return str(_EMAIL.validate_python(s))
     except ValidationError:
-        raise IdentityError(MSG_EMAIL_INVALID)
+        raise IdentityError("email_invalid", MSG_EMAIL_INVALID)
 
 
 def legacy_phone_digits(phone: Phone) -> list[str]:

@@ -1,13 +1,12 @@
 {
   "@@locale": "en",
   "appName": "3D Mirror",
-  "authTitle": "Start your\ntransformation",
   "authSubtitle": "Your body. Your mirror.",
   "tabPhone": "Phone",
   "tabEmail": "Email",
   "sendCode": "Send code",
   "resendCode": "Resend",
-  "resendIn": "Resend in {sec}s",
+  "resendIn": "RESEND  ·  {sec}S",
   "@resendIn": {
     "placeholders": {
       "sec": {
@@ -17,7 +16,7 @@
   },
   "codePlaceholder": "6-digit code",
   "verifyLogin": "Verify & sign in",
-  "orDivider": "or",
+  "orDivider": "OR",
   "appleLogin": "Sign in with Apple",
   "privacyNote": "By signing in you agree to our",
   "privacyLink": "Privacy Policy",
@@ -118,5 +117,29 @@
     }
   },
   "languageZh": "简体中文",
-  "languageEn": "English"
+  "languageEn": "English",
+  "brandMasthead": "3D MIRROR",
+  "authTitleLead": "Start your\n",
+  "authTitleEmphasis": "transformation",
+  "authContinueWith": "CONTINUE WITH",
+  "phonePlaceholder": "Phone number",
+  "countrySearchHint": "Search country/region or dialing code",
+  "countryNoMatch": "No matching country or region",
+  "errorPhoneEmpty": "Enter your phone number",
+  "errorPhoneNeedsCountryCode": "Choose a country code, e.g. +86",
+  "errorPhoneInvalid": "Not a valid mobile number for this country/region",
+  "errorPhoneNotMobile": "Only mobile numbers are supported, not landline, toll-free or similar numbers",
+  "errorEmailEmpty": "Enter your email",
+  "errorEmailInvalid": "Enter a valid email address",
+  "errorRateLimited": "Too many requests. Please try again later",
+  "errorAppleSignIn": "Sign in with Apple failed. Please try again",
+  "errorNetworkStatus": "Network error ({status})",
+  "@errorNetworkStatus": {
+    "placeholders": {
+      "status": {
+        "type": "int"
+      }
+    }
+  },
+  "sessionExpired": "Your session has expired. Please sign in again"
 }

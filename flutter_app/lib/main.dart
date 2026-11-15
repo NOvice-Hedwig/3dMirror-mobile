@@ -80,10 +80,12 @@ class _MirrorAppState extends ConsumerState<MirrorApp> {
       ref.invalidate(challengeProgressProvider);
       ref.invalidate(latestBodyAnalysisProvider);
     });
-    if (reason == SessionEndReason.expired) {
+    // The messenger sits below MaterialApp's Localizations, so its context has S.
+    final messengerContext = _messengerKey.currentContext;
+    if (reason == SessionEndReason.expired && messengerContext != null) {
       _messengerKey.currentState
         ?..hideCurrentSnackBar()
-        ..showSnackBar(const SnackBar(content: Text('登录已过期，请重新登录')));
+        ..showSnackBar(SnackBar(content: Text(S.of(messengerContext).sessionExpired)));
     }
   }
 

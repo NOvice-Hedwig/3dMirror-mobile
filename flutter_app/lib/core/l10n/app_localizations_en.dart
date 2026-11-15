@@ -12,9 +12,6 @@ class SEn extends S {
   String get appName => '3D Mirror';
 
   @override
-  String get authTitle => 'Start your\ntransformation';
-
-  @override
   String get authSubtitle => 'Your body. Your mirror.';
 
   @override
@@ -31,7 +28,7 @@ class SEn extends S {
 
   @override
   String resendIn(int sec) {
-    return 'Resend in ${sec}s';
+    return 'RESEND  ·  ${sec}S';
   }
 
   @override
@@ -41,7 +38,7 @@ class SEn extends S {
   String get verifyLogin => 'Verify & sign in';
 
   @override
-  String get orDivider => 'or';
+  String get orDivider => 'OR';
 
   @override
   String get appleLogin => 'Sign in with Apple';
@@ -326,4 +323,59 @@ class SEn extends S {
 
   @override
   String get languageEn => 'English';
+
+  @override
+  String get brandMasthead => '3D MIRROR';
+
+  @override
+  String get authTitleLead => 'Start your\n';
+
+  @override
+  String get authTitleEmphasis => 'transformation';
+
+  @override
+  String get authContinueWith => 'CONTINUE WITH';
+
+  @override
+  String get phonePlaceholder => 'Phone number';
+
+  @override
+  String get countrySearchHint => 'Search country/region or dialing code';
+
+  @override
+  String get countryNoMatch => 'No matching country or region';
+
+  @override
+  String get errorPhoneEmpty => 'Enter your phone number';
+
+  @override
+  String get errorPhoneNeedsCountryCode => 'Choose a country code, e.g. +86';
+
+  @override
+  String get errorPhoneInvalid =>
+      'Not a valid mobile number for this country/region';
+
+  @override
+  String get errorPhoneNotMobile =>
+      'Only mobile numbers are supported, not landline, toll-free or similar numbers';
+
+  @override
+  String get errorEmailEmpty => 'Enter your email';
+
+  @override
+  String get errorEmailInvalid => 'Enter a valid email address';
+
+  @override
+  String get errorRateLimited => 'Too many requests. Please try again later';
+
+  @override
+  String get errorAppleSignIn => 'Sign in with Apple failed. Please try again';
+
+  @override
+  String errorNetworkStatus(int status) {
+    return 'Network error ($status)';
+  }
+
+  @override
+  String get sessionExpired => 'Your session has expired. Please sign in again';
 }

@@ -10,14 +10,10 @@ import 'package:phone_numbers_parser/metadata.dart' show countryCodeToIsoCode;
 import 'package:phone_numbers_parser/phone_numbers_parser.dart';
 
 import '../data/country_names.dart';
+import '../l10n/error_text.dart';
 
-const msgPhoneEmpty     = '请输入手机号';
-const msgPhoneInvalid   = '该国家/地区的手机号格式不正确';
-const msgPhoneNotMobile = '仅支持手机号，不支持座机、免费电话等号码';
-const msgEmailEmpty     = '请输入邮箱';
-const msgEmailInvalid   = '邮箱格式不正确';
-
-/// Result of checking a phone input: either an E.164 number or a user-facing error.
+/// Result of checking a phone input: either an E.164 number or an error code
+/// (ErrorCode.phone*, the backend's codes; show it with errorCodeText).
 class PhoneCheck {
   final String? e164;
   final String? error;
@@ -30,21 +26,21 @@ final _formatting = RegExp(r'[\s\-.()]');
 
 PhoneCheck checkPhone(String input, IsoCode selected) {
   final s = input.replaceAll(_formatting, '');
-  if (s.isEmpty) return const PhoneCheck._(error: msgPhoneEmpty);
+  if (s.isEmpty) return const PhoneCheck._(error: ErrorCode.phoneEmpty);
   final PhoneNumber n;
   try {
     n = s.startsWith('+')
         ? PhoneNumber.parse(s)
         : PhoneNumber.parse(s, destinationCountry: selected);
   } on PhoneNumberException {
-    return const PhoneCheck._(error: msgPhoneInvalid);
+    return const PhoneCheck._(error: ErrorCode.phoneInvalid);
   }
   final typed = s.startsWith('+') ? n.isoCode : null;
-  if (!n.isValid()) return PhoneCheck._(error: msgPhoneInvalid, typedCountry: typed);
+  if (!n.isValid()) return PhoneCheck._(error: ErrorCode.phoneInvalid, typedCountry: typed);
   // phone_numbers_parser has no FIXED_LINE_OR_MOBILE type; where the two can't be told apart
   // (e.g. US/CA) the mobile check passes, matching the backend's MOBILE | FIXED_LINE_OR_MOBILE.
   if (!n.isValid(type: PhoneNumberType.mobile)) {
-    return PhoneCheck._(error: msgPhoneNotMobile, typedCountry: typed);
+    return PhoneCheck._(error: ErrorCode.phoneNotMobile, typedCountry: typed);
   }
   return PhoneCheck._(e164: n.international, typedCountry: typed);
 }
@@ -53,11 +49,11 @@ final _email = RegExp(r'^[^\s@]+@[^\s@]+\.[^\s@]+$');
 
 String normalizeEmail(String input) => input.trim().toLowerCase();
 
-/// Error message for an email input, or null when it looks valid.
+/// Error code for an email input (ErrorCode.email*), or null when it looks valid.
 String? emailError(String input) {
   final s = normalizeEmail(input);
-  if (s.isEmpty) return msgEmailEmpty;
-  if (!_email.hasMatch(s)) return msgEmailInvalid;
+  if (s.isEmpty) return ErrorCode.emailEmpty;
+  if (!_email.hasMatch(s)) return ErrorCode.emailInvalid;
   return null;
 }
 
@@ -68,6 +64,12 @@ String dialCode(IsoCode iso) => PhoneNumber(isoCode: iso, nsn: '').countryCode;
 
 String countryNameZh(IsoCode iso) => kCountryNames[iso.name]?.zh ?? iso.name;
 String countryNameEn(IsoCode iso) => kCountryNames[iso.name]?.en ?? iso.name;
+
+/// Name in the app language ('en' → English, anything else → Chinese) and in the other one.
+String countryName(IsoCode iso, String languageCode) =>
+    languageCode == 'en' ? countryNameEn(iso) : countryNameZh(iso);
+String countryNameOther(IsoCode iso, String languageCode) =>
+    languageCode == 'en' ? countryNameZh(iso) : countryNameEn(iso);
 
 /// Flag emoji from the ISO code (regional indicator symbols).
 String flagEmoji(IsoCode iso) => String.fromCharCodes(

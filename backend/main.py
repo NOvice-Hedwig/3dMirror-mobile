@@ -10,6 +10,7 @@ from contextlib import asynccontextmanager
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
+import api_errors
 from database import Database
 from routers import sessions, users, photos
 from auth.router import router as auth_router
@@ -27,6 +28,8 @@ app = FastAPI(
     version="0.1.0",
     lifespan=lifespan,
 )
+
+api_errors.install(app)
 
 app.add_middleware(
     CORSMiddleware,

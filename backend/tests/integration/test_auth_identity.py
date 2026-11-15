@@ -128,19 +128,19 @@ def test_new_user_is_stored_in_e164(client):
 
 # ── rejected input → 422 with a readable message ──────────────────────────────
 
-@pytest.mark.parametrize("phone,message", [
-    ("13812345678",     MSG_PHONE_NEEDS_CODE),
-    ("+86 123",         MSG_PHONE_INVALID),
-    ("+1 012 555 0123", MSG_PHONE_INVALID),
-    ("+18002345678",    MSG_PHONE_NOT_MOBILE),    # US toll-free
-    ("+441212345678",   MSG_PHONE_NOT_MOBILE),    # UK fixed line
-    ("+861012345678",   MSG_PHONE_NOT_MOBILE),    # China fixed line
+@pytest.mark.parametrize("phone,message,code", [
+    ("13812345678",     MSG_PHONE_NEEDS_CODE, "phone_needs_country_code"),
+    ("+86 123",         MSG_PHONE_INVALID, "phone_invalid"),
+    ("+1 012 555 0123", MSG_PHONE_INVALID, "phone_invalid"),
+    ("+18002345678",    MSG_PHONE_NOT_MOBILE, "phone_not_mobile"),    # US toll-free
+    ("+441212345678",   MSG_PHONE_NOT_MOBILE, "phone_not_mobile"),    # UK fixed line
+    ("+861012345678",   MSG_PHONE_NOT_MOBILE, "phone_not_mobile"),    # China fixed line
 ])
 @pytest.mark.parametrize("endpoint", ["/auth/phone/send", "/auth/phone/verify"])
-def test_bad_phone_returns_422_with_message(client, endpoint, phone, message):
+def test_bad_phone_returns_422_with_message(client, endpoint, phone, message, code):
     r = client.post(endpoint, json={"phone": phone, "code": "123456"})
     assert r.status_code == 422, r.text
-    assert r.json() == {"detail": message}
+    assert r.json() == {"detail": message, "code": code}
 
 
 @pytest.mark.parametrize("endpoint", ["/auth/email/send", "/auth/email/verify"])
@@ -148,7 +148,8 @@ def test_bad_phone_returns_422_with_message(client, endpoint, phone, message):
 def test_bad_email_returns_422_with_message(client, endpoint, email):
     r = client.post(endpoint, json={"email": email, "code": "123456"})
     assert r.status_code == 422, r.text
-    assert r.json()["detail"] in (MSG_EMAIL_INVALID, "请输入邮箱")
+    assert r.json() in ({"detail": MSG_EMAIL_INVALID, "code": "email_invalid"},
+                        {"detail": "请输入邮箱", "code": "email_empty"})
 
 
 # ── email: OTP key and storage are normalized ─────────────────────────────────
@@ -251,7 +252,7 @@ def test_same_destination_twice_within_a_minute_returns_429(client, endpoint, fi
     again = value.upper() if field == "email" else f"{value[:3]} {value[3:]}"
     r = client.post(endpoint, json={field: again})
     assert r.status_code == 429, r.text
-    assert r.json() == {"detail": MSG_TOO_MANY}
+    assert r.json() == {"detail": MSG_TOO_MANY, "code": "rate_limited"}
     assert 1 <= int(r.headers["Retry-After"]) <= 60
 
 
@@ -275,7 +276,7 @@ def test_per_ip_limit_returns_429(client, fresh_limits, monkeypatch):
         assert r.status_code == 200, r.text
     r = client.post("/auth/email/send", json={"email": f"ip6-{uuid.uuid4().hex[:6]}@example.com"})
     assert r.status_code == 429
-    assert r.json() == {"detail": MSG_TOO_MANY}
+    assert r.json() == {"detail": MSG_TOO_MANY, "code": "rate_limited"}
 
 
 def test_invalid_input_does_not_use_rate_limit_quota(client):
