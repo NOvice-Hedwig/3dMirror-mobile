@@ -70,6 +70,60 @@ class PhotoAnalysisResult {
     'limb_proportion_norm': limbProportionNorm,
     ...raw,
   };
+
+  bool get hasAnyValue =>
+      shoulderWidthNorm != null || waistNorm != null || hipNorm != null ||
+      limbProportionNorm != null;
+
+  /// The values keyed the way `AvatarParams.applyPhotoAnalysis` (models.dart, owned by the
+  /// avatar work) reads them: it expects `shoulder_norm`, while the analysis field is
+  /// `shoulder_width_norm`. Pass this map, not [toJson], or the shoulder value is ignored.
+  /// `limb_proportion_norm` has no avatar counterpart yet and is not included.
+  Map<String, double?> toAvatarOverrides() => {
+    'shoulder_norm': shoulderWidthNorm,
+    'waist_norm':    waistNorm,
+    'hip_norm':      hipNorm,
+  };
+}
+
+// ─── BodyAnalysis ─────────────────────────────────────────────────────────────
+
+/// 'ok' = at least one value estimated; 'unavailable' = analysis not configured on the server;
+/// 'failed' = the run failed (see [BodyAnalysis.detail]).
+enum AnalysisStatus { ok, unavailable, failed }
+
+/// One stored analysis run (GET /photos/analysis/latest, POST /photos/analyze).
+class BodyAnalysis {
+  final String              id;
+  final AnalysisStatus      status;
+  final DateTime            createdAt;   // local time
+  final String?             model;
+  final List<String>        photoIds;
+  final PhotoAnalysisResult values;      // all null unless status is ok
+  final String?             detail;      // reason (unavailable/failed) or note (skipped photos)
+
+  const BodyAnalysis({
+    required this.id, required this.status, required this.createdAt,
+    required this.photoIds, required this.values, this.model, this.detail,
+  });
+
+  factory BodyAnalysis.fromJson(Map<String, dynamic> j) => BodyAnalysis(
+    id:        j['id'] as String,
+    status:    AnalysisStatus.values.firstWhere(
+        (s) => s.name == j['status'], orElse: () => AnalysisStatus.failed),
+    createdAt: DateTime.parse(j['created_at'] as String).toLocal(),
+    model:     j['model'] as String?,
+    photoIds:  (j['photo_ids'] as List<dynamic>).map((e) => e as String).toList(),
+    values:    PhotoAnalysisResult.fromJson(j),
+    detail:    j['detail'] as String?,
+  );
+
+  /// Short user-facing status text.
+  String get statusLabel => switch (status) {
+    AnalysisStatus.ok          => '体型分析已完成',
+    AnalysisStatus.unavailable => '体型分析暂不可用',
+    AnalysisStatus.failed      => '体型分析失败，请稍后重新拍照',
+  };
 }
 
 // ─── BodyPhoto ────────────────────────────────────────────────────────────────

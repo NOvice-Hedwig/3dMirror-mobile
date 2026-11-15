@@ -2,6 +2,7 @@ import 'dart:io';
 
 import 'package:flutter/material.dart';
 import 'package:flutter_animate/flutter_animate.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:shared_preferences/shared_preferences.dart';
@@ -9,16 +10,17 @@ import 'package:shared_preferences/shared_preferences.dart';
 import '../../core/router/app_router.dart';
 import '../../core/theme/design_tokens.dart';
 import '../../models/body_photo.dart';
+import '../../providers/photo_analysis_provider.dart';
 import '../../services/api/photo_api.dart';
 
-class PhotoCaptureScreen extends StatefulWidget {
+class PhotoCaptureScreen extends ConsumerStatefulWidget {
   const PhotoCaptureScreen({super.key});
 
   @override
-  State<PhotoCaptureScreen> createState() => _PhotoCaptureScreenState();
+  ConsumerState<PhotoCaptureScreen> createState() => _PhotoCaptureScreenState();
 }
 
-class _PhotoCaptureScreenState extends State<PhotoCaptureScreen> {
+class _PhotoCaptureScreenState extends ConsumerState<PhotoCaptureScreen> {
   final _picker = ImagePicker();
   final _photos = <PhotoAngle, File>{};
 
@@ -229,9 +231,10 @@ class _PhotoCaptureScreenState extends State<PhotoCaptureScreen> {
     try {
       final photoIds = await PhotoApi.instance.uploadPhotos(_photos);
 
-      // Fire analysis in background; we don't block the user on it.
+      // Analyze in the background without blocking the user. The provider outlives this
+      // screen, so the result is stored in latestBodyAnalysisProvider when it arrives.
       if (photoIds.isNotEmpty) {
-        PhotoApi.instance.analyzePhotos(photoIds).ignore();
+        ref.read(latestBodyAnalysisProvider.notifier).analyze(photoIds).ignore();
       }
 
       final prefs = await SharedPreferences.getInstance();

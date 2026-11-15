@@ -14,6 +14,7 @@ import 'providers/challenge_provider.dart';
 import 'providers/coach_provider.dart';
 import 'providers/locale_provider.dart';
 import 'providers/log_provider.dart';
+import 'providers/photo_analysis_provider.dart';
 import 'providers/predict_provider.dart';
 import 'providers/session_provider.dart';
 import 'services/api/api_http.dart';
@@ -73,6 +74,7 @@ class _MirrorAppState extends ConsumerState<MirrorApp> {
       ref.invalidate(coachSuggestionsProvider);
       ref.invalidate(targetParamsNotifierProvider);
       ref.invalidate(challengeProgressProvider);
+      ref.invalidate(latestBodyAnalysisProvider);
     });
     if (reason == SessionEndReason.expired) {
       _messengerKey.currentState

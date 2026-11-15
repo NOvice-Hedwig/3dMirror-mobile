@@ -1,5 +1,5 @@
 from pydantic import BaseModel, Field, EmailStr
-from typing import Optional
+from typing import Literal, Optional
 from datetime import datetime
 
 
@@ -59,8 +59,15 @@ class PhotoOut(BaseModel):
     created_at:   datetime
 
 
-class BodyAnalysisResult(BaseModel):
-    shoulder_width_norm:  Optional[float] = None
+class BodyAnalysisOut(BaseModel):
+    """One body_analyses row (see ONBOARDING.md, "Photo analysis data contract")."""
+    id:                   str
+    status:               Literal["ok", "unavailable", "failed"]
+    created_at:           datetime                 # timezone-aware UTC
+    model:                Optional[str]   = None
+    photo_ids:            list[str]
+    shoulder_width_norm:  Optional[float] = None   # 0–1, unitless; None if not estimated
     waist_norm:           Optional[float] = None
     hip_norm:             Optional[float] = None
     limb_proportion_norm: Optional[float] = None
+    detail:               Optional[str]   = None

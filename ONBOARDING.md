@@ -15,7 +15,8 @@
 - **Resolved this week (2026-10-10 → 10-12):** the DB-layer runtime failures (JSON, dates, period date, duplicate-day logs), the incomplete `migration.sql`, the failing 401 test, the tracked `backend/.env`, and timezone handling of log dates. The `JWT_SECRET` was rotated and `backend/.env` is no longer tracked. Details in [§8.1](#81-resolved-this-week).
 - **Login identifiers:** phones are validated per country (mobile numbers only) and stored as E.164; emails are trimmed and lowercased. Sending codes is rate-limited **in memory, so the backend must run as a single instance** until that moves to a shared store. See [§6 "Login identifiers"](#login-identifiers-and-send-limits-since-2026-10-27).
 - **Time rule:** calendar dates are always the user's local date. The app sends its IANA timezone in an `X-Timezone` header, and instants are timezone-aware UTC. See [§6 "Time rule"](#time-rule-since-2026-10-12) before touching anything date-related.
-- **Still open, most important first:** the Unity avatar isn't wired up, photo analysis results are unused, i18n strings aren't used, supplement reminders aren't scheduled, and two test problems remain. See [§8.2](#82-open-issues).
+- **Still open, most important first:** the Unity avatar isn't wired up (photo analysis is now stored and returned, but no avatar code applies it yet), i18n strings aren't used, supplement reminders aren't scheduled, and two test problems remain. See [§8.2](#82-open-issues).
+- **Photo analysis** results live in `body_analyses`. Their shape is documented in [§6 "Photo analysis data contract"](#photo-analysis-data-contract-since-2026-11-14), including a note for the avatar owner about the `shoulder_norm` / `shoulder_width_norm` naming.
 
 ---
 
@@ -81,7 +82,7 @@ Not present: `flutter_unity_widget`. [BRIDGE_SPEC.md](unity_project/BRIDGE_SPEC.
 | Twilio | OTP to every other country (sent E.164) | `DEV_MODE=false` and phone login outside CN |
 | SendGrid | Email OTP | `DEV_MODE=false` and email login |
 | Apple Sign-In (`appleid.apple.com/auth/keys`) | Verify identity tokens | Apple login. Always live, no dev bypass |
-| Anthropic API | Estimate body proportions from photos | Optional. Without a key the analysis returns `{}` silently |
+| Anthropic API | Estimate body proportions from photos | Optional. Without a key each analysis is stored with status `unavailable` |
 
 ---
 
@@ -137,8 +138,8 @@ All of these are listed in [backend/.env.example](backend/.env.example).
 | `TWILIO_ACCOUNT_SID`, `TWILIO_AUTH_TOKEN`, `TWILIO_FROM_NUMBER` | empty | intl phone login | |
 | `SENDGRID_API_KEY`, `EMAIL_FROM` | empty / `noreply@3dmirror.app` | email login | |
 | `APPLE_BUNDLE_ID` | `com.yourcompany.3dmirror` | Apple login | JWT audience check |
-| `ANTHROPIC_API_KEY` | — | optional | Without it, photo analysis returns `{}` |
-| `VISION_MODEL` | `claude-haiku-4-5-20251001` | optional | Model id for photo analysis |
+| `ANTHROPIC_API_KEY` | — | optional | Without it, photo analysis is stored with status `unavailable` |
+| `VISION_MODEL` | `claude-haiku-4-5-20251001` | optional | Model ID for photo analysis (Claude Haiku 4.5, still active). Stored per analysis in `body_analyses.model` |
 | `UPLOAD_DIR` | `uploads` | optional | Photos go on local disk, relative to the CWD |
 | `AUTH_SEND_LIMIT_IP_PER_MINUTE`, `AUTH_SEND_LIMIT_IP_PER_HOUR` | `5` / `20` | optional | Per-client-IP limit on sending codes. Raise only for automated test runs from one IP (§7) |
 
@@ -181,8 +182,8 @@ flutter run                                                       # Android emul
 │   ├── routers/                   One file per resource; SQL inline in handlers
 │   │   ├── users.py  sessions.py  photos.py  logs.py  predict.py  coach.py  challenge.py
 │   ├── services/
-│   │   ├── photo_service.py       Disk writes + body_photos SQL
-│   │   └── llm_service.py         Claude vision call + JSON parsing
+│   │   ├── photo_service.py       Disk writes, body_photos and body_analyses SQL
+│   │   └── llm_service.py         Claude vision call (async), image type sniffing, reply parsing
 │   ├── scripts/                   run_migration.py, one-off upgrade scripts for old DBs,
 │   │                              report_timezone_skew.py (read-only audit of pre-fix timestamps)
 │   ├── tests/
@@ -286,7 +287,8 @@ Returns `SessionOut`. Flutter then does `context.push('/result?id=<id>')`.
 |---|---|---|
 | `users` | `id UUID`, `phone UNIQUE`, `email CITEXT UNIQUE`, `apple_id UNIQUE`, `display_name`, `locale DEFAULT 'zh'`, `gender`, `height_cm`, `target_avatar_params JSONB`, `challenge_goal JSONB`, `challenge_start_date DATE`, timestamps | CHECK: at least one of phone/email/apple_id. Gender and height are **never written** by the app |
 | `sessions` | `user_id → users`, `body_data JSONB NOT NULL`, `avatar_params JSONB NOT NULL`, `activity_data JSONB`, `thumbnail_url`, `created_at` | Index `(user_id, created_at DESC)`. The core "check-in" record |
-| `body_photos` | `user_id`, `session_id → sessions (nullable)`, `angle ∈ {front,side,back}`, `file_path`, `llm_analysis JSONB` | `session_id` is never set |
+| `body_photos` | `user_id`, `session_id → sessions (nullable)`, `angle ∈ {front,side,back}`, `file_path`, `llm_analysis JSONB` | `session_id` is never set. `llm_analysis` is **legacy**: no longer written or read since 2026-11-14, old rows kept (all `{}`) |
+| `body_analyses` | `user_id`, `created_at`, `status ∈ {ok,unavailable,failed}`, `model`, `photo_ids uuid[]`, four nullable `*_norm` proportions, `detail` | One row per photo analysis run. Contract in §6 |
 | `session_summary` (view) | flattens weight/body-fat/waist/workout_type | Unused by code |
 | `workout_logs` | `type`, `sub_type`, `duration_min`, `intensity`, `with_weight`, `muscle_group`, `sets JSONB`, `estimated_kcal`, `logged_at` | |
 | `diet_logs` | `meal ∈ {早餐,午餐,晚餐,加餐}`, `food_name`, `grams`, `calories`, `protein_g`, `entry_method` | Enum values are Chinese literals |
@@ -331,7 +333,8 @@ Formats:
 | `GET /sessions?limit=30` | — | `SessionOut[]` newest first |
 | `GET /sessions/{id}` | — | `SessionOut` / 404 |
 | `POST /photos/upload` | multipart, `front`/`side`/`back` files (≤10 MB, jpeg/png/webp/heic) | `{photo_ids[]}` |
-| `POST /photos/analyze` | form `photo_ids` (repeated) | `{analysis{shoulder_width_norm, waist_norm, hip_norm, limb_proportion_norm}, photo_ids}` |
+| `POST /photos/analyze` | form `photo_ids` (repeated) | The stored `body_analyses` record (§6 contract). **200 even when the analysis failed** (check `status`); 404 unknown photos; 422 malformed IDs |
+| `GET /photos/analysis/latest` | optional `?status=ok\|unavailable\|failed` | The user's most recent analysis record; 404 if none |
 | `GET /photos?session_id=` | — | `{photos[]}` (`file_path` is a server-local path; no static serving) |
 | `POST /logs/workout` | `{type, sub_type, duration_min, intensity, with_weight, muscle_group?, sets?, estimated_kcal?}` | 201 `{id}` |
 | `POST /logs/diet` | `{meal, food_name, grams?, calories, protein_g?, entry_method}` | 201 `{id}` |
@@ -410,6 +413,52 @@ Environment variables only (§2.2), read at **import time** as module globals in
   - The default comes from the device locale, falling back to China. Typing or pasting `+…` makes the picker follow.
   - `phone_numbers_parser` has no country names, so `lib/core/data/country_names.dart` is **generated from Unicode CLDR** by `tool/gen_country_names.py` (dev-time Babel). Re-run it after upgrading `phone_numbers_parser`.
 
+### Photo analysis data contract (since 2026-11-14)
+
+**Flow:**
+1. After uploading body photos, `photo_capture_screen.dart` calls `latestBodyAnalysisProvider.notifier.analyze(photoIds)` in the background; the user isn't blocked.
+2. The backend runs Claude vision and **stores every run** in `body_analyses`, including unavailable and failed ones, and returns the record.
+3. The provider holds the latest record. It loads from `GET /photos/analysis/latest` on first read and is reset on sign-out.
+
+**Record** (`body_analyses` row = API response = Flutter `BodyAnalysis`):
+
+| Field | Type | Null? | Meaning |
+|---|---|---|---|
+| `id` | UUID | no | Analysis run ID |
+| `status` | `ok` \| `unavailable` \| `failed` | no | `ok`: **at least one** proportion was estimated (enforced by a DB constraint). `unavailable`: no `ANTHROPIC_API_KEY` on the server. `failed`: see `detail`. Unknown values are treated as `failed` by the app |
+| `created_at` | timestamptz | no | When the run finished; aware UTC from `clock.now_utc()` (the app converts it to local time) |
+| `model` | text | yes | Model ID used (e.g. `claude-haiku-4-5-20251001`); null when `unavailable` |
+| `photo_ids` | UUID[] | no | Photos submitted. No foreign key, so IDs stay even if a photo is deleted later |
+| `shoulder_width_norm` | float 0–1 | yes | Relative shoulder width: 0 = narrow, 1 = very broad |
+| `waist_norm` | float 0–1 | yes | Relative waist circumference: 0 = very slim, 1 = very wide |
+| `hip_norm` | float 0–1 | yes | Relative hip width: 0 = narrow, 1 = very wide |
+| `limb_proportion_norm` | float 0–1 | yes | Relative limb length vs torso: 0 = short limbs, 1 = long limbs |
+| `detail` | text | yes | Reason for `unavailable`/`failed` (e.g. `API error 529 (InternalServerError)`, `no photo in a supported format …`), or a note on an `ok` run (e.g. `skipped 1 photo(s): HEIC/HEIF`). For logs and debugging, not for display |
+
+**Units and null rules:**
+- Proportions are **unitless model estimates on a 0–1 scale**, not measurements in cm. They're clamped to [0, 1], and the DB enforces the range.
+- Each proportion is `null` when the model didn't estimate it, and **all four are always `null` unless `status` is `ok`**. Consumers should treat `null` as "keep the current value".
+- On an `ok` run, any subset may still be `null`.
+
+**Images:**
+- Claude accepts only JPEG, PNG, GIF and WebP. The backend detects each photo's real type **from its bytes**, not its file name; the app names every upload `<angle>.jpg`.
+- HEIC/HEIF (uploadable, but not accepted by the API) and unreadable files are **skipped**. If nothing usable remains, the run is `failed`.
+- The app itself always uploads JPEG, so HEIC only comes from other clients. To analyze HEIC, convert server-side first (e.g. with `pillow-heif`); this isn't done yet (§8.2 #8).
+
+**Failure handling:** API errors (4xx/5xx after the SDK's 2 retries), connection errors or timeouts (60 s), refusals and unparseable replies are all stored as `failed` and returned with **HTTP 200**, never a 500. The client uses `anthropic.AsyncAnthropic`, so the server isn't blocked during the call.
+
+**Reading it in the app:**
+- `ref.watch(latestBodyAnalysisProvider)` gives an `AsyncValue<BodyAnalysis?>`.
+- `.values` is a `PhotoAnalysisResult` (`shoulderWidthNorm`, `waistNorm`, `hipNorm`, `limbProportionNorm`).
+- `.statusLabel` gives Chinese status text.
+- `PhotoApi.fetchLatestAnalysis(okOnly: true)` (`?status=ok`) gets the latest run that has values.
+
+> **Note for the avatar owner (decision needed):** `AvatarParams.applyPhotoAnalysis` (`models.dart`) reads the key **`shoulder_norm`**, but the analysis field is **`shoulder_width_norm`**. Passing the analysis values directly would silently ignore the shoulder estimate.
+> - **Current bridge:** `PhotoAnalysisResult.toAvatarOverrides()` (`body_photo.dart`) returns `{shoulder_norm, waist_norm, hip_norm}`, so `base.applyPhotoAnalysis(analysis.values.toAvatarOverrides())` works today without changing avatar code. This is tested in `test/body_analysis_test.dart`.
+> - **Your choice:** either change `applyPhotoAnalysis` to read `shoulder_width_norm` (then drop the adapter), or keep using the adapter.
+> - **`limb_proportion_norm` has no consumer:** `AvatarParams` has no matching field, and the adapter doesn't pass it.
+> - **Not wired yet:** nothing applies the analysis to the visible avatar.
+
 ### Time rule (since 2026-10-12)
 
 - **Calendar dates are the user's local date**, never the server's or the database's.
@@ -436,7 +485,9 @@ Environment variables only (§2.2), read at **import time** as module globals in
 | Backend timezone rules | `backend/tests/integration/test_timezone_rules.py`, 10 tests | **10 pass** in-process with a frozen clock against the same disposable database |
 | Backend login identifiers (unit) | `backend/tests/test_identity.py`, 45 tests | **45 pass**: phone and email rules, legacy forms, SMS routing, rate limiter (no DB) |
 | Backend login identifiers (integration) | `backend/tests/integration/test_auth_identity.py`, 41 tests | **41 pass** in-process against the disposable database: routes, 422/429, legacy rows, collisions |
-| Flutter | `test/login_identity_test.dart`, `api_http_test.dart`, `home_provider_error_test.dart`, 34 tests | **34 pass** (`widget_test.dart` still doesn't compile, see §8.2) |
+| Backend photo analysis (unit) | `backend/tests/test_photo_analysis.py`, 26 tests | **26 pass**: image type detection, reply parsing, every outcome, using a fake Anthropic client (no network, no cost) |
+| Backend photo analysis (integration) | `backend/tests/integration/test_photo_analysis_api.py`, 9 tests | **9 pass** in-process against the disposable database (needs `body_analyses`, i.e. `migration.sql` applied); uploads go to a temp dir |
+| Flutter | `test/body_analysis_test.dart`, `login_identity_test.dart`, `api_http_test.dart`, `home_provider_error_test.dart`, 41 tests | **41 pass** (`widget_test.dart` still doesn't compile, see §8.2) |
 | Flutter | `flutter_app/test/widget_test.dart` | **Does not compile.** It's the default counter template and references `MyApp`, which doesn't exist (the app class is `MirrorApp`). Open, see §8.2 |
 | iOS/macOS | `RunnerTests.swift` | Xcode template stubs |
 
@@ -485,7 +536,7 @@ Mutation checks confirmed that each old behaviour (UTC dates, UTC "today" in SQL
 
 Mutation checks (no legacy rewrite, rewriting despite a collision, bare-number matching for every country, rejecting `FIXED_LINE_OR_MOBILE`, accepting any number type, no email lowercasing, no rate limit, OTP keyed by a non-E.164 value) each make at least one test fail.
 
-**Coverage gaps:** photos and the LLM call, the real SMS, email and Apple provider calls, predict's date maths, and Flutter UI and widget behaviour (the auth screen's inline errors, disabled button and country picker are untested; only their validation logic is). There's no CI config in the repo.
+**Coverage gaps:** a real Claude vision call (tests use a fake client) and the photo upload/list routes beyond analysis, the real SMS, email and Apple provider calls, predict's date maths, and Flutter UI and widget behaviour (the auth screen's inline errors, disabled button and country picker are untested; only their validation logic is). There's no CI config in the repo.
 
 **Run the Flutter suite** (once it's fixed): `cd flutter_app && flutter test`. Lints: `flutter analyze` (`flutter_lints` + `avoid_print`; `session_api.dart` violates it).
 
@@ -519,6 +570,7 @@ All verified by the integration tests in §7.
 | **Tracked `backend/.env`** | `JWT_SECRET` was rotated; `backend/.env` is no longer tracked and is covered by the root `.gitignore`, along with caches, venvs, build output, `uploads/` and local tool settings |
 | **`migration.sql` incomplete** (missing the five daily-log tables) | They were added to `migration.sql`; a fresh database built from it alone matches the live schema exactly |
 | **Unvalidated phone/email at login.** Raw input was the OTP key and stored value, so `13800138000` and `+8613800138000` became two accounts; email OTP keys were case-sensitive; SMS routing used `lstrip("+86")`, which strips characters rather than a prefix; there was no limit on sending codes | Phone validated per country (mobile only) and normalized to E.164; email trimmed and lowercased; 422 with Chinese messages; legacy rows matched and rewritten on login; Aliyun receives the parsed national number; per-destination and per-IP send limits (429). App: country picker, inline errors, disabled send button (§6 "Login identifiers") |
+| **Photo analysis discarded** (2026-11-14). The app ignored the result; the backend wrote `{}` without a key, returned 500 on API errors, blocked the event loop with the sync client, and sent HEIC labelled as JPEG | Every run is stored in `body_analyses` with a `status` and returned (200 even on failure); `GET /photos/analysis/latest`; async client; image type detected from bytes and unsupported formats (HEIC) skipped; the app keeps the latest record in `latestBodyAnalysisProvider`; `toAvatarOverrides()` bridges the shoulder key (§6). `body_photos.llm_analysis` is no longer written |
 | **Log dates mixed timezones.** They used the backend host's local time, UTC in Postgres, offset-less device times, and UTC days in Flutter; sessions were stored 4 h (EDT) / 5 h (EST) in the future from naive `utcnow()` | One rule (§6 "Time rule"): the app sends `X-Timezone`, dates are the user's local date, and instants are aware UTC from `clock.now_utc()`. Applied to logs, sessions, challenge and coach, plus Flutter parsing and a DST-safe challenge end date |
 
 ### 8.2 Open issues
@@ -531,9 +583,11 @@ All verified by the integration tests in §7.
    - A stray directory `unity_project/Assets/{Scripts/{Bridge,Avatar,Camera,Lighting},Materials,Models,Prefabs,Scenes}` was left by an unexpanded shell brace; delete it.
    - Naming mismatch: Dart sends lighting as `studioMinimal` (enum name) while `AvatarParams.lighting_profile` is `studio_minimal`.
    - Screenshot/share (`result_screen._shareScreenshot`) depends on Unity, so it's a no-op.
-2. **Photo analysis is unused, and the shoulder field name is wrong.**
-   - [photo_capture_screen.dart:234](flutter_app/lib/features/onboarding/photo_capture_screen.dart#L234) calls `analyzePhotos(...).ignore()`, discarding the result, and `AvatarParams.applyPhotoAnalysis` is never called.
-   - Even if it were, it reads `'shoulder_norm'` ([models.dart:137](flutter_app/lib/models/models.dart#L137)) while the LLM returns `shoulder_width_norm`. `limb_proportion_norm` has no consumer.
+2. **Photo analysis is stored but not yet applied to the avatar (avatar owner).** Results are stored and available in the app (see §6 "Photo analysis data contract").
+   - `AvatarParams.applyPhotoAnalysis` is still never called.
+   - It reads `'shoulder_norm'` while the analysis field is `shoulder_width_norm`; `toAvatarOverrides()` bridges this until the avatar owner decides.
+   - `limb_proportion_norm` has no consumer.
+   - HEIC photos are skipped rather than converted; the app itself only uploads JPEG (#8).
 3. **i18n is scaffolded but unused.** No screen calls `S.of(context)`; all UI copy is hard-coded (mostly Chinese), so switching locale has no visible effect. Backend responses (coach cards, error details) are hard-coded Chinese too.
 4. **Supplement reminders are not implemented.** The supplement sheet lets the user switch a reminder on and pick a time, and the backend stores `reminder_time`/`reminder_enabled`, but **nothing schedules a reminder**. There's no notification package, no Android notification permission, and no server scheduler or push.
    - **Preferred approach:** schedule on the device (e.g. `flutter_local_notifications`) at the chosen wall-clock time. The phone's own timezone handles it, so **no server-side timezone** (`users.timezone`) is needed. That's only required if reminders are ever sent by server push.
@@ -545,9 +599,16 @@ All verified by the integration tests in §7.
    - **8 values that aren't valid numbers at all** (e.g. 3–12 digit test strings typed under `DEV_MODE`). Since login now requires a valid mobile number, **those accounts can no longer log in by phone.**
    - No collisions.
    - **Decision (2026-10-28): leave them unchanged for now.** They own 17 rows in total (6 sessions, 10 body photos, 1 workout log), and none has an email or Apple login as an alternative. Revisit before any production data exists: delete them, or map them in a one-off migration. No script exists yet, and nothing runs on `mirror_db` without approval.
+8. **HEIC photos (low priority; findings 2026-11-14).** Claude's API accepts only JPEG, PNG, GIF and WebP, so the backend skips HEIC/HEIF photos (§6 "Photo analysis data contract"). **The current app can't produce HEIC**, according to the plugin source (not yet confirmed on a device):
+   - **The app only uses the camera:** `photo_capture_screen.dart` calls `pickImage(source: ImageSource.camera, imageQuality: 85)`, with no gallery picking and no `maxWidth`/`maxHeight`.
+   - **iOS (`image_picker_ios` 0.8.13+6):** a camera capture has no photo-library asset, so the plugin always encodes the in-memory image with `UIImageJPEGRepresentation` (quality 0.85) to a `.jpg` file, whatever the iPhone's "High Efficiency" camera setting. Even the gallery path, unused today, re-encodes HEIC to JPEG ("converts to JPEG by default").
+   - **Android (`image_picker_android` 0.8.13+17):** `imageQuality < 100` forces decode and re-encode, as JPEG unless the image has transparency (PNG, also accepted).
+   - **So HEIC can only arrive from another client** calling `/photos/upload` directly, which accepts `image/heic`. **No client change is needed now.**
+   - **If gallery picking is added later:** keep using `image_picker` (it converts HEIC on both platforms), or call it with an `imageQuality` below 100.
+   - **To support HEIC from other clients:** either reject `image/heic` at upload (415), or convert server-side with `pillow-heif`.
+   - **Optional:** add `maxWidth: 2000, maxHeight: 2000` to `pickImage`. Claude downscales to about 1568 px on the long edge anyway, so this would cut upload size with no loss in analysis.
 
 **Other logic bugs:**
-- **`llm_service.analyze_body_photos`** uses the **sync** `anthropic.Anthropic` client inside an async route, which blocks the event loop for the whole call. Its docstring says it "falls back to empty dict on any error", but API errors aren't caught and surface as a 500. HEIC uploads are allowed but sent to Claude as `image/jpeg`. The same analysis is written to every photo in the batch.
 - **Coach recovery card never triggers:** it checks `activity_data.get("type") == "无氧"`, but `sessions.activity_data` uses `workout_type` with English enum values (`strength`…). Workouts logged via the FAB go to `workout_logs`, which coach doesn't read. "Training days" counts distinct session days, not workouts.
 - **Challenge:**
   - The baseline needs a session on exactly the (local) start date. Otherwise it falls back to *current* values, which gives 0% progress.
@@ -598,7 +659,7 @@ All verified by the integration tests in §7.
 ## 9. Suggested next steps
 
 1. Decide the 3D path (flutter_unity_widget vs. a lighter in-Flutter renderer) before investing more in `UnityBridge`.
-2. Wire the photo analysis result into the avatar (fix the `shoulder_width_norm` key) or drop the feature.
+2. Avatar owner: apply `latestBodyAnalysisProvider` to the avatar, decide on the `shoulder_norm` key versus `toAvatarOverrides()`, and decide what `limb_proportion_norm` should drive. Optionally convert HEIC uploads server-side.
 3. Build supplement reminders on-device with a per-supplement reminder model (§8.2 #4).
 4. Add an attempt limit on OTP verify, and move the OTP store and send limits to a shared store before running more than one backend instance.
 5. Fix the two `DEV_MODE`-dependent unit tests by patching `auth.router.send_*_otp`; replace `widget_test.dart` with a real smoke test; add a CI workflow that runs unit tests plus the integration suite against a Postgres service container.

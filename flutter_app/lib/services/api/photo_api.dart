@@ -52,18 +52,11 @@ class PhotoApi {
 
   // ── Analyze ────────────────────────────────────────────────────────────────
 
-  Future<PhotoAnalysisResult?> analyzePhotos(List<String> photoIds) async {
-    if (photoIds.isEmpty) return null;
+  /// Runs the analysis and returns the stored record. A failed or unavailable analysis is
+  /// still a record (HTTP 200, check [BodyAnalysis.status]); throws only on transport errors.
+  Future<BodyAnalysis> analyzePhotos(List<String> photoIds) async {
     final token = await _token();
-
-    final request = http.MultipartRequest('POST', Uri.parse('$_base/photos/analyze'))
-      ..headers['Authorization'] = 'Bearer $token';
-
-    for (final id in photoIds) {
-      request.fields['photo_ids'] = id;
-    }
-
-    // Use form-encoded body instead to match FastAPI Form(...) list
+    // Form-encoded, repeated field: matches FastAPI's `photo_ids: list[str] = Form(...)`.
     final formBody = photoIds.map((id) => 'photo_ids=${Uri.encodeComponent(id)}').join('&');
     final r = await ApiHttp.instance.post(
       Uri.parse('$_base/photos/analyze'),
@@ -73,13 +66,20 @@ class PhotoApi {
       },
       body: formBody,
     );
+    if (r.statusCode != 200) throw PhotoException('体型分析请求失败 (${r.statusCode})');
+    return BodyAnalysis.fromJson(json.decode(r.body) as Map<String, dynamic>);
+  }
 
-    if (r.statusCode != 200) return null;
-
-    final decoded  = json.decode(r.body) as Map<String, dynamic>;
-    final analysis = decoded['analysis'] as Map<String, dynamic>?;
-    if (analysis == null || analysis.isEmpty) return null;
-    return PhotoAnalysisResult.fromJson(analysis);
+  /// The user's most recent analysis, or null if there is none.
+  /// [okOnly] returns the most recent one with values (status ok).
+  Future<BodyAnalysis?> fetchLatestAnalysis({bool okOnly = false}) async {
+    final token = await _token();
+    final uri = Uri.parse('$_base/photos/analysis/latest')
+        .replace(queryParameters: okOnly ? {'status': 'ok'} : null);
+    final r = await ApiHttp.instance.get(uri, headers: {'Authorization': 'Bearer $token'});
+    if (r.statusCode == 404) return null;
+    if (r.statusCode != 200) throw PhotoException('获取体型分析失败 (${r.statusCode})');
+    return BodyAnalysis.fromJson(json.decode(r.body) as Map<String, dynamic>);
   }
 
   // ── List ───────────────────────────────────────────────────────────────────

@@ -1,15 +1,19 @@
 """
 Photo routes:
-  POST /photos/upload   — multipart upload of 1-3 angle photos
-  POST /photos/analyze  — trigger LLM analysis for a set of photo_ids
-  GET  /photos          — list photos for the current user (optionally by session)
+  POST /photos/upload           — multipart upload of 1-3 angle photos
+  POST /photos/analyze          — run vision analysis on photo_ids; stores and returns the result
+  GET  /photos/analysis/latest  — the user's most recent analysis (optionally ?status=ok)
+  GET  /photos                  — list photos for the current user (optionally by session)
 """
 
+import uuid
+from typing import Literal, Optional
+
 from fastapi import APIRouter, HTTPException, Header, UploadFile, File, Form
-from typing import Optional
 
 from database import Database
 from auth.service import decode_jwt
+from schemas import BodyAnalysisOut
 from services import photo_service, llm_service
 
 router = APIRouter()
@@ -63,34 +67,46 @@ async def upload_photos(
     return {"photo_ids": photo_ids}
 
 
-@router.post("/analyze")
+@router.post("/analyze", response_model=BodyAnalysisOut)
 async def analyze_photos(
     authorization: str = Header(...),
     photo_ids: list[str] = Form(...),
 ):
     """
-    Trigger Claude vision analysis for the given photo_ids.
-    Returns the structured body parameter estimates.
+    Run Claude vision analysis on the given photo_ids, store it in body_analyses and return it.
+    Analysis failures don't raise: they are stored and returned with status 'failed' or
+    'unavailable' (HTTP 200), so the app can show them and retry later.
     """
     uid  = _uid(authorization)
     pool = Database.pool()
+    try:
+        ids = [str(uuid.UUID(p)) for p in photo_ids]
+    except ValueError:
+        raise HTTPException(422, "照片编号格式不正确")
 
     rows = await pool.fetch(
-        "SELECT id, file_path FROM body_photos WHERE id = ANY($1::uuid[]) AND user_id=$2",
-        photo_ids, uid,
+        "SELECT id, file_path FROM body_photos WHERE id = ANY($1::uuid[]) AND user_id=$2"
+        " ORDER BY created_at",
+        ids, uid,
     )
     if not rows:
-        raise HTTPException(404, "No matching photos found")
+        raise HTTPException(404, "未找到对应的照片")
 
-    file_paths = [r["file_path"] for r in rows]
-    analysis   = await llm_service.analyze_body_photos(file_paths)
+    outcome = await llm_service.analyze_body_photos([r["file_path"] for r in rows])
+    return await photo_service.create_analysis_record(
+        pool, user_id=uid, photo_ids=[str(r["id"]) for r in rows], outcome=outcome)
 
-    for row in rows:
-        await photo_service.update_photo_analysis(
-            pool, photo_id=str(row["id"]), analysis=analysis
-        )
 
-    return {"analysis": analysis, "photo_ids": [str(r["id"]) for r in rows]}
+@router.get("/analysis/latest", response_model=BodyAnalysisOut)
+async def latest_analysis(
+    authorization: str = Header(...),
+    status: Optional[Literal["ok", "unavailable", "failed"]] = None,
+):
+    uid  = _uid(authorization)
+    found = await photo_service.get_latest_analysis(Database.pool(), user_id=uid, status=status)
+    if found is None:
+        raise HTTPException(404, "尚无体型分析结果")
+    return found
 
 
 @router.get("")

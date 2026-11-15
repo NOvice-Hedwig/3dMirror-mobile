@@ -141,3 +141,29 @@ CREATE TABLE IF NOT EXISTS body_snapshots (
     measurements JSONB NOT NULL,
     UNIQUE (user_id, date)
 );
+
+-- ── Body photo analyses (one row per analysis run) ───────────────────────────
+-- Proportions are unitless 0–1 estimates from the vision model, NULL when not estimated.
+-- status: 'ok' (at least one value), 'unavailable' (no API key), 'failed' (see detail).
+-- photo_ids has no foreign key: it records which photos were submitted, even if deleted later.
+-- Replaces body_photos.llm_analysis, which is no longer written (kept for old rows).
+CREATE TABLE IF NOT EXISTS body_analyses (
+    id                   UUID             DEFAULT gen_random_uuid() PRIMARY KEY,
+    user_id              UUID             NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+    created_at           TIMESTAMPTZ      NOT NULL DEFAULT NOW(),
+    status               TEXT             NOT NULL CHECK (status IN ('ok', 'unavailable', 'failed')),
+    model                TEXT,
+    photo_ids            UUID[]           NOT NULL,
+    shoulder_width_norm  DOUBLE PRECISION CHECK (shoulder_width_norm  BETWEEN 0 AND 1),
+    waist_norm           DOUBLE PRECISION CHECK (waist_norm           BETWEEN 0 AND 1),
+    hip_norm             DOUBLE PRECISION CHECK (hip_norm             BETWEEN 0 AND 1),
+    limb_proportion_norm DOUBLE PRECISION CHECK (limb_proportion_norm BETWEEN 0 AND 1),
+    detail               TEXT,
+    CONSTRAINT body_analyses_values_match_status CHECK (
+        (status = 'ok') = (shoulder_width_norm IS NOT NULL OR waist_norm IS NOT NULL
+                           OR hip_norm IS NOT NULL OR limb_proportion_norm IS NOT NULL)
+    )
+);
+
+CREATE INDEX IF NOT EXISTS idx_body_analyses_user_created
+    ON body_analyses (user_id, created_at DESC);
