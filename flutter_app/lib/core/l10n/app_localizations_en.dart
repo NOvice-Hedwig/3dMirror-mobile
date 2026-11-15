@@ -282,4 +282,48 @@ class SEn extends S {
 
   @override
   String get saveFailed => 'Save failed';
+
+  @override
+  String get meTitle => 'ME';
+
+  @override
+  String get meUserName => '3D MIRROR USER';
+
+  @override
+  String get meChallenge => 'CHALLENGE  ·  MODE';
+
+  @override
+  String get meChallengeSub => 'Monthly goal · 20% off when you reach it';
+
+  @override
+  String get meSubscription => 'SUBSCRIPTION';
+
+  @override
+  String get meSubscriptionSub => 'Manage subscription';
+
+  @override
+  String get meLanguage => 'LANGUAGE';
+
+  @override
+  String get meSignOut => 'SIGN  ·  OUT';
+
+  @override
+  String get comingSoon => 'SOON';
+
+  @override
+  String get languageSheetTitle => 'Language';
+
+  @override
+  String get languageSystem => 'Follow system';
+
+  @override
+  String languageSystemCurrent(String language) {
+    return 'Follow system · $language';
+  }
+
+  @override
+  String get languageZh => '简体中文';
+
+  @override
+  String get languageEn => 'English';
 }

@@ -32,7 +32,11 @@ void main() async {
     systemNavigationBarIconBrightness: Brightness.dark,
   ));
 
-  runApp(const ProviderScope(child: MirrorApp()));
+  final language = await loadAppLanguage();
+  runApp(ProviderScope(
+    overrides: [initialAppLanguageProvider.overrideWithValue(language)],
+    child: const MirrorApp(),
+  ));
 }
 
 class MirrorApp extends ConsumerStatefulWidget {
@@ -85,15 +89,17 @@ class _MirrorAppState extends ConsumerState<MirrorApp> {
 
   @override
   Widget build(BuildContext context) {
-    final locale = ref.watch(localeProvider);
+    final language = ref.watch(appLanguageProvider);
     return MaterialApp.router(
       title: '3D Mirror',
       debugShowCheckedModeBanner: false,
       theme: MirrorTheme.light,
       routerConfig: appRouter,
       scaffoldMessengerKey: _messengerKey,
-      locale: locale,
-      supportedLocales: const [Locale('zh'), Locale('en')],
+      // null = follow the device; resolveAppLocale maps it to zh/en, falling back to zh.
+      locale: language.locale,
+      supportedLocales: kSupportedLocales,
+      localeListResolutionCallback: (preferred, _) => resolveAppLocale(preferred),
       localizationsDelegates: const [
         S.delegate,
         GlobalMaterialLocalizations.delegate,

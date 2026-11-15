@@ -4,9 +4,11 @@ import 'package:flutter_animate/flutter_animate.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
+import '../../core/l10n/app_localizations.dart';
 import '../../core/router/app_router.dart';
 import '../../core/theme/design_tokens.dart';
 import '../../core/widgets/animate_widgets.dart';
+import '../../providers/locale_provider.dart';
 import '../../services/api/auth_api.dart';
 import '../../services/api/api_http.dart';
 
@@ -75,8 +77,16 @@ class _MeScreenState extends ConsumerState<MeScreen> {
   // and navigates to the login screen.
   Future<void> _signOut() => AuthApi.instance.signOut();
 
+  void _pickLanguage() => showModalBottomSheet<void>(
+    context: context,
+    backgroundColor: MirrorColors.bg,
+    builder: (_) => const _LanguageSheet(),
+  );
+
   @override
-  Widget build(BuildContext context) => Scaffold(
+  Widget build(BuildContext context) {
+    final s = S.of(context);
+    return Scaffold(
     backgroundColor: MirrorColors.bg,
     body: SafeArea(
       child: Column(children: [
@@ -117,7 +127,7 @@ class _MeScreenState extends ConsumerState<MeScreen> {
                     Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        Text('3D MIRROR USER',
+                        Text(s.meUserName,
                             style: MirrorText.body.copyWith(
                                 color: MirrorColors.text1)),
                         const SizedBox(height: 4),
@@ -153,19 +163,25 @@ class _MeScreenState extends ConsumerState<MeScreen> {
                 child: Column(children: [
                   const EditorialDivider(),
                   _MeRow(
-                    label: 'CHALLENGE  ·  MODE',
-                    sub: '月目标 · 达成享 8 折',
+                    label: s.meChallenge,
+                    sub: s.meChallengeSub,
                     onTap: () => context.push(MirrorRoute.challenge),
                   ),
                   _MeRow(
-                    label: 'SUBSCRIPTION',
-                    sub: '管理订阅',
+                    label: s.meSubscription,
+                    sub: s.meSubscriptionSub,
                     onTap: () {},
                     isComingSoon: true,
                   ),
+                  _MeRow(
+                    label: s.meLanguage,
+                    sub: _languageLabel(s, ref.watch(appLanguageProvider),
+                        Localizations.localeOf(context)),
+                    onTap: _pickLanguage,
+                  ),
                   const EditorialDivider(),
                   _MeRow(
-                    label: 'SIGN  ·  OUT',
+                    label: s.meSignOut,
                     sub: '',
                     onTap: _signOut,
                     isDestructive: true,
@@ -180,6 +196,7 @@ class _MeScreenState extends ConsumerState<MeScreen> {
       ]),
     ),
   );
+  }
 
   Widget _buildMasthead() => Column(
     children: [
@@ -187,7 +204,7 @@ class _MeScreenState extends ConsumerState<MeScreen> {
         padding: const EdgeInsets.fromLTRB(
             MirrorSpacing.pagePad, 20, MirrorSpacing.pagePad, 12),
         child: Text(
-          'ME',
+          S.of(context).meTitle,
           style: MirrorText.overline.copyWith(
               color: MirrorColors.gold,
               fontSize: 11,
@@ -257,10 +274,57 @@ class _MeRow extends StatelessWidget {
             ),
           ),
           if (isComingSoon)
-            Text('SOON', style: MirrorText.caption)
+            Text(S.of(context).comingSoon, style: MirrorText.caption)
           else
             const Icon(Icons.arrow_forward_ios_rounded,
                 size: 12, color: MirrorColors.text3),
+        ]),
+      ),
+    );
+  }
+}
+
+// ── Language ──────────────────────────────────────────────────────────────────
+
+String _languageLabel(S s, AppLanguage language, Locale active) => switch (language) {
+  AppLanguage.system => s.languageSystemCurrent(
+      active.languageCode == 'en' ? s.languageEn : s.languageZh),
+  AppLanguage.zh     => s.languageZh,
+  AppLanguage.en     => s.languageEn,
+};
+
+class _LanguageSheet extends ConsumerWidget {
+  const _LanguageSheet();
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final s       = S.of(context);
+    final current = ref.watch(appLanguageProvider);
+    // Each language is named in itself, so it can be found whatever the app is showing.
+    final options = {
+      AppLanguage.system: s.languageSystem,
+      AppLanguage.zh:     s.languageZh,
+      AppLanguage.en:     s.languageEn,
+    };
+    return SafeArea(
+      child: Padding(
+        padding: const EdgeInsets.symmetric(
+            horizontal: MirrorSpacing.pagePad, vertical: 16),
+        child: Column(mainAxisSize: MainAxisSize.min, children: [
+          Text(s.languageSheetTitle, style: MirrorText.label),
+          const SizedBox(height: 8),
+          for (final e in options.entries)
+            ListTile(
+              contentPadding: EdgeInsets.zero,
+              title: Text(e.value, style: MirrorText.body),
+              trailing: e.key == current
+                  ? const Icon(Icons.check_rounded, size: 18, color: MirrorColors.gold)
+                  : null,
+              onTap: () {
+                ref.read(appLanguageProvider.notifier).set(e.key);
+                Navigator.of(context).pop();
+              },
+            ),
         ]),
       ),
     );

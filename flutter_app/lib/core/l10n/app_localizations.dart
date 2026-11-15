@@ -642,6 +642,90 @@ abstract class S {
   /// In zh, this message translates to:
   /// **'保存失败'**
   String get saveFailed;
+
+  /// No description provided for @meTitle.
+  ///
+  /// In zh, this message translates to:
+  /// **'ME'**
+  String get meTitle;
+
+  /// No description provided for @meUserName.
+  ///
+  /// In zh, this message translates to:
+  /// **'3D MIRROR USER'**
+  String get meUserName;
+
+  /// No description provided for @meChallenge.
+  ///
+  /// In zh, this message translates to:
+  /// **'CHALLENGE  ·  MODE'**
+  String get meChallenge;
+
+  /// No description provided for @meChallengeSub.
+  ///
+  /// In zh, this message translates to:
+  /// **'月目标 · 达成享 8 折'**
+  String get meChallengeSub;
+
+  /// No description provided for @meSubscription.
+  ///
+  /// In zh, this message translates to:
+  /// **'SUBSCRIPTION'**
+  String get meSubscription;
+
+  /// No description provided for @meSubscriptionSub.
+  ///
+  /// In zh, this message translates to:
+  /// **'管理订阅'**
+  String get meSubscriptionSub;
+
+  /// No description provided for @meLanguage.
+  ///
+  /// In zh, this message translates to:
+  /// **'LANGUAGE'**
+  String get meLanguage;
+
+  /// No description provided for @meSignOut.
+  ///
+  /// In zh, this message translates to:
+  /// **'SIGN  ·  OUT'**
+  String get meSignOut;
+
+  /// No description provided for @comingSoon.
+  ///
+  /// In zh, this message translates to:
+  /// **'SOON'**
+  String get comingSoon;
+
+  /// No description provided for @languageSheetTitle.
+  ///
+  /// In zh, this message translates to:
+  /// **'语言'**
+  String get languageSheetTitle;
+
+  /// No description provided for @languageSystem.
+  ///
+  /// In zh, this message translates to:
+  /// **'跟随系统'**
+  String get languageSystem;
+
+  /// No description provided for @languageSystemCurrent.
+  ///
+  /// In zh, this message translates to:
+  /// **'跟随系统 · {language}'**
+  String languageSystemCurrent(String language);
+
+  /// No description provided for @languageZh.
+  ///
+  /// In zh, this message translates to:
+  /// **'简体中文'**
+  String get languageZh;
+
+  /// No description provided for @languageEn.
+  ///
+  /// In zh, this message translates to:
+  /// **'English'**
+  String get languageEn;
 }
 
 class _SDelegate extends LocalizationsDelegate<S> {

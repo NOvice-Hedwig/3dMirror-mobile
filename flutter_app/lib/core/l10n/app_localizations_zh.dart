@@ -282,4 +282,48 @@ class SZh extends S {
 
   @override
   String get saveFailed => '保存失败';
+
+  @override
+  String get meTitle => 'ME';
+
+  @override
+  String get meUserName => '3D MIRROR USER';
+
+  @override
+  String get meChallenge => 'CHALLENGE  ·  MODE';
+
+  @override
+  String get meChallengeSub => '月目标 · 达成享 8 折';
+
+  @override
+  String get meSubscription => 'SUBSCRIPTION';
+
+  @override
+  String get meSubscriptionSub => '管理订阅';
+
+  @override
+  String get meLanguage => 'LANGUAGE';
+
+  @override
+  String get meSignOut => 'SIGN  ·  OUT';
+
+  @override
+  String get comingSoon => 'SOON';
+
+  @override
+  String get languageSheetTitle => '语言';
+
+  @override
+  String get languageSystem => '跟随系统';
+
+  @override
+  String languageSystemCurrent(String language) {
+    return '跟随系统 · $language';
+  }
+
+  @override
+  String get languageZh => '简体中文';
+
+  @override
+  String get languageEn => 'English';
 }

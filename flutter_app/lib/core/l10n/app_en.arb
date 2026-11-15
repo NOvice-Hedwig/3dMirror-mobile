@@ -8,7 +8,13 @@
   "sendCode": "Send code",
   "resendCode": "Resend",
   "resendIn": "Resend in {sec}s",
-  "@resendIn": { "placeholders": { "sec": { "type": "int" } } },
+  "@resendIn": {
+    "placeholders": {
+      "sec": {
+        "type": "int"
+      }
+    }
+  },
   "codePlaceholder": "6-digit code",
   "verifyLogin": "Verify & sign in",
   "orDivider": "or",
@@ -91,5 +97,26 @@
   "navInput": "Log",
   "loadFailed": "Load failed",
   "retry": "Retry",
-  "saveFailed": "Save failed"
+  "saveFailed": "Save failed",
+  "meTitle": "ME",
+  "meUserName": "3D MIRROR USER",
+  "meChallenge": "CHALLENGE  ·  MODE",
+  "meChallengeSub": "Monthly goal · 20% off when you reach it",
+  "meSubscription": "SUBSCRIPTION",
+  "meSubscriptionSub": "Manage subscription",
+  "meLanguage": "LANGUAGE",
+  "meSignOut": "SIGN  ·  OUT",
+  "comingSoon": "SOON",
+  "languageSheetTitle": "Language",
+  "languageSystem": "Follow system",
+  "languageSystemCurrent": "Follow system · {language}",
+  "@languageSystemCurrent": {
+    "placeholders": {
+      "language": {
+        "type": "String"
+      }
+    }
+  },
+  "languageZh": "简体中文",
+  "languageEn": "English"
 }

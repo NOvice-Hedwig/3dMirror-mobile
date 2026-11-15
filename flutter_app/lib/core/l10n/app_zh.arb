@@ -8,7 +8,13 @@
   "sendCode": "发送验证码",
   "resendCode": "重新发送",
   "resendIn": "{sec}s 后重发",
-  "@resendIn": { "placeholders": { "sec": { "type": "int" } } },
+  "@resendIn": {
+    "placeholders": {
+      "sec": {
+        "type": "int"
+      }
+    }
+  },
   "codePlaceholder": "6位验证码",
   "verifyLogin": "验证并登录",
   "orDivider": "或",
@@ -91,5 +97,26 @@
   "navInput": "记录",
   "loadFailed": "加载失败",
   "retry": "重试",
-  "saveFailed": "保存失败"
+  "saveFailed": "保存失败",
+  "meTitle": "ME",
+  "meUserName": "3D MIRROR USER",
+  "meChallenge": "CHALLENGE  ·  MODE",
+  "meChallengeSub": "月目标 · 达成享 8 折",
+  "meSubscription": "SUBSCRIPTION",
+  "meSubscriptionSub": "管理订阅",
+  "meLanguage": "LANGUAGE",
+  "meSignOut": "SIGN  ·  OUT",
+  "comingSoon": "SOON",
+  "languageSheetTitle": "语言",
+  "languageSystem": "跟随系统",
+  "languageSystemCurrent": "跟随系统 · {language}",
+  "@languageSystemCurrent": {
+    "placeholders": {
+      "language": {
+        "type": "String"
+      }
+    }
+  },
+  "languageZh": "简体中文",
+  "languageEn": "English"
 }
