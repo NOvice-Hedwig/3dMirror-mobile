@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import '../../../../core/l10n/app_localizations.dart';
 import '../../../../core/theme/design_tokens.dart';
 import '../../../../core/widgets/animate_widgets.dart';
 import '../../../../models/log_models.dart';
@@ -64,12 +65,14 @@ class _SleepLogSheetState extends ConsumerState<SleepLogSheet> {
     ));
   }
 
+  S get _s => S.of(context);
+
   Future<void> _save() async {
     if (_durationHours < 1.0) {
       _showSnack(
-        '睡眠时间不足 1 小时，是否确认保存？',
+        _s.sleepShortConfirm,
         action: SnackBarAction(
-          label: '确认',
+          label: _s.confirmBtn,
           textColor: MirrorColors.text1,
           onPressed: _doSave,
         ),
@@ -80,6 +83,7 @@ class _SleepLogSheetState extends ConsumerState<SleepLogSheet> {
   }
 
   Future<void> _doSave() async {
+    final s = _s;   // the sheet closes before the snack is shown
     setState(() => _isSaving = true);
     final now  = DateTime.now();
     final bed  = DateTime(now.year, now.month, now.day,
@@ -101,10 +105,10 @@ class _SleepLogSheetState extends ConsumerState<SleepLogSheet> {
       ref.invalidate(todayStatsProvider);
       if (mounted) {
         Navigator.pop(context);
-        _showSnack('睡眠已记录');
+        _showSnack(s.sleepSaved);
       }
     } catch (e) {
-      if (mounted) _showSnack('保存失败：$e');
+      if (mounted) _showSnack(s.saveFailedDetail('$e'));
     } finally {
       if (mounted) setState(() => _isSaving = false);
     }
@@ -113,7 +117,7 @@ class _SleepLogSheetState extends ConsumerState<SleepLogSheet> {
   @override
   Widget build(BuildContext context) {
     return SheetBase(
-      title:    'SLEEP  ·  LOG',
+      title:    _s.sleepSheetTitle,
       isSaving: _isSaving,
       onSave:   _save,
       body:     _buildBody(),
@@ -145,16 +149,16 @@ class _SleepLogSheetState extends ConsumerState<SleepLogSheet> {
 
   Widget _buildTimeSection() {
     return Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-      Text('SLEEP  ·  TIME', style: MirrorText.overline),
+      Text(_s.sleepTimeTitle, style: MirrorText.overline),
       const SizedBox(height: 16),
       Row(children: [
         Expanded(child: _TimeSelector(
-          label: '入睡', time: _bedtime,
+          label: _s.sleepBedtime, time: _bedtime,
           onTap: () => _pickTime(true),
         )),
         const SizedBox(width: 16),
         Expanded(child: _TimeSelector(
-          label: '起床', time: _wakeTime,
+          label: _s.sleepWake, time: _wakeTime,
           onTap: () => _pickTime(false),
         )),
       ]),
@@ -163,7 +167,7 @@ class _SleepLogSheetState extends ConsumerState<SleepLogSheet> {
 
   Widget _buildDurationDisplay() {
     return Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-      Text('DURATION  ·  CALC', style: MirrorText.overline),
+      Text(_s.sleepDurationTitle, style: MirrorText.overline),
       const SizedBox(height: 12),
       Container(
         padding: const EdgeInsets.all(16),
@@ -173,7 +177,7 @@ class _SleepLogSheetState extends ConsumerState<SleepLogSheet> {
           border: Border.all(color: MirrorColors.divider, width: 0.5),
         ),
         child: Row(mainAxisAlignment: MainAxisAlignment.center, children: [
-          Text('睡眠时长   ', style: MirrorText.body),
+          Text('${_s.sleepDuration}   ', style: MirrorText.body),
           Text(_durationStr, style: MirrorText.displayMd),
         ]),
       ),
@@ -182,7 +186,7 @@ class _SleepLogSheetState extends ConsumerState<SleepLogSheet> {
 
   Widget _buildQualitySection() {
     return Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-      Text('SLEEP  ·  QUALITY', style: MirrorText.overline),
+      Text(_s.sleepQualityTitle, style: MirrorText.overline),
       const SizedBox(height: 16),
       Row(
         mainAxisAlignment: MainAxisAlignment.center,

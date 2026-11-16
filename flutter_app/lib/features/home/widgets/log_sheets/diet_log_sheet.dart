@@ -1,6 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../../constants/food_library.dart';
+import '../../../../core/l10n/app_localizations.dart';
+import '../../../../core/l10n/log_value_labels.dart';
+import '../../../../models/log_values.dart';
 import '../../../../providers/log_provider.dart';
 import '../../../../services/api/log_api.dart';
 import '../../../../core/theme/design_tokens.dart';
@@ -16,7 +19,7 @@ class DietLogSheet extends ConsumerStatefulWidget {
 }
 
 class _DietLogSheetState extends ConsumerState<DietLogSheet> {
-  late String _meal;
+  late String _meal;   // stored value (MealValue); the label is translated
   String  _method      = 'search';
   String  _foodSearch  = '';
   FoodItem? _selectedFood;
@@ -29,11 +32,16 @@ class _DietLogSheetState extends ConsumerState<DietLogSheet> {
 
   bool _isSaving = false;
 
+  S get _s => S.of(context);
+
   @override
   void initState() {
     super.initState();
     final h = DateTime.now().hour;
-    _meal = h < 10 ? '早餐' : h < 14 ? '午餐' : h < 18 ? '晚餐' : '加餐';
+    _meal = h < 10 ? MealValue.breakfast
+        : h < 14 ? MealValue.lunch
+        : h < 18 ? MealValue.dinner
+        : MealValue.snack;
   }
 
   @override
@@ -70,11 +78,11 @@ class _DietLogSheetState extends ConsumerState<DietLogSheet> {
 
   bool _validate() {
     if (_nameCtrl.text.trim().isEmpty) {
-      _showSnack('请输入食物名称');
+      _showSnack(_s.dietErrorName);
       return false;
     }
     if (_caloriesCtrl.text.trim().isEmpty) {
-      _showSnack('请输入卡路里');
+      _showSnack(_s.dietErrorCalories);
       return false;
     }
     return true;
@@ -91,6 +99,7 @@ class _DietLogSheetState extends ConsumerState<DietLogSheet> {
 
   Future<void> _save() async {
     if (!_validate()) return;
+    final s = _s;   // the sheet closes before the snack is shown
     setState(() => _isSaving = true);
 
     final entry = DietLogEntry(
@@ -109,10 +118,10 @@ class _DietLogSheetState extends ConsumerState<DietLogSheet> {
       ref.invalidate(todayStatsProvider);
       if (mounted) {
         Navigator.pop(context);
-        _showSnack('饮食已记录');
+        _showSnack(s.dietSaved);
       }
     } catch (e) {
-      if (mounted) _showSnack('保存失败：$e');
+      if (mounted) _showSnack(s.saveFailedDetail('$e'));
     } finally {
       if (mounted) setState(() => _isSaving = false);
     }
@@ -121,7 +130,7 @@ class _DietLogSheetState extends ConsumerState<DietLogSheet> {
   @override
   Widget build(BuildContext context) {
     return SheetBase(
-      title:    'MEAL  ·  LOG',
+      title:    _s.dietSheetTitle,
       isSaving: _isSaving,
       onSave:   _save,
       body:     _buildBody(),
@@ -157,12 +166,11 @@ class _DietLogSheetState extends ConsumerState<DietLogSheet> {
   }
 
   Widget _buildMealSection() {
-    const meals = ['早餐', '午餐', '晚餐', '加餐'];
     return Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-      Text('MEAL  ·  TYPE', style: MirrorText.overline),
+      Text(_s.dietMealTypeTitle, style: MirrorText.overline),
       const SizedBox(height: 12),
-      Row(children: meals.map((m) => MirrorChip(
-        label: m, selected: _meal == m,
+      Row(children: MealValue.all.map((m) => MirrorChip(
+        label: mealLabel(_s, m), selected: _meal == m,
         onTap: () => setState(() => _meal = m),
       )).toList()),
     ]);
@@ -170,15 +178,15 @@ class _DietLogSheetState extends ConsumerState<DietLogSheet> {
 
   Widget _buildMethodSection() {
     return Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-      Text('ENTRY  ·  METHOD', style: MirrorText.overline),
+      Text(_s.dietEntryMethodTitle, style: MirrorText.overline),
       const SizedBox(height: 12),
       Row(children: [
         MirrorChip(
-          label: '搜索', selected: _method == 'search',
+          label: _s.dietMethodSearch, selected: _method == 'search',
           onTap: () => setState(() => _method = 'search'),
         ),
         MirrorChip(
-          label: '手动', selected: _method == 'manual',
+          label: _s.dietMethodManual, selected: _method == 'manual',
           onTap: () => setState(() => _method = 'manual'),
         ),
       ]),
@@ -190,7 +198,7 @@ class _DietLogSheetState extends ConsumerState<DietLogSheet> {
       if (_method == 'search') ...[
         TextField(
           controller: _searchCtrl,
-          decoration: sheetInputDecoration('搜索食物', hint: '鸡胸肉、燕麦…'),
+          decoration: sheetInputDecoration(_s.dietSearchFood, hint: _s.dietSearchHint),
           onChanged: (v) => setState(() => _foodSearch = v),
         ),
         if (_foodSearch.isNotEmpty) ...[
@@ -203,28 +211,28 @@ class _DietLogSheetState extends ConsumerState<DietLogSheet> {
       // 食物表单（搜索选中或手动模式时显示）
       TextField(
         controller: _nameCtrl,
-        decoration: sheetInputDecoration('食物名称'),
+        decoration: sheetInputDecoration(_s.dietFoodName),
       ),
       const SizedBox(height: 10),
       Row(children: [
         Expanded(child: TextField(
           controller: _gramsCtrl,
           keyboardType: const TextInputType.numberWithOptions(decimal: true),
-          decoration: sheetInputDecoration('克重'),
+          decoration: sheetInputDecoration(_s.dietGrams),
           onChanged: _onGramsChanged,
         )),
         const SizedBox(width: 10),
         Expanded(child: TextField(
           controller: _caloriesCtrl,
           keyboardType: TextInputType.number,
-          decoration: sheetInputDecoration('卡路里 *'),
+          decoration: sheetInputDecoration(_s.dietCalories),
         )),
       ]),
       const SizedBox(height: 10),
       TextField(
         controller: _proteinCtrl,
         keyboardType: const TextInputType.numberWithOptions(decimal: true),
-        decoration: sheetInputDecoration('蛋白质 g（选填）'),
+        decoration: sheetInputDecoration(_s.dietProtein),
       ),
     ]);
   }

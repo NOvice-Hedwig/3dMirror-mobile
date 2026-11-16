@@ -17,6 +17,16 @@ const migratedFiles = [
   'lib/core/validation/login_identity.dart',
   'lib/services/api/auth_api.dart',
   'lib/main.dart',
+  // batch 2: home FAB and log sheets. models/log_values.dart is deliberately absent: it
+  // holds the stored Chinese values (data, not display text).
+  'lib/features/home/widgets/fab_button.dart',
+  'lib/features/home/widgets/log_sheets/_sheet_base.dart',
+  'lib/features/home/widgets/log_sheets/diet_log_sheet.dart',
+  'lib/features/home/widgets/log_sheets/health_log_sheet.dart',
+  'lib/features/home/widgets/log_sheets/sleep_log_sheet.dart',
+  'lib/features/home/widgets/log_sheets/supplement_log_sheet.dart',
+  'lib/features/home/widgets/log_sheets/workout_log_sheet.dart',
+  'lib/models/log_models.dart',
 ];
 
 Map<String, dynamic> readArb(String lang) =>

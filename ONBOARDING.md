@@ -413,7 +413,7 @@ Environment variables only (§2.2), read at **import time** as module globals in
   - Search covers Chinese name, English name, ISO code and dialing code. For a shared code (`+44`, `+1`), the main country comes first.
   - The default comes from the device locale, falling back to China. Typing or pasting `+…` makes the picker follow.
   - `phone_numbers_parser` has no country names, so `lib/core/data/country_names.dart` is **generated from Unicode CLDR** by `tool/gen_country_names.py` (dev-time Babel). Re-run it after upgrading `phone_numbers_parser`.
-  - Each row shows the name in the app language, with the other language underneath. The list is sorted by English name in both languages: Dart has no pinyin collation built in, so a Chinese order would need sort keys added by the generator.
+  - Each row shows the name in the app language, with the other language underneath. The list is sorted by English name in both languages (Chinese order is open, §8.2 #10).
 
 ### i18n (since 2026-11-15)
 
@@ -440,12 +440,26 @@ Environment variables only (§2.2), read at **import time** as module globals in
     - `code_invalid`, `apple_token_invalid` (400)
     - `sms_send_failed`, `email_send_failed` (500)
     - `user_not_found` (404, `/auth/me`; not shown by the app)
-- **Stored values stay Chinese:** some values are data, not display text, so translate only how they are shown, never the value sent to the server:
-  - meal type (`早餐`…): `diet_logs.meal` has a CHECK on the Chinese values;
-  - workout type (`有氧`, `无氧`…): compared in `routers/coach.py`;
-  - period symptoms.
-- **Migrated so far:** Me, login (screen, validation messages, country picker, server errors) and the expired-session snackbar.
-- **Remaining batches:** home FAB and log sheets; onboarding and photo capture; input, history, snapshot, compare and predict; challenge, coach and exercise library; backend coach suggestion templates (as `code` + `params`). `UnauthorizedException.toString()` in `api_http.dart` is still Chinese and moves with the screens that display exception text.
+- **Stored values stay Chinese:** some values are data, not display text, so translate only how they are shown, never the value sent to the server.
+  - They are defined once in `lib/models/log_values.dart`, and `lib/core/l10n/log_value_labels.dart` turns them into labels.
+  - In Chinese the label is the stored value itself. A value with no label (a custom name or old data) is shown as it is.
+  - `test/log_values_test.dart` pins the exact values, checks the meal list against the CHECK in `migration.sql` and the `无氧` comparison in `coach.py`, and saves each sheet in English to assert the Chinese value goes over the wire.
+
+  | Set | Stored values → English label | Why the value must not change |
+  |---|---|---|
+  | `MealValue` (`diet_logs.meal`) | 早餐 Breakfast, 午餐 Lunch, 晚餐 Dinner, 加餐 Snack | DB CHECK constraint |
+  | `WorkoutLogType` (`type`) | 有氧 Cardio, 无氧 Strength, 普拉提 Pilates, 球类 Ball sports, 其他 Other | `coach.py` compares `无氧` |
+  | `WorkoutSubType` (`sub_type`) | 跑步 Running, 跳绳 Jump rope, 跳操 Dance aerobics, HIIT, 游泳 Swimming, 爬山 Hiking, 骑行 Cycling, 其他 Other, 垫上普拉提 Mat Pilates, 器械普拉提 Reformer Pilates, 篮球 Basketball, 羽毛球 Badminton, 网球 Tennis, 乒乓球 Table tennis, 足球 Football | calorie estimate compares 跑步/跳绳/HIIT; stored data |
+  | `MuscleGroupValue` (`muscle_group`) | 胸 Chest, 背 Back, 腿 Legs, 肩 Shoulders, 手臂 Arms, 核心 Core | keys of `exercise_library.dart`; stored data |
+  | `SymptomValue` (`period_logs.symptoms`) | 痛经 Cramps, 情绪波动 Mood swings, 水肿 Swelling, 长痘 Acne, 疲劳 Fatigue, 腰酸 Lower back pain | stored data |
+  | `SupplementValue` (`supplement_logs.name`) | 蛋白粉 Protein powder, 肌酸 Creatine, 维生素D Vitamin D, 胶原蛋白 Collagen, 鱼油 Fish oil, 维生素C Vitamin C, 铁 Iron, 叶酸 Folic acid, 镁 Magnesium, 锌 Zinc | stored data; custom names are stored as typed |
+
+  Workout intensity (`low`/`medium`/`high`) and period phase (`start`/`ongoing`/`end`) were already English codes, so only their labels moved to the ARB files.
+- **Migrated so far:**
+  - Me;
+  - login (screen, validation messages, country picker, server errors) and the expired-session snackbar;
+  - the home FAB and the five log sheets.
+- **Remaining batches:** onboarding and photo capture; input, history, snapshot, compare and predict; challenge, coach and exercise library; backend coach suggestion templates (as `code` + `params`). `UnauthorizedException.toString()` in `api_http.dart` is still Chinese and moves with the screens that display exception text.
 - **Avatar-owned files (not migrated, for the avatar owner):** these files belong to the 3D avatar work and were left untouched. Each string needs an ARB key; `loadFailed` and `retry` already exist.
 
   | File | Strings |
@@ -531,9 +545,11 @@ Environment variables only (§2.2), read at **import time** as module globals in
 | Backend photo analysis (unit) | `backend/tests/test_photo_analysis.py`, 26 tests | **26 pass**: image type detection, reply parsing, every outcome, using a fake Anthropic client (no network, no cost) |
 | Backend photo analysis (integration) | `backend/tests/integration/test_photo_analysis_api.py`, 9 tests | **9 pass** in-process against the disposable database (needs `body_analyses`, i.e. `migration.sql` applied); uploads go to a temp dir |
 | Backend API error codes | `backend/tests/test_api_errors.py`, 4 tests | **4 pass**: `{detail, code}` shape and headers; plain `HTTPException` and validation errors unchanged |
-| Flutter | `test/body_analysis_test.dart`, `login_identity_test.dart`, `api_http_test.dart`, `home_provider_error_test.dart`, 41 tests | **41 pass** (`widget_test.dart` still doesn't compile, see §8.2) |
+| Flutter | `test/body_analysis_test.dart`, `login_identity_test.dart`, `api_http_test.dart`, `home_provider_error_test.dart`, 41 tests | **41 pass** |
 | Flutter i18n (2026-11-15) | `test/l10n_test.dart` (ARB parity, Chinese-literal check, locale resolution, persistence, runtime switch) and `test/error_text_test.dart` (code → text in both languages, response parsing, fallbacks), 23 tests | **23 pass** |
-| Flutter | `flutter_app/test/widget_test.dart` | **Does not compile.** It's the default counter template and references `MyApp`, which doesn't exist (the app class is `MirrorApp`). Open, see §8.2 |
+| Flutter smoke test (2026-11-15) | `flutter_app/test/widget_test.dart`, 2 tests | **2 pass**: pumps the real app root (`MirrorApp` in a `ProviderScope`) and checks a signed-out start shows the login screen, in Chinese and in English. Replaced the counter template, which didn't compile |
+| Flutter stored log values (2026-11-15) | `test/log_values_test.dart`, 12 tests | **12 pass**: exact stored values, backend CHECK/`coach.py` agreement, labels in both languages, and each log sheet saved in English sends the Chinese value |
+| **Flutter total** | `flutter test` | **78 pass, 0 fail** |
 | iOS/macOS | `RunnerTests.swift` | Xcode template stubs |
 
 **Run backend unit tests:**
@@ -633,12 +649,12 @@ All verified by the integration tests in §7.
    - It reads `'shoulder_norm'` while the analysis field is `shoulder_width_norm`; `toAvatarOverrides()` bridges this until the avatar owner decides.
    - `limb_proportion_norm` has no consumer.
    - HEIC photos are skipped rather than converted; the app itself only uploads JPEG (#8).
-3. **i18n is partly migrated.** The language switch, Me and login are done, and login errors are translated from codes. The other screens are still hard-coded (mostly Chinese), and so are the backend coach cards. Remaining batches and the avatar-owned strings are listed in §6 "i18n".
+3. **i18n is partly migrated.** The language switch, Me, login and the home log sheets are done, and login errors are translated from codes. The other screens are still hard-coded (mostly Chinese), and so are the backend coach cards. Remaining batches and the avatar-owned strings are listed in §6 "i18n".
 4. **Supplement reminders are not implemented.** The supplement sheet lets the user switch a reminder on and pick a time, and the backend stores `reminder_time`/`reminder_enabled`, but **nothing schedules a reminder**. There's no notification package, no Android notification permission, and no server scheduler or push.
    - **Preferred approach:** schedule on the device (e.g. `flutter_local_notifications`) at the chosen wall-clock time. The phone's own timezone handles it, so **no server-side timezone** (`users.timezone`) is needed. That's only required if reminders are ever sent by server push.
    - **Data model:** reminders are currently stored per log entry (`supplement_logs`). They should become a **standing reminder per supplement** (e.g. a `supplements` or `supplement_reminders` table: user, supplement, time, enabled), separate from the log of doses taken.
 5. **Two unit tests fail with `DEV_MODE=false`.** `test_phone_send_called` and `test_email_send_called` patch `auth.service.send_*_otp`, but the router imported those names directly, so the patch has no effect. They pass only when `DEV_MODE` skips the real Aliyun and SendGrid calls; otherwise they get a 500.
-6. **Default Flutter widget test.** `flutter_app/test/widget_test.dart` is the counter template, references a non-existent `MyApp`, and doesn't compile.
+6. ~~**Default Flutter widget test.**~~ Resolved 2026-11-15: `widget_test.dart` is now an app smoke test (§7).
 7. **Stored phone values that aren't valid numbers (decision pending).** A read-only count on 2026-10-27 found 9 users in the dev `mirror_db`:
    - 1 legacy-format China mobile (`86…` without `+`), which will be matched and rewritten to E.164 on its next login.
    - **8 values that aren't valid numbers at all** (e.g. 3–12 digit test strings typed under `DEV_MODE`). Since login now requires a valid mobile number, **those accounts can no longer log in by phone.**
@@ -657,6 +673,7 @@ All verified by the integration tests in §7.
    - move the libraries to the backend with per-locale names.
 
    If these names are ever stored in logs, keep the stored value stable (see "Stored values stay Chinese" in §6 "i18n").
+10. **Country picker order in Chinese (low priority, 2026-11-15).** The phone country list is sorted by English name in both languages, so Chinese users see an order that looks random. Dart has no built-in pinyin collation. A fix would have `tool/gen_country_names.py` emit a pinyin sort key per country (e.g. with `pypinyin` at generation time) and have `searchCountries` sort by it when the app is in Chinese.
 
 **Other logic bugs:**
 - **Coach recovery card never triggers:** it checks `activity_data.get("type") == "无氧"`, but `sessions.activity_data` uses `workout_type` with English enum values (`strength`…). Workouts logged via the FAB go to `workout_logs`, which coach doesn't read. "Training days" counts distinct session days, not workouts.
@@ -712,6 +729,6 @@ All verified by the integration tests in §7.
 2. Avatar owner: apply `latestBodyAnalysisProvider` to the avatar, decide on the `shoulder_norm` key versus `toAvatarOverrides()`, and decide what `limb_proportion_norm` should drive. Optionally convert HEIC uploads server-side.
 3. Build supplement reminders on-device with a per-supplement reminder model (§8.2 #4).
 4. Add an attempt limit on OTP verify, and move the OTP store and send limits to a shared store before running more than one backend instance.
-5. Fix the two `DEV_MODE`-dependent unit tests by patching `auth.router.send_*_otp`; replace `widget_test.dart` with a real smoke test; add a CI workflow that runs unit tests plus the integration suite against a Postgres service container.
+5. Fix the two `DEV_MODE`-dependent unit tests by patching `auth.router.send_*_otp`; add a CI workflow that runs unit tests plus the integration suite against a Postgres service container.
 6. Move the remaining routers to `Depends(current_user)`; centralise `API_BASE_URL` and the HTTP client in Flutter.
 7. Finish the i18n batches (§6 "i18n"), including coach suggestions as `code` + `params`.

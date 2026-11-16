@@ -1,4 +1,5 @@
 import '../services/api/local_time.dart';
+import 'log_values.dart';
 
 // Dates: calendar dates sent to the API are the user's local 'YYYY-MM-DD';
 // instants are sent as UTC ('...Z') and converted back with toLocal() on parse.
@@ -8,7 +9,7 @@ class DietLogEntry {
   final String   id;
   final String   userId;
   final DateTime loggedAt;
-  final String   meal;        // '早餐'|'午餐'|'晚餐'|'加餐'
+  final String   meal;        // MealValue (stored Chinese value, see log_values.dart)
   final String   foodName;
   final double?  grams;
   final double   calories;
@@ -92,7 +93,7 @@ class SleepLogEntry {
 // ─── WorkoutLogEntry ──────────────────────────────────────────────────────────
 // Stored as activity_data JSON in the existing sessions table (no new table).
 class WorkoutLogEntry {
-  final String           type;       // '有氧'|'无氧'|'普拉提'|'球类'|'其他'
+  final String           type;       // WorkoutLogType (stored Chinese value)
   final String           subType;
   final int              durationMin;
   final String           intensity;  // 'low'|'medium'|'high'
@@ -114,9 +115,9 @@ class WorkoutLogEntry {
     required int durationMin,
     required String intensity,
   }) {
-    final base = subType == '跑步' ? 10.0
-        : subType == '跳绳' ? 12.0
-        : subType == 'HIIT' ? 11.0
+    final base = subType == WorkoutSubType.running ? 10.0
+        : subType == WorkoutSubType.jumpRope ? 12.0
+        : subType == WorkoutSubType.hiit ? 11.0
         : 8.0;
     final factor = intensity == 'low' ? 0.75
         : intensity == 'high' ? 1.3 : 1.0;
@@ -179,7 +180,7 @@ class StrengthSet {
 class PeriodLogEntry {
   final String?      date;      // local 'YYYY-MM-DD'; null → today (local) when sent
   final String       phase;     // 'start'|'end'|'ongoing'
-  final List<String> symptoms;  // ['痛经','情绪波动','水肿','长痘','疲劳']
+  final List<String> symptoms;  // SymptomValue entries (stored Chinese values)
   final int          intensity; // 1–3
 
   const PeriodLogEntry({

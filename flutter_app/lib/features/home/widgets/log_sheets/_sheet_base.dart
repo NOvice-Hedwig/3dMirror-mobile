@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_animate/flutter_animate.dart';
+import '../../../../core/l10n/app_localizations.dart';
 import '../../../../core/theme/design_tokens.dart';
 
 // ── 共用输入框装饰 ──────────────────────────────────────────────────────────────
@@ -121,7 +122,7 @@ class SheetBase extends StatelessWidget {
                           color: MirrorColors.text1, strokeWidth: 1),
                       )
                     : Text(
-                        'SAVE  ·  RECORD',
+                        S.of(context).sheetSave,
                         style: MirrorText.overline.copyWith(
                           color: MirrorColors.text2, letterSpacing: 2.5),
                       ),

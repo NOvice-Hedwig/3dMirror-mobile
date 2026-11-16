@@ -378,4 +378,402 @@ class SEn extends S {
 
   @override
   String get sessionExpired => 'Your session has expired. Please sign in again';
+
+  @override
+  String get fabWorkout => 'Workout';
+
+  @override
+  String get fabDiet => 'Diet';
+
+  @override
+  String get fabSleep => 'Sleep';
+
+  @override
+  String get fabHealth => 'Health';
+
+  @override
+  String get fabSupplement => 'Supplements';
+
+  @override
+  String get sheetSave => 'SAVE  ·  RECORD';
+
+  @override
+  String saveFailedDetail(String error) {
+    return 'Couldn\'t save: $error';
+  }
+
+  @override
+  String get logOptional => 'Optional';
+
+  @override
+  String get logIntensityTitle => 'INTENSITY';
+
+  @override
+  String get editBtn => 'Edit';
+
+  @override
+  String get workoutSheetTitle => 'TYPE  ·  LOG';
+
+  @override
+  String get workoutTypeSelect => 'TYPE  ·  SELECT';
+
+  @override
+  String get workoutCardioTypeTitle => 'CARDIO  ·  TYPE';
+
+  @override
+  String get workoutPilatesTypeTitle => 'PILATES  ·  TYPE';
+
+  @override
+  String get workoutSportTypeTitle => 'SPORT  ·  TYPE';
+
+  @override
+  String get workoutOtherNameTitle => 'OTHER  ·  NAME';
+
+  @override
+  String get workoutMuscleGroupTitle => 'MUSCLE  ·  GROUP';
+
+  @override
+  String get workoutDurationIntensityTitle => 'DURATION  ·  INTENSITY';
+
+  @override
+  String get workoutSetsTitle => 'SETS  ·  LOG';
+
+  @override
+  String get workoutCalorieTitle => 'CALORIE  ·  EST';
+
+  @override
+  String get workoutErrorMuscleGroup => 'Choose a muscle group';
+
+  @override
+  String get workoutErrorNoSets => 'Add at least one set';
+
+  @override
+  String get workoutErrorMinDuration => 'Duration must be at least 5 minutes';
+
+  @override
+  String get workoutSaved => 'Workout logged';
+
+  @override
+  String get workoutOtherNameField => 'Activity name';
+
+  @override
+  String get workoutExerciseSearch => 'Search exercises';
+
+  @override
+  String get unitMinutes => 'min';
+
+  @override
+  String get workoutWithWeight => 'Added weight';
+
+  @override
+  String get workoutWeightField => 'Weight kg';
+
+  @override
+  String get workoutAddSet => '+ Add a set';
+
+  @override
+  String get workoutReps => 'Reps';
+
+  @override
+  String get workoutEstimatedBurn => 'Estimated burn';
+
+  @override
+  String get workoutIntensityLow => 'Low';
+
+  @override
+  String get workoutIntensityMedium => 'Medium';
+
+  @override
+  String get workoutIntensityHigh => 'High';
+
+  @override
+  String get workoutTypeCardio => 'Cardio';
+
+  @override
+  String get workoutTypeStrength => 'Strength';
+
+  @override
+  String get workoutTypePilates => 'Pilates';
+
+  @override
+  String get workoutTypeBall => 'Ball sports';
+
+  @override
+  String get workoutTypeOther => 'Other';
+
+  @override
+  String get subTypeRunning => 'Running';
+
+  @override
+  String get subTypeJumpRope => 'Jump rope';
+
+  @override
+  String get subTypeAerobics => 'Dance aerobics';
+
+  @override
+  String get subTypeHiit => 'HIIT';
+
+  @override
+  String get subTypeSwimming => 'Swimming';
+
+  @override
+  String get subTypeHiking => 'Hiking';
+
+  @override
+  String get subTypeCycling => 'Cycling';
+
+  @override
+  String get subTypeOther => 'Other';
+
+  @override
+  String get subTypeMatPilates => 'Mat Pilates';
+
+  @override
+  String get subTypeReformerPilates => 'Reformer Pilates';
+
+  @override
+  String get subTypeBasketball => 'Basketball';
+
+  @override
+  String get subTypeBadminton => 'Badminton';
+
+  @override
+  String get subTypeTennis => 'Tennis';
+
+  @override
+  String get subTypeTableTennis => 'Table tennis';
+
+  @override
+  String get subTypeFootball => 'Football';
+
+  @override
+  String get muscleChest => 'Chest';
+
+  @override
+  String get muscleBack => 'Back';
+
+  @override
+  String get muscleLegs => 'Legs';
+
+  @override
+  String get muscleShoulders => 'Shoulders';
+
+  @override
+  String get muscleArms => 'Arms';
+
+  @override
+  String get muscleCore => 'Core';
+
+  @override
+  String get dietSheetTitle => 'MEAL  ·  LOG';
+
+  @override
+  String get dietMealTypeTitle => 'MEAL  ·  TYPE';
+
+  @override
+  String get dietEntryMethodTitle => 'ENTRY  ·  METHOD';
+
+  @override
+  String get mealBreakfast => 'Breakfast';
+
+  @override
+  String get mealLunch => 'Lunch';
+
+  @override
+  String get mealDinner => 'Dinner';
+
+  @override
+  String get mealSnack => 'Snack';
+
+  @override
+  String get dietMethodSearch => 'Search';
+
+  @override
+  String get dietMethodManual => 'Manual';
+
+  @override
+  String get dietSearchFood => 'Search food';
+
+  @override
+  String get dietSearchHint => 'Chicken breast, oats…';
+
+  @override
+  String get dietFoodName => 'Food name';
+
+  @override
+  String get dietGrams => 'Grams';
+
+  @override
+  String get dietCalories => 'Calories *';
+
+  @override
+  String get dietProtein => 'Protein g (optional)';
+
+  @override
+  String get dietErrorName => 'Enter a food name';
+
+  @override
+  String get dietErrorCalories => 'Enter the calories';
+
+  @override
+  String get dietSaved => 'Meal logged';
+
+  @override
+  String get healthSheetTitle => 'HEALTH  ·  LOG';
+
+  @override
+  String get healthMeasureTitle => 'BODY  ·  MEASURE';
+
+  @override
+  String get healthPeriodTitle => 'PERIOD  ·  LOG';
+
+  @override
+  String get healthSymptomsTitle => 'SYMPTOMS';
+
+  @override
+  String get measureWeightKg => 'Weight kg';
+
+  @override
+  String get measureWaistCm => 'Waist cm';
+
+  @override
+  String get measureHipCm => 'Hips cm';
+
+  @override
+  String get measureChestCm => 'Chest cm';
+
+  @override
+  String get measureThighCm => 'Thigh cm';
+
+  @override
+  String get periodStart => 'Period started';
+
+  @override
+  String get periodOngoing => 'Ongoing';
+
+  @override
+  String get periodEnd => 'Period ended';
+
+  @override
+  String get periodIntensityLight => 'Light';
+
+  @override
+  String get periodIntensityModerate => 'Moderate';
+
+  @override
+  String get periodIntensityHeavy => 'Heavy';
+
+  @override
+  String get symptomCramps => 'Cramps';
+
+  @override
+  String get symptomMoodSwings => 'Mood swings';
+
+  @override
+  String get symptomSwelling => 'Swelling';
+
+  @override
+  String get symptomAcne => 'Acne';
+
+  @override
+  String get symptomFatigue => 'Fatigue';
+
+  @override
+  String get symptomBackPain => 'Lower back pain';
+
+  @override
+  String get healthErrorEmpty => 'Fill in at least one field';
+
+  @override
+  String get healthSaved => 'Health data logged';
+
+  @override
+  String get sleepSheetTitle => 'SLEEP  ·  LOG';
+
+  @override
+  String get sleepTimeTitle => 'SLEEP  ·  TIME';
+
+  @override
+  String get sleepDurationTitle => 'DURATION  ·  CALC';
+
+  @override
+  String get sleepQualityTitle => 'SLEEP  ·  QUALITY';
+
+  @override
+  String get sleepBedtime => 'Bedtime';
+
+  @override
+  String get sleepWake => 'Wake up';
+
+  @override
+  String get sleepDuration => 'Sleep duration';
+
+  @override
+  String get sleepShortConfirm => 'Less than 1 hour of sleep. Save anyway?';
+
+  @override
+  String get sleepSaved => 'Sleep logged';
+
+  @override
+  String get supplementSheetTitle => 'SUPPLEMENT  ·  LOG';
+
+  @override
+  String get supplementSelectTitle => 'SUPPLEMENT  ·  SELECT';
+
+  @override
+  String get supplementCustomTitle => 'CUSTOM  ·  ADD';
+
+  @override
+  String get supplementReminderTitle => 'REMINDER  ·  TIME';
+
+  @override
+  String get supplementNameField => 'Name';
+
+  @override
+  String get supplementNameHint => 'e.g. glutamine';
+
+  @override
+  String get supplementDosageField => 'Dosage';
+
+  @override
+  String get supplementDosageHint => '30 g, 2 capsules';
+
+  @override
+  String get supplementPickTime => 'Choose a time';
+
+  @override
+  String get supplementErrorEmpty => 'Choose or enter at least one supplement';
+
+  @override
+  String get supplementSaved => 'Supplements logged';
+
+  @override
+  String get supplementProteinPowder => 'Protein powder';
+
+  @override
+  String get supplementCreatine => 'Creatine';
+
+  @override
+  String get supplementVitaminD => 'Vitamin D';
+
+  @override
+  String get supplementCollagen => 'Collagen';
+
+  @override
+  String get supplementFishOil => 'Fish oil';
+
+  @override
+  String get supplementVitaminC => 'Vitamin C';
+
+  @override
+  String get supplementIron => 'Iron';
+
+  @override
+  String get supplementFolicAcid => 'Folic acid';
+
+  @override
+  String get supplementMagnesium => 'Magnesium';
+
+  @override
+  String get supplementZinc => 'Zinc';
 }

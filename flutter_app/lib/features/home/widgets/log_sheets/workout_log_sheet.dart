@@ -1,9 +1,12 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../../constants/exercise_library.dart';
+import '../../../../core/l10n/app_localizations.dart';
+import '../../../../core/l10n/log_value_labels.dart';
 import '../../../../core/theme/design_tokens.dart';
 import '../../../../core/widgets/animate_widgets.dart';
 import '../../../../models/log_models.dart';
+import '../../../../models/log_values.dart';
 import '../../../../providers/log_provider.dart';
 import '../../../../providers/session_provider.dart';
 import '../../../../services/api/log_api.dart';
@@ -29,14 +32,6 @@ class _MutableSet {
   );
 }
 
-// ── 子类型映射 ─────────────────────────────────────────────────────────────────
-const _kSubTypes = {
-  '有氧':  ['跑步', '跳绳', '跳操', 'HIIT', '游泳', '爬山', '骑行', '其他'],
-  '普拉提': ['垫上普拉提', '器械普拉提'],
-  '球类':  ['篮球', '羽毛球', '网球', '乒乓球', '足球', '其他'],
-};
-const _kMuscleGroups = ['胸', '背', '腿', '肩', '手臂', '核心'];
-
 // ─────────────────────────────────────────────────────────────────────────────
 class WorkoutLogSheet extends ConsumerStatefulWidget {
   const WorkoutLogSheet({super.key});
@@ -46,8 +41,9 @@ class WorkoutLogSheet extends ConsumerStatefulWidget {
 }
 
 class _WorkoutLogSheetState extends ConsumerState<WorkoutLogSheet> {
-  String  _type        = '有氧';
-  String  _subType     = '跑步';
+  // Stored values (models/log_values.dart); shown through log_value_labels.dart.
+  String  _type        = WorkoutLogType.cardio;
+  String  _subType     = WorkoutSubType.running;
   int     _durationMin = 30;
   String  _intensity   = 'medium';
   bool    _withWeight  = false;
@@ -62,6 +58,8 @@ class _WorkoutLogSheetState extends ConsumerState<WorkoutLogSheet> {
   bool    _showCalorieEditor = false;
   final   _calorieEditCtrl  = TextEditingController();
   bool    _isSaving = false;
+
+  S get _s => S.of(context);
 
   @override
   void dispose() {
@@ -88,15 +86,7 @@ class _WorkoutLogSheetState extends ConsumerState<WorkoutLogSheet> {
       _exerciseSearch   = '';
       _searchCtrl.clear();
       _sets.clear();
-      if (t == '有氧') {
-        _subType = '跑步';
-      } else if (t == '普拉提') {
-        _subType = '垫上普拉提';
-      } else if (t == '球类') {
-        _subType = '篮球';
-      } else {
-        _subType = t;
-      }
+      _subType = WorkoutSubType.byType[t]?.first ?? t;
     });
   }
 
@@ -110,18 +100,18 @@ class _WorkoutLogSheetState extends ConsumerState<WorkoutLogSheet> {
   }
 
   bool _validate() {
-    if (_type == '无氧') {
+    if (_type == WorkoutLogType.strength) {
       if (_muscleGroup == null) {
-        _showSnack('请选择训练部位');
+        _showSnack(_s.workoutErrorMuscleGroup);
         return false;
       }
       if (_sets.isEmpty) {
-        _showSnack('请至少添加一组');
+        _showSnack(_s.workoutErrorNoSets);
         return false;
       }
     } else {
       if (_durationMin < 5) {
-        _showSnack('时长至少 5 分钟');
+        _showSnack(_s.workoutErrorMinDuration);
         return false;
       }
     }
@@ -139,20 +129,21 @@ class _WorkoutLogSheetState extends ConsumerState<WorkoutLogSheet> {
 
   Future<void> _save() async {
     if (!_validate()) return;
+    final s = _s;   // the sheet closes before the snack is shown
     setState(() => _isSaving = true);
 
     final entry = WorkoutLogEntry(
       type:         _type,
-      subType:      _type == '其他' ? _customCtrl.text.trim() : _subType,
-      durationMin:  _type == '无氧' ? 0 : _durationMin,
+      subType:      _type == WorkoutLogType.other ? _customCtrl.text.trim() : _subType,
+      durationMin:  _type == WorkoutLogType.strength ? 0 : _durationMin,
       intensity:    _intensity,
       withWeight:   _withWeight,
       weightKg:     _withWeight ? double.tryParse(_weightKgCtrl.text) : null,
       muscleGroup:  _muscleGroup,
-      sets:         _type == '无氧'
+      sets:         _type == WorkoutLogType.strength
           ? _sets.map((s) => s.toStrengthSet()).toList()
           : null,
-      estimatedKcal: _type != '无氧' ? _estimatedCalories : null,
+      estimatedKcal: _type != WorkoutLogType.strength ? _estimatedCalories : null,
     );
     try {
       await LogApi.instance.saveWorkout(entry);
@@ -160,10 +151,10 @@ class _WorkoutLogSheetState extends ConsumerState<WorkoutLogSheet> {
       ref.invalidate(sessionsProvider);
       if (mounted) {
         Navigator.pop(context);
-        _showSnack('运动已记录');
+        _showSnack(s.workoutSaved);
       }
     } catch (e) {
-      if (mounted) _showSnack('保存失败：$e');
+      if (mounted) _showSnack(s.saveFailedDetail('$e'));
     } finally {
       if (mounted) setState(() => _isSaving = false);
     }
@@ -173,7 +164,7 @@ class _WorkoutLogSheetState extends ConsumerState<WorkoutLogSheet> {
   @override
   Widget build(BuildContext context) {
     return SheetBase(
-      title:    'TYPE  ·  LOG',
+      title:    _s.workoutSheetTitle,
       isSaving: _isSaving,
       onSave:   _save,
       body:     _buildBody(),
@@ -197,7 +188,7 @@ class _WorkoutLogSheetState extends ConsumerState<WorkoutLogSheet> {
           child: _buildSubSection(),
         ),
 
-        if (_type != '无氧') ...[
+        if (_type != WorkoutLogType.strength) ...[
           const EditorialDivider(topPad: 24, bottomPad: 24),
           // Section 3A — 时长 + 强度 + 负重
           FadeSlideIn(
@@ -225,17 +216,16 @@ class _WorkoutLogSheetState extends ConsumerState<WorkoutLogSheet> {
   }
 
   Widget _buildTypeRow() {
-    const types = ['有氧', '无氧', '普拉提', '球类', '其他'];
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Text('TYPE  ·  SELECT', style: MirrorText.overline),
+        Text(_s.workoutTypeSelect, style: MirrorText.overline),
         const SizedBox(height: 12),
         SingleChildScrollView(
           scrollDirection: Axis.horizontal,
           child: Row(
-            children: types.map((t) => MirrorChip(
-              label:    t,
+            children: WorkoutLogType.all.map((t) => MirrorChip(
+              label:    workoutTypeLabel(_s, t),
               selected: _type == t,
               onTap:    () => _switchType(t),
             )).toList(),
@@ -246,17 +236,19 @@ class _WorkoutLogSheetState extends ConsumerState<WorkoutLogSheet> {
   }
 
   Widget _buildSubSection() {
-    if (_type == '有氧') return _buildChipRow('CARDIO  ·  TYPE', _kSubTypes['有氧']!);
-    if (_type == '普拉提') return _buildChipRow('PILATES  ·  TYPE', _kSubTypes['普拉提']!);
-    if (_type == '球类') return _buildChipRow('SPORT  ·  TYPE', _kSubTypes['球类']!);
-    if (_type == '其他') {
+    final subTypes = WorkoutSubType.byType[_type];
+    if (_type == WorkoutLogType.cardio) return _buildChipRow(_s.workoutCardioTypeTitle, subTypes!);
+    if (_type == WorkoutLogType.pilates) return _buildChipRow(_s.workoutPilatesTypeTitle, subTypes!);
+    if (_type == WorkoutLogType.ball) return _buildChipRow(_s.workoutSportTypeTitle, subTypes!);
+    if (_type == WorkoutLogType.other) {
       return Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-        Text('OTHER  ·  NAME', style: MirrorText.overline),
+        Text(_s.workoutOtherNameTitle, style: MirrorText.overline),
         const SizedBox(height: 10),
-        TextField(controller: _customCtrl, decoration: sheetInputDecoration('运动名称')),
+        TextField(controller: _customCtrl,
+            decoration: sheetInputDecoration(_s.workoutOtherNameField)),
       ]);
     }
-    // 无氧
+    // strength
     return _buildStrengthSubSection();
   }
 
@@ -268,7 +260,7 @@ class _WorkoutLogSheetState extends ConsumerState<WorkoutLogSheet> {
         spacing: 0,
         runSpacing: 8,
         children: options.map((o) => MirrorChip(
-          label: o, selected: _subType == o,
+          label: workoutSubTypeLabel(_s, o), selected: _subType == o,
           onTap: () => setState(() => _subType = o),
         )).toList(),
       ),
@@ -277,13 +269,13 @@ class _WorkoutLogSheetState extends ConsumerState<WorkoutLogSheet> {
 
   Widget _buildStrengthSubSection() {
     return Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-      Text('MUSCLE  ·  GROUP', style: MirrorText.overline),
+      Text(_s.workoutMuscleGroupTitle, style: MirrorText.overline),
       const SizedBox(height: 12),
       Wrap(
         spacing: 0,
         runSpacing: 8,
-        children: _kMuscleGroups.map((g) => MirrorChip(
-          label: g, selected: _muscleGroup == g,
+        children: MuscleGroupValue.all.map((g) => MirrorChip(
+          label: muscleGroupLabel(_s, g), selected: _muscleGroup == g,
           onTap: () => setState(() => _muscleGroup = g),
         )).toList(),
       ),
@@ -291,7 +283,7 @@ class _WorkoutLogSheetState extends ConsumerState<WorkoutLogSheet> {
         const SizedBox(height: 16),
         TextField(
           controller: _searchCtrl,
-          decoration: sheetInputDecoration('搜索动作'),
+          decoration: sheetInputDecoration(_s.workoutExerciseSearch),
           onChanged: (v) => setState(() => _exerciseSearch = v),
         ),
         const SizedBox(height: 8),
@@ -335,9 +327,12 @@ class _WorkoutLogSheetState extends ConsumerState<WorkoutLogSheet> {
   }
 
   Widget _buildDurationSection() {
-    const intensities = [('低', 'low'), ('中', 'medium'), ('高', 'high')];
+    final intensities = [
+      (_s.workoutIntensityLow, 'low'), (_s.workoutIntensityMedium, 'medium'),
+      (_s.workoutIntensityHigh, 'high'),
+    ];
     return Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-      Text('DURATION  ·  INTENSITY', style: MirrorText.overline),
+      Text(_s.workoutDurationIntensityTitle, style: MirrorText.overline),
       const SizedBox(height: 16),
 
       // 时长大字 + Slider
@@ -346,7 +341,7 @@ class _WorkoutLogSheetState extends ConsumerState<WorkoutLogSheet> {
         const SizedBox(width: 4),
         Padding(
           padding: const EdgeInsets.only(bottom: 3),
-          child: Text('分钟', style: MirrorText.unitLg),
+          child: Text(_s.unitMinutes, style: MirrorText.unitLg),
         ),
       ]),
       const SizedBox(height: 8),
@@ -373,7 +368,7 @@ class _WorkoutLogSheetState extends ConsumerState<WorkoutLogSheet> {
       const SizedBox(height: 20),
 
       // 强度
-      Text('INTENSITY', style: MirrorText.overline),
+      Text(_s.logIntensityTitle, style: MirrorText.overline),
       const SizedBox(height: 10),
       Row(children: intensities.map<Widget>((item) => MirrorChip(
         label: item.$1, selected: _intensity == item.$2,
@@ -383,7 +378,7 @@ class _WorkoutLogSheetState extends ConsumerState<WorkoutLogSheet> {
 
       // 附加负重
       Row(children: [
-        Text('附加负重', style: MirrorText.body),
+        Text(_s.workoutWithWeight, style: MirrorText.body),
         const Spacer(),
         Switch(
           value: _withWeight,
@@ -396,7 +391,7 @@ class _WorkoutLogSheetState extends ConsumerState<WorkoutLogSheet> {
         TextField(
           controller: _weightKgCtrl,
           keyboardType: const TextInputType.numberWithOptions(decimal: true),
-          decoration: sheetInputDecoration('负重 kg'),
+          decoration: sheetInputDecoration(_s.workoutWeightField),
         ),
       ],
     ]);
@@ -404,7 +399,7 @@ class _WorkoutLogSheetState extends ConsumerState<WorkoutLogSheet> {
 
   Widget _buildSetsSection() {
     return Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-      Text('SETS  ·  LOG', style: MirrorText.overline),
+      Text(_s.workoutSetsTitle, style: MirrorText.overline),
       const SizedBox(height: 12),
       ...List.generate(_sets.length, (i) => _buildSetRow(i)),
       const SizedBox(height: 4),
@@ -412,7 +407,7 @@ class _WorkoutLogSheetState extends ConsumerState<WorkoutLogSheet> {
         onTap: _addSet,
         child: Padding(
           padding: const EdgeInsets.symmetric(vertical: 12),
-          child: Text('+ 添加一组',
+          child: Text(_s.workoutAddSet,
               style: MirrorText.bodyS.copyWith(color: MirrorColors.text2)),
         ),
       ),
@@ -428,7 +423,7 @@ class _WorkoutLogSheetState extends ConsumerState<WorkoutLogSheet> {
         Expanded(child: TextField(
           controller: s.repsCtrl,
           keyboardType: TextInputType.number,
-          decoration: sheetInputDecoration('次数'),
+          decoration: sheetInputDecoration(_s.workoutReps),
         )),
         const SizedBox(width: 8),
         Expanded(child: TextField(
@@ -448,7 +443,7 @@ class _WorkoutLogSheetState extends ConsumerState<WorkoutLogSheet> {
 
   Widget _buildCalorieSection() {
     return Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-      Text('CALORIE  ·  EST', style: MirrorText.overline),
+      Text(_s.workoutCalorieTitle, style: MirrorText.overline),
       const SizedBox(height: 12),
       if (_showCalorieEditor)
         Row(children: [
@@ -465,12 +460,12 @@ class _WorkoutLogSheetState extends ConsumerState<WorkoutLogSheet> {
           const SizedBox(width: 12),
           GestureDetector(
             onTap: () => setState(() => _showCalorieEditor = false),
-            child: Text('取消', style: MirrorText.caption),
+            child: Text(_s.cancelBtn, style: MirrorText.caption),
           ),
         ])
       else
         Row(children: [
-          Text('估算消耗', style: MirrorText.body),
+          Text(_s.workoutEstimatedBurn, style: MirrorText.body),
           const Spacer(),
           Text('$_estimatedCalories', style: MirrorText.displayMd),
           const SizedBox(width: 4),
@@ -485,7 +480,7 @@ class _WorkoutLogSheetState extends ConsumerState<WorkoutLogSheet> {
                   (_manualCalories ?? _estimatedCalories).toString();
               _showCalorieEditor = true;
             }),
-            child: Text('修改',
+            child: Text(_s.editBtn,
                 style: MirrorText.caption.copyWith(
                   color: MirrorColors.text2,
                   decoration: TextDecoration.underline,

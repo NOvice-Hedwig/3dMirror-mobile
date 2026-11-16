@@ -1,6 +1,7 @@
 import 'dart:math' as math;
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
+import '../../../core/l10n/app_localizations.dart';
 import '../home_design.dart';
 import 'log_sheets/workout_log_sheet.dart';
 import 'log_sheets/diet_log_sheet.dart';
@@ -11,17 +12,23 @@ import 'log_sheets/supplement_log_sheet.dart';
 // ── 子按钮数据 ─────────────────────────────────────────────────────────────────
 class _FabItem {
   final String emoji;
-  final String label;
+  final String Function(S) label;
   final String sheet; // batch-2: matched in _openSheet()
   const _FabItem(this.emoji, this.label, this.sheet);
 }
 
+String _workout(S s)    => s.fabWorkout;
+String _diet(S s)       => s.fabDiet;
+String _sleep(S s)      => s.fabSleep;
+String _health(S s)     => s.fabHealth;
+String _supplement(S s) => s.fabSupplement;
+
 const _kItems = [
-  _FabItem('🏃', '运动', 'workout'),
-  _FabItem('🥗', '饮食', 'diet'),
-  _FabItem('🌙', '睡眠', 'sleep'),
-  _FabItem('❤️',  '健康', 'health'),
-  _FabItem('💊', '补剂', 'supplement'),
+  _FabItem('🏃', _workout,    'workout'),
+  _FabItem('🥗', _diet,       'diet'),
+  _FabItem('🌙', _sleep,      'sleep'),
+  _FabItem('❤️',  _health,     'health'),
+  _FabItem('💊', _supplement, 'supplement'),
 ];
 
 // ── 扇形角度（顺时针，以12点方向为0°，负数 = 向左）─────────────────────────────
@@ -235,7 +242,7 @@ class _FanOverlayState extends State<_FanOverlay> {
                   scale: _itemAnims[i],
                   child: _FanButton(
                     emoji: _kItems[i].emoji,
-                    label: _kItems[i].label,
+                    label: _kItems[i].label(S.of(context)),
                     onTap: () => widget.onItemTap(i),
                   ),
                 ),

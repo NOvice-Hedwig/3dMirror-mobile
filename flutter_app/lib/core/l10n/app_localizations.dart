@@ -822,6 +822,798 @@ abstract class S {
   /// In zh, this message translates to:
   /// **'登录已过期，请重新登录'**
   String get sessionExpired;
+
+  /// No description provided for @fabWorkout.
+  ///
+  /// In zh, this message translates to:
+  /// **'运动'**
+  String get fabWorkout;
+
+  /// No description provided for @fabDiet.
+  ///
+  /// In zh, this message translates to:
+  /// **'饮食'**
+  String get fabDiet;
+
+  /// No description provided for @fabSleep.
+  ///
+  /// In zh, this message translates to:
+  /// **'睡眠'**
+  String get fabSleep;
+
+  /// No description provided for @fabHealth.
+  ///
+  /// In zh, this message translates to:
+  /// **'健康'**
+  String get fabHealth;
+
+  /// No description provided for @fabSupplement.
+  ///
+  /// In zh, this message translates to:
+  /// **'补剂'**
+  String get fabSupplement;
+
+  /// No description provided for @sheetSave.
+  ///
+  /// In zh, this message translates to:
+  /// **'SAVE  ·  RECORD'**
+  String get sheetSave;
+
+  /// No description provided for @saveFailedDetail.
+  ///
+  /// In zh, this message translates to:
+  /// **'保存失败：{error}'**
+  String saveFailedDetail(String error);
+
+  /// No description provided for @logOptional.
+  ///
+  /// In zh, this message translates to:
+  /// **'选填'**
+  String get logOptional;
+
+  /// No description provided for @logIntensityTitle.
+  ///
+  /// In zh, this message translates to:
+  /// **'INTENSITY'**
+  String get logIntensityTitle;
+
+  /// No description provided for @editBtn.
+  ///
+  /// In zh, this message translates to:
+  /// **'修改'**
+  String get editBtn;
+
+  /// No description provided for @workoutSheetTitle.
+  ///
+  /// In zh, this message translates to:
+  /// **'TYPE  ·  LOG'**
+  String get workoutSheetTitle;
+
+  /// No description provided for @workoutTypeSelect.
+  ///
+  /// In zh, this message translates to:
+  /// **'TYPE  ·  SELECT'**
+  String get workoutTypeSelect;
+
+  /// No description provided for @workoutCardioTypeTitle.
+  ///
+  /// In zh, this message translates to:
+  /// **'CARDIO  ·  TYPE'**
+  String get workoutCardioTypeTitle;
+
+  /// No description provided for @workoutPilatesTypeTitle.
+  ///
+  /// In zh, this message translates to:
+  /// **'PILATES  ·  TYPE'**
+  String get workoutPilatesTypeTitle;
+
+  /// No description provided for @workoutSportTypeTitle.
+  ///
+  /// In zh, this message translates to:
+  /// **'SPORT  ·  TYPE'**
+  String get workoutSportTypeTitle;
+
+  /// No description provided for @workoutOtherNameTitle.
+  ///
+  /// In zh, this message translates to:
+  /// **'OTHER  ·  NAME'**
+  String get workoutOtherNameTitle;
+
+  /// No description provided for @workoutMuscleGroupTitle.
+  ///
+  /// In zh, this message translates to:
+  /// **'MUSCLE  ·  GROUP'**
+  String get workoutMuscleGroupTitle;
+
+  /// No description provided for @workoutDurationIntensityTitle.
+  ///
+  /// In zh, this message translates to:
+  /// **'DURATION  ·  INTENSITY'**
+  String get workoutDurationIntensityTitle;
+
+  /// No description provided for @workoutSetsTitle.
+  ///
+  /// In zh, this message translates to:
+  /// **'SETS  ·  LOG'**
+  String get workoutSetsTitle;
+
+  /// No description provided for @workoutCalorieTitle.
+  ///
+  /// In zh, this message translates to:
+  /// **'CALORIE  ·  EST'**
+  String get workoutCalorieTitle;
+
+  /// No description provided for @workoutErrorMuscleGroup.
+  ///
+  /// In zh, this message translates to:
+  /// **'请选择训练部位'**
+  String get workoutErrorMuscleGroup;
+
+  /// No description provided for @workoutErrorNoSets.
+  ///
+  /// In zh, this message translates to:
+  /// **'请至少添加一组'**
+  String get workoutErrorNoSets;
+
+  /// No description provided for @workoutErrorMinDuration.
+  ///
+  /// In zh, this message translates to:
+  /// **'时长至少 5 分钟'**
+  String get workoutErrorMinDuration;
+
+  /// No description provided for @workoutSaved.
+  ///
+  /// In zh, this message translates to:
+  /// **'运动已记录'**
+  String get workoutSaved;
+
+  /// No description provided for @workoutOtherNameField.
+  ///
+  /// In zh, this message translates to:
+  /// **'运动名称'**
+  String get workoutOtherNameField;
+
+  /// No description provided for @workoutExerciseSearch.
+  ///
+  /// In zh, this message translates to:
+  /// **'搜索动作'**
+  String get workoutExerciseSearch;
+
+  /// No description provided for @unitMinutes.
+  ///
+  /// In zh, this message translates to:
+  /// **'分钟'**
+  String get unitMinutes;
+
+  /// No description provided for @workoutWithWeight.
+  ///
+  /// In zh, this message translates to:
+  /// **'附加负重'**
+  String get workoutWithWeight;
+
+  /// No description provided for @workoutWeightField.
+  ///
+  /// In zh, this message translates to:
+  /// **'负重 kg'**
+  String get workoutWeightField;
+
+  /// No description provided for @workoutAddSet.
+  ///
+  /// In zh, this message translates to:
+  /// **'+ 添加一组'**
+  String get workoutAddSet;
+
+  /// No description provided for @workoutReps.
+  ///
+  /// In zh, this message translates to:
+  /// **'次数'**
+  String get workoutReps;
+
+  /// No description provided for @workoutEstimatedBurn.
+  ///
+  /// In zh, this message translates to:
+  /// **'估算消耗'**
+  String get workoutEstimatedBurn;
+
+  /// No description provided for @workoutIntensityLow.
+  ///
+  /// In zh, this message translates to:
+  /// **'低'**
+  String get workoutIntensityLow;
+
+  /// No description provided for @workoutIntensityMedium.
+  ///
+  /// In zh, this message translates to:
+  /// **'中'**
+  String get workoutIntensityMedium;
+
+  /// No description provided for @workoutIntensityHigh.
+  ///
+  /// In zh, this message translates to:
+  /// **'高'**
+  String get workoutIntensityHigh;
+
+  /// No description provided for @workoutTypeCardio.
+  ///
+  /// In zh, this message translates to:
+  /// **'有氧'**
+  String get workoutTypeCardio;
+
+  /// No description provided for @workoutTypeStrength.
+  ///
+  /// In zh, this message translates to:
+  /// **'无氧'**
+  String get workoutTypeStrength;
+
+  /// No description provided for @workoutTypePilates.
+  ///
+  /// In zh, this message translates to:
+  /// **'普拉提'**
+  String get workoutTypePilates;
+
+  /// No description provided for @workoutTypeBall.
+  ///
+  /// In zh, this message translates to:
+  /// **'球类'**
+  String get workoutTypeBall;
+
+  /// No description provided for @workoutTypeOther.
+  ///
+  /// In zh, this message translates to:
+  /// **'其他'**
+  String get workoutTypeOther;
+
+  /// No description provided for @subTypeRunning.
+  ///
+  /// In zh, this message translates to:
+  /// **'跑步'**
+  String get subTypeRunning;
+
+  /// No description provided for @subTypeJumpRope.
+  ///
+  /// In zh, this message translates to:
+  /// **'跳绳'**
+  String get subTypeJumpRope;
+
+  /// No description provided for @subTypeAerobics.
+  ///
+  /// In zh, this message translates to:
+  /// **'跳操'**
+  String get subTypeAerobics;
+
+  /// No description provided for @subTypeHiit.
+  ///
+  /// In zh, this message translates to:
+  /// **'HIIT'**
+  String get subTypeHiit;
+
+  /// No description provided for @subTypeSwimming.
+  ///
+  /// In zh, this message translates to:
+  /// **'游泳'**
+  String get subTypeSwimming;
+
+  /// No description provided for @subTypeHiking.
+  ///
+  /// In zh, this message translates to:
+  /// **'爬山'**
+  String get subTypeHiking;
+
+  /// No description provided for @subTypeCycling.
+  ///
+  /// In zh, this message translates to:
+  /// **'骑行'**
+  String get subTypeCycling;
+
+  /// No description provided for @subTypeOther.
+  ///
+  /// In zh, this message translates to:
+  /// **'其他'**
+  String get subTypeOther;
+
+  /// No description provided for @subTypeMatPilates.
+  ///
+  /// In zh, this message translates to:
+  /// **'垫上普拉提'**
+  String get subTypeMatPilates;
+
+  /// No description provided for @subTypeReformerPilates.
+  ///
+  /// In zh, this message translates to:
+  /// **'器械普拉提'**
+  String get subTypeReformerPilates;
+
+  /// No description provided for @subTypeBasketball.
+  ///
+  /// In zh, this message translates to:
+  /// **'篮球'**
+  String get subTypeBasketball;
+
+  /// No description provided for @subTypeBadminton.
+  ///
+  /// In zh, this message translates to:
+  /// **'羽毛球'**
+  String get subTypeBadminton;
+
+  /// No description provided for @subTypeTennis.
+  ///
+  /// In zh, this message translates to:
+  /// **'网球'**
+  String get subTypeTennis;
+
+  /// No description provided for @subTypeTableTennis.
+  ///
+  /// In zh, this message translates to:
+  /// **'乒乓球'**
+  String get subTypeTableTennis;
+
+  /// No description provided for @subTypeFootball.
+  ///
+  /// In zh, this message translates to:
+  /// **'足球'**
+  String get subTypeFootball;
+
+  /// No description provided for @muscleChest.
+  ///
+  /// In zh, this message translates to:
+  /// **'胸'**
+  String get muscleChest;
+
+  /// No description provided for @muscleBack.
+  ///
+  /// In zh, this message translates to:
+  /// **'背'**
+  String get muscleBack;
+
+  /// No description provided for @muscleLegs.
+  ///
+  /// In zh, this message translates to:
+  /// **'腿'**
+  String get muscleLegs;
+
+  /// No description provided for @muscleShoulders.
+  ///
+  /// In zh, this message translates to:
+  /// **'肩'**
+  String get muscleShoulders;
+
+  /// No description provided for @muscleArms.
+  ///
+  /// In zh, this message translates to:
+  /// **'手臂'**
+  String get muscleArms;
+
+  /// No description provided for @muscleCore.
+  ///
+  /// In zh, this message translates to:
+  /// **'核心'**
+  String get muscleCore;
+
+  /// No description provided for @dietSheetTitle.
+  ///
+  /// In zh, this message translates to:
+  /// **'MEAL  ·  LOG'**
+  String get dietSheetTitle;
+
+  /// No description provided for @dietMealTypeTitle.
+  ///
+  /// In zh, this message translates to:
+  /// **'MEAL  ·  TYPE'**
+  String get dietMealTypeTitle;
+
+  /// No description provided for @dietEntryMethodTitle.
+  ///
+  /// In zh, this message translates to:
+  /// **'ENTRY  ·  METHOD'**
+  String get dietEntryMethodTitle;
+
+  /// No description provided for @mealBreakfast.
+  ///
+  /// In zh, this message translates to:
+  /// **'早餐'**
+  String get mealBreakfast;
+
+  /// No description provided for @mealLunch.
+  ///
+  /// In zh, this message translates to:
+  /// **'午餐'**
+  String get mealLunch;
+
+  /// No description provided for @mealDinner.
+  ///
+  /// In zh, this message translates to:
+  /// **'晚餐'**
+  String get mealDinner;
+
+  /// No description provided for @mealSnack.
+  ///
+  /// In zh, this message translates to:
+  /// **'加餐'**
+  String get mealSnack;
+
+  /// No description provided for @dietMethodSearch.
+  ///
+  /// In zh, this message translates to:
+  /// **'搜索'**
+  String get dietMethodSearch;
+
+  /// No description provided for @dietMethodManual.
+  ///
+  /// In zh, this message translates to:
+  /// **'手动'**
+  String get dietMethodManual;
+
+  /// No description provided for @dietSearchFood.
+  ///
+  /// In zh, this message translates to:
+  /// **'搜索食物'**
+  String get dietSearchFood;
+
+  /// No description provided for @dietSearchHint.
+  ///
+  /// In zh, this message translates to:
+  /// **'鸡胸肉、燕麦…'**
+  String get dietSearchHint;
+
+  /// No description provided for @dietFoodName.
+  ///
+  /// In zh, this message translates to:
+  /// **'食物名称'**
+  String get dietFoodName;
+
+  /// No description provided for @dietGrams.
+  ///
+  /// In zh, this message translates to:
+  /// **'克重'**
+  String get dietGrams;
+
+  /// No description provided for @dietCalories.
+  ///
+  /// In zh, this message translates to:
+  /// **'卡路里 *'**
+  String get dietCalories;
+
+  /// No description provided for @dietProtein.
+  ///
+  /// In zh, this message translates to:
+  /// **'蛋白质 g（选填）'**
+  String get dietProtein;
+
+  /// No description provided for @dietErrorName.
+  ///
+  /// In zh, this message translates to:
+  /// **'请输入食物名称'**
+  String get dietErrorName;
+
+  /// No description provided for @dietErrorCalories.
+  ///
+  /// In zh, this message translates to:
+  /// **'请输入卡路里'**
+  String get dietErrorCalories;
+
+  /// No description provided for @dietSaved.
+  ///
+  /// In zh, this message translates to:
+  /// **'饮食已记录'**
+  String get dietSaved;
+
+  /// No description provided for @healthSheetTitle.
+  ///
+  /// In zh, this message translates to:
+  /// **'HEALTH  ·  LOG'**
+  String get healthSheetTitle;
+
+  /// No description provided for @healthMeasureTitle.
+  ///
+  /// In zh, this message translates to:
+  /// **'BODY  ·  MEASURE'**
+  String get healthMeasureTitle;
+
+  /// No description provided for @healthPeriodTitle.
+  ///
+  /// In zh, this message translates to:
+  /// **'PERIOD  ·  LOG'**
+  String get healthPeriodTitle;
+
+  /// No description provided for @healthSymptomsTitle.
+  ///
+  /// In zh, this message translates to:
+  /// **'SYMPTOMS'**
+  String get healthSymptomsTitle;
+
+  /// No description provided for @measureWeightKg.
+  ///
+  /// In zh, this message translates to:
+  /// **'体重 kg'**
+  String get measureWeightKg;
+
+  /// No description provided for @measureWaistCm.
+  ///
+  /// In zh, this message translates to:
+  /// **'腰围 cm'**
+  String get measureWaistCm;
+
+  /// No description provided for @measureHipCm.
+  ///
+  /// In zh, this message translates to:
+  /// **'臀围 cm'**
+  String get measureHipCm;
+
+  /// No description provided for @measureChestCm.
+  ///
+  /// In zh, this message translates to:
+  /// **'胸围 cm'**
+  String get measureChestCm;
+
+  /// No description provided for @measureThighCm.
+  ///
+  /// In zh, this message translates to:
+  /// **'大腿围 cm'**
+  String get measureThighCm;
+
+  /// No description provided for @periodStart.
+  ///
+  /// In zh, this message translates to:
+  /// **'经期开始'**
+  String get periodStart;
+
+  /// No description provided for @periodOngoing.
+  ///
+  /// In zh, this message translates to:
+  /// **'进行中'**
+  String get periodOngoing;
+
+  /// No description provided for @periodEnd.
+  ///
+  /// In zh, this message translates to:
+  /// **'经期结束'**
+  String get periodEnd;
+
+  /// No description provided for @periodIntensityLight.
+  ///
+  /// In zh, this message translates to:
+  /// **'轻'**
+  String get periodIntensityLight;
+
+  /// No description provided for @periodIntensityModerate.
+  ///
+  /// In zh, this message translates to:
+  /// **'中'**
+  String get periodIntensityModerate;
+
+  /// No description provided for @periodIntensityHeavy.
+  ///
+  /// In zh, this message translates to:
+  /// **'重'**
+  String get periodIntensityHeavy;
+
+  /// No description provided for @symptomCramps.
+  ///
+  /// In zh, this message translates to:
+  /// **'痛经'**
+  String get symptomCramps;
+
+  /// No description provided for @symptomMoodSwings.
+  ///
+  /// In zh, this message translates to:
+  /// **'情绪波动'**
+  String get symptomMoodSwings;
+
+  /// No description provided for @symptomSwelling.
+  ///
+  /// In zh, this message translates to:
+  /// **'水肿'**
+  String get symptomSwelling;
+
+  /// No description provided for @symptomAcne.
+  ///
+  /// In zh, this message translates to:
+  /// **'长痘'**
+  String get symptomAcne;
+
+  /// No description provided for @symptomFatigue.
+  ///
+  /// In zh, this message translates to:
+  /// **'疲劳'**
+  String get symptomFatigue;
+
+  /// No description provided for @symptomBackPain.
+  ///
+  /// In zh, this message translates to:
+  /// **'腰酸'**
+  String get symptomBackPain;
+
+  /// No description provided for @healthErrorEmpty.
+  ///
+  /// In zh, this message translates to:
+  /// **'请至少填写一项数据'**
+  String get healthErrorEmpty;
+
+  /// No description provided for @healthSaved.
+  ///
+  /// In zh, this message translates to:
+  /// **'健康数据已记录'**
+  String get healthSaved;
+
+  /// No description provided for @sleepSheetTitle.
+  ///
+  /// In zh, this message translates to:
+  /// **'SLEEP  ·  LOG'**
+  String get sleepSheetTitle;
+
+  /// No description provided for @sleepTimeTitle.
+  ///
+  /// In zh, this message translates to:
+  /// **'SLEEP  ·  TIME'**
+  String get sleepTimeTitle;
+
+  /// No description provided for @sleepDurationTitle.
+  ///
+  /// In zh, this message translates to:
+  /// **'DURATION  ·  CALC'**
+  String get sleepDurationTitle;
+
+  /// No description provided for @sleepQualityTitle.
+  ///
+  /// In zh, this message translates to:
+  /// **'SLEEP  ·  QUALITY'**
+  String get sleepQualityTitle;
+
+  /// No description provided for @sleepBedtime.
+  ///
+  /// In zh, this message translates to:
+  /// **'入睡'**
+  String get sleepBedtime;
+
+  /// No description provided for @sleepWake.
+  ///
+  /// In zh, this message translates to:
+  /// **'起床'**
+  String get sleepWake;
+
+  /// No description provided for @sleepDuration.
+  ///
+  /// In zh, this message translates to:
+  /// **'睡眠时长'**
+  String get sleepDuration;
+
+  /// No description provided for @sleepShortConfirm.
+  ///
+  /// In zh, this message translates to:
+  /// **'睡眠时间不足 1 小时，是否确认保存？'**
+  String get sleepShortConfirm;
+
+  /// No description provided for @sleepSaved.
+  ///
+  /// In zh, this message translates to:
+  /// **'睡眠已记录'**
+  String get sleepSaved;
+
+  /// No description provided for @supplementSheetTitle.
+  ///
+  /// In zh, this message translates to:
+  /// **'SUPPLEMENT  ·  LOG'**
+  String get supplementSheetTitle;
+
+  /// No description provided for @supplementSelectTitle.
+  ///
+  /// In zh, this message translates to:
+  /// **'SUPPLEMENT  ·  SELECT'**
+  String get supplementSelectTitle;
+
+  /// No description provided for @supplementCustomTitle.
+  ///
+  /// In zh, this message translates to:
+  /// **'CUSTOM  ·  ADD'**
+  String get supplementCustomTitle;
+
+  /// No description provided for @supplementReminderTitle.
+  ///
+  /// In zh, this message translates to:
+  /// **'REMINDER  ·  TIME'**
+  String get supplementReminderTitle;
+
+  /// No description provided for @supplementNameField.
+  ///
+  /// In zh, this message translates to:
+  /// **'名称'**
+  String get supplementNameField;
+
+  /// No description provided for @supplementNameHint.
+  ///
+  /// In zh, this message translates to:
+  /// **'如：谷氨酰胺'**
+  String get supplementNameHint;
+
+  /// No description provided for @supplementDosageField.
+  ///
+  /// In zh, this message translates to:
+  /// **'剂量'**
+  String get supplementDosageField;
+
+  /// No description provided for @supplementDosageHint.
+  ///
+  /// In zh, this message translates to:
+  /// **'30g、2粒'**
+  String get supplementDosageHint;
+
+  /// No description provided for @supplementPickTime.
+  ///
+  /// In zh, this message translates to:
+  /// **'选择时间'**
+  String get supplementPickTime;
+
+  /// No description provided for @supplementErrorEmpty.
+  ///
+  /// In zh, this message translates to:
+  /// **'请至少选择或填写一种补剂'**
+  String get supplementErrorEmpty;
+
+  /// No description provided for @supplementSaved.
+  ///
+  /// In zh, this message translates to:
+  /// **'补剂已记录'**
+  String get supplementSaved;
+
+  /// No description provided for @supplementProteinPowder.
+  ///
+  /// In zh, this message translates to:
+  /// **'蛋白粉'**
+  String get supplementProteinPowder;
+
+  /// No description provided for @supplementCreatine.
+  ///
+  /// In zh, this message translates to:
+  /// **'肌酸'**
+  String get supplementCreatine;
+
+  /// No description provided for @supplementVitaminD.
+  ///
+  /// In zh, this message translates to:
+  /// **'维生素D'**
+  String get supplementVitaminD;
+
+  /// No description provided for @supplementCollagen.
+  ///
+  /// In zh, this message translates to:
+  /// **'胶原蛋白'**
+  String get supplementCollagen;
+
+  /// No description provided for @supplementFishOil.
+  ///
+  /// In zh, this message translates to:
+  /// **'鱼油'**
+  String get supplementFishOil;
+
+  /// No description provided for @supplementVitaminC.
+  ///
+  /// In zh, this message translates to:
+  /// **'维生素C'**
+  String get supplementVitaminC;
+
+  /// No description provided for @supplementIron.
+  ///
+  /// In zh, this message translates to:
+  /// **'铁'**
+  String get supplementIron;
+
+  /// No description provided for @supplementFolicAcid.
+  ///
+  /// In zh, this message translates to:
+  /// **'叶酸'**
+  String get supplementFolicAcid;
+
+  /// No description provided for @supplementMagnesium.
+  ///
+  /// In zh, this message translates to:
+  /// **'镁'**
+  String get supplementMagnesium;
+
+  /// No description provided for @supplementZinc.
+  ///
+  /// In zh, this message translates to:
+  /// **'锌'**
+  String get supplementZinc;
 }
 
 class _SDelegate extends LocalizationsDelegate<S> {

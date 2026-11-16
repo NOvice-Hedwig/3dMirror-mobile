@@ -376,4 +376,402 @@ class SZh extends S {
 
   @override
   String get sessionExpired => '登录已过期，请重新登录';
+
+  @override
+  String get fabWorkout => '运动';
+
+  @override
+  String get fabDiet => '饮食';
+
+  @override
+  String get fabSleep => '睡眠';
+
+  @override
+  String get fabHealth => '健康';
+
+  @override
+  String get fabSupplement => '补剂';
+
+  @override
+  String get sheetSave => 'SAVE  ·  RECORD';
+
+  @override
+  String saveFailedDetail(String error) {
+    return '保存失败：$error';
+  }
+
+  @override
+  String get logOptional => '选填';
+
+  @override
+  String get logIntensityTitle => 'INTENSITY';
+
+  @override
+  String get editBtn => '修改';
+
+  @override
+  String get workoutSheetTitle => 'TYPE  ·  LOG';
+
+  @override
+  String get workoutTypeSelect => 'TYPE  ·  SELECT';
+
+  @override
+  String get workoutCardioTypeTitle => 'CARDIO  ·  TYPE';
+
+  @override
+  String get workoutPilatesTypeTitle => 'PILATES  ·  TYPE';
+
+  @override
+  String get workoutSportTypeTitle => 'SPORT  ·  TYPE';
+
+  @override
+  String get workoutOtherNameTitle => 'OTHER  ·  NAME';
+
+  @override
+  String get workoutMuscleGroupTitle => 'MUSCLE  ·  GROUP';
+
+  @override
+  String get workoutDurationIntensityTitle => 'DURATION  ·  INTENSITY';
+
+  @override
+  String get workoutSetsTitle => 'SETS  ·  LOG';
+
+  @override
+  String get workoutCalorieTitle => 'CALORIE  ·  EST';
+
+  @override
+  String get workoutErrorMuscleGroup => '请选择训练部位';
+
+  @override
+  String get workoutErrorNoSets => '请至少添加一组';
+
+  @override
+  String get workoutErrorMinDuration => '时长至少 5 分钟';
+
+  @override
+  String get workoutSaved => '运动已记录';
+
+  @override
+  String get workoutOtherNameField => '运动名称';
+
+  @override
+  String get workoutExerciseSearch => '搜索动作';
+
+  @override
+  String get unitMinutes => '分钟';
+
+  @override
+  String get workoutWithWeight => '附加负重';
+
+  @override
+  String get workoutWeightField => '负重 kg';
+
+  @override
+  String get workoutAddSet => '+ 添加一组';
+
+  @override
+  String get workoutReps => '次数';
+
+  @override
+  String get workoutEstimatedBurn => '估算消耗';
+
+  @override
+  String get workoutIntensityLow => '低';
+
+  @override
+  String get workoutIntensityMedium => '中';
+
+  @override
+  String get workoutIntensityHigh => '高';
+
+  @override
+  String get workoutTypeCardio => '有氧';
+
+  @override
+  String get workoutTypeStrength => '无氧';
+
+  @override
+  String get workoutTypePilates => '普拉提';
+
+  @override
+  String get workoutTypeBall => '球类';
+
+  @override
+  String get workoutTypeOther => '其他';
+
+  @override
+  String get subTypeRunning => '跑步';
+
+  @override
+  String get subTypeJumpRope => '跳绳';
+
+  @override
+  String get subTypeAerobics => '跳操';
+
+  @override
+  String get subTypeHiit => 'HIIT';
+
+  @override
+  String get subTypeSwimming => '游泳';
+
+  @override
+  String get subTypeHiking => '爬山';
+
+  @override
+  String get subTypeCycling => '骑行';
+
+  @override
+  String get subTypeOther => '其他';
+
+  @override
+  String get subTypeMatPilates => '垫上普拉提';
+
+  @override
+  String get subTypeReformerPilates => '器械普拉提';
+
+  @override
+  String get subTypeBasketball => '篮球';
+
+  @override
+  String get subTypeBadminton => '羽毛球';
+
+  @override
+  String get subTypeTennis => '网球';
+
+  @override
+  String get subTypeTableTennis => '乒乓球';
+
+  @override
+  String get subTypeFootball => '足球';
+
+  @override
+  String get muscleChest => '胸';
+
+  @override
+  String get muscleBack => '背';
+
+  @override
+  String get muscleLegs => '腿';
+
+  @override
+  String get muscleShoulders => '肩';
+
+  @override
+  String get muscleArms => '手臂';
+
+  @override
+  String get muscleCore => '核心';
+
+  @override
+  String get dietSheetTitle => 'MEAL  ·  LOG';
+
+  @override
+  String get dietMealTypeTitle => 'MEAL  ·  TYPE';
+
+  @override
+  String get dietEntryMethodTitle => 'ENTRY  ·  METHOD';
+
+  @override
+  String get mealBreakfast => '早餐';
+
+  @override
+  String get mealLunch => '午餐';
+
+  @override
+  String get mealDinner => '晚餐';
+
+  @override
+  String get mealSnack => '加餐';
+
+  @override
+  String get dietMethodSearch => '搜索';
+
+  @override
+  String get dietMethodManual => '手动';
+
+  @override
+  String get dietSearchFood => '搜索食物';
+
+  @override
+  String get dietSearchHint => '鸡胸肉、燕麦…';
+
+  @override
+  String get dietFoodName => '食物名称';
+
+  @override
+  String get dietGrams => '克重';
+
+  @override
+  String get dietCalories => '卡路里 *';
+
+  @override
+  String get dietProtein => '蛋白质 g（选填）';
+
+  @override
+  String get dietErrorName => '请输入食物名称';
+
+  @override
+  String get dietErrorCalories => '请输入卡路里';
+
+  @override
+  String get dietSaved => '饮食已记录';
+
+  @override
+  String get healthSheetTitle => 'HEALTH  ·  LOG';
+
+  @override
+  String get healthMeasureTitle => 'BODY  ·  MEASURE';
+
+  @override
+  String get healthPeriodTitle => 'PERIOD  ·  LOG';
+
+  @override
+  String get healthSymptomsTitle => 'SYMPTOMS';
+
+  @override
+  String get measureWeightKg => '体重 kg';
+
+  @override
+  String get measureWaistCm => '腰围 cm';
+
+  @override
+  String get measureHipCm => '臀围 cm';
+
+  @override
+  String get measureChestCm => '胸围 cm';
+
+  @override
+  String get measureThighCm => '大腿围 cm';
+
+  @override
+  String get periodStart => '经期开始';
+
+  @override
+  String get periodOngoing => '进行中';
+
+  @override
+  String get periodEnd => '经期结束';
+
+  @override
+  String get periodIntensityLight => '轻';
+
+  @override
+  String get periodIntensityModerate => '中';
+
+  @override
+  String get periodIntensityHeavy => '重';
+
+  @override
+  String get symptomCramps => '痛经';
+
+  @override
+  String get symptomMoodSwings => '情绪波动';
+
+  @override
+  String get symptomSwelling => '水肿';
+
+  @override
+  String get symptomAcne => '长痘';
+
+  @override
+  String get symptomFatigue => '疲劳';
+
+  @override
+  String get symptomBackPain => '腰酸';
+
+  @override
+  String get healthErrorEmpty => '请至少填写一项数据';
+
+  @override
+  String get healthSaved => '健康数据已记录';
+
+  @override
+  String get sleepSheetTitle => 'SLEEP  ·  LOG';
+
+  @override
+  String get sleepTimeTitle => 'SLEEP  ·  TIME';
+
+  @override
+  String get sleepDurationTitle => 'DURATION  ·  CALC';
+
+  @override
+  String get sleepQualityTitle => 'SLEEP  ·  QUALITY';
+
+  @override
+  String get sleepBedtime => '入睡';
+
+  @override
+  String get sleepWake => '起床';
+
+  @override
+  String get sleepDuration => '睡眠时长';
+
+  @override
+  String get sleepShortConfirm => '睡眠时间不足 1 小时，是否确认保存？';
+
+  @override
+  String get sleepSaved => '睡眠已记录';
+
+  @override
+  String get supplementSheetTitle => 'SUPPLEMENT  ·  LOG';
+
+  @override
+  String get supplementSelectTitle => 'SUPPLEMENT  ·  SELECT';
+
+  @override
+  String get supplementCustomTitle => 'CUSTOM  ·  ADD';
+
+  @override
+  String get supplementReminderTitle => 'REMINDER  ·  TIME';
+
+  @override
+  String get supplementNameField => '名称';
+
+  @override
+  String get supplementNameHint => '如：谷氨酰胺';
+
+  @override
+  String get supplementDosageField => '剂量';
+
+  @override
+  String get supplementDosageHint => '30g、2粒';
+
+  @override
+  String get supplementPickTime => '选择时间';
+
+  @override
+  String get supplementErrorEmpty => '请至少选择或填写一种补剂';
+
+  @override
+  String get supplementSaved => '补剂已记录';
+
+  @override
+  String get supplementProteinPowder => '蛋白粉';
+
+  @override
+  String get supplementCreatine => '肌酸';
+
+  @override
+  String get supplementVitaminD => '维生素D';
+
+  @override
+  String get supplementCollagen => '胶原蛋白';
+
+  @override
+  String get supplementFishOil => '鱼油';
+
+  @override
+  String get supplementVitaminC => '维生素C';
+
+  @override
+  String get supplementIron => '铁';
+
+  @override
+  String get supplementFolicAcid => '叶酸';
+
+  @override
+  String get supplementMagnesium => '镁';
+
+  @override
+  String get supplementZinc => '锌';
 }

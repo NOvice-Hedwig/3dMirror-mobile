@@ -1,8 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import '../../../../core/l10n/app_localizations.dart';
+import '../../../../core/l10n/log_value_labels.dart';
 import '../../../../core/theme/design_tokens.dart';
 import '../../../../core/widgets/animate_widgets.dart';
 import '../../../../models/log_models.dart';
+import '../../../../models/log_values.dart';
 import '../../../../providers/log_provider.dart';
 import '../../../../services/api/log_api.dart';
 import '_sheet_base.dart';
@@ -22,9 +25,11 @@ class _HealthLogSheetState extends ConsumerState<HealthLogSheet> {
   final _thighCtrl  = TextEditingController();
 
   String?       _periodPhase;
-  final List<String>  _symptoms  = [];
+  final List<String>  _symptoms  = [];   // stored values (SymptomValue)
   int           _intensity = 2;
   bool          _isSaving  = false;
+
+  S get _s => S.of(context);
 
   @override
   void dispose() {
@@ -62,9 +67,10 @@ class _HealthLogSheetState extends ConsumerState<HealthLogSheet> {
   Future<void> _save() async {
     final m = _measurement;
     if (!m.hasAnyValue && _periodPhase == null) {
-      _showSnack('请至少填写一项数据');
+      _showSnack(_s.healthErrorEmpty);
       return;
     }
+    final s = _s;   // the sheet closes before the snack is shown
     setState(() => _isSaving = true);
 
     try {
@@ -81,10 +87,10 @@ class _HealthLogSheetState extends ConsumerState<HealthLogSheet> {
       }
       if (mounted) {
         Navigator.pop(context);
-        _showSnack('健康数据已记录');
+        _showSnack(s.healthSaved);
       }
     } catch (e) {
-      if (mounted) _showSnack('保存失败：$e');
+      if (mounted) _showSnack(s.saveFailedDetail('$e'));
     } finally {
       if (mounted) setState(() => _isSaving = false);
     }
@@ -93,7 +99,7 @@ class _HealthLogSheetState extends ConsumerState<HealthLogSheet> {
   @override
   Widget build(BuildContext context) {
     return SheetBase(
-      title:    'HEALTH  ·  LOG',
+      title:    _s.healthSheetTitle,
       isSaving: _isSaving,
       onSave:   _save,
       body:     _buildBody(),
@@ -120,17 +126,17 @@ class _HealthLogSheetState extends ConsumerState<HealthLogSheet> {
 
   Widget _buildMeasureSection() {
     return Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-      Text('BODY  ·  MEASURE', style: MirrorText.overline),
+      Text(_s.healthMeasureTitle, style: MirrorText.overline),
       const SizedBox(height: 16),
-      _measureRow(_weightCtrl, '体重 kg', _waistCtrl, '腰围 cm'),
+      _measureRow(_weightCtrl, _s.measureWeightKg, _waistCtrl, _s.measureWaistCm),
       const SizedBox(height: 10),
-      _measureRow(_hipCtrl,   '臀围 cm', _chestCtrl, '胸围 cm'),
+      _measureRow(_hipCtrl,   _s.measureHipCm, _chestCtrl, _s.measureChestCm),
       const SizedBox(height: 10),
       Row(children: [
         Expanded(child: TextField(
           controller: _thighCtrl,
           keyboardType: const TextInputType.numberWithOptions(decimal: true),
-          decoration: sheetInputDecoration('大腿围 cm'),
+          decoration: sheetInputDecoration(_s.measureThighCm),
         )),
         const Expanded(child: SizedBox()),
       ]),
@@ -157,15 +163,19 @@ class _HealthLogSheetState extends ConsumerState<HealthLogSheet> {
   }
 
   Widget _buildPeriodSection() {
-    const phases = [('经期开始', 'start'), ('进行中', 'ongoing'), ('经期结束', 'end')];
-    const symptoms = ['痛经', '情绪波动', '水肿', '长痘', '疲劳', '腰酸'];
-    const intensityLabels = [('轻', 1), ('中', 2), ('重', 3)];
+    final phases = [
+      (_s.periodStart, 'start'), (_s.periodOngoing, 'ongoing'), (_s.periodEnd, 'end'),
+    ];
+    final intensityLabels = [
+      (_s.periodIntensityLight, 1), (_s.periodIntensityModerate, 2),
+      (_s.periodIntensityHeavy, 3),
+    ];
 
     return Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
       Row(children: [
-        Text('PERIOD  ·  LOG', style: MirrorText.overline),
+        Text(_s.healthPeriodTitle, style: MirrorText.overline),
         const Spacer(),
-        Text('选填', style: MirrorText.caption),
+        Text(_s.logOptional, style: MirrorText.caption),
       ]),
       const SizedBox(height: 16),
 
@@ -179,19 +189,19 @@ class _HealthLogSheetState extends ConsumerState<HealthLogSheet> {
 
       if (_periodPhase != null) ...[
         const SizedBox(height: 20),
-        Text('SYMPTOMS', style: MirrorText.overline),
+        Text(_s.healthSymptomsTitle, style: MirrorText.overline),
         const SizedBox(height: 10),
         Wrap(
           spacing: 0,
           runSpacing: 8,
-          children: symptoms.map((s) => MirrorChip(
-            label: s,
-            selected: _symptoms.contains(s),
-            onTap: () => _toggleSymptom(s),
+          children: SymptomValue.all.map((v) => MirrorChip(
+            label: symptomLabel(_s, v),
+            selected: _symptoms.contains(v),
+            onTap: () => _toggleSymptom(v),
           )).toList(),
         ),
         const SizedBox(height: 20),
-        Text('INTENSITY', style: MirrorText.overline),
+        Text(_s.logIntensityTitle, style: MirrorText.overline),
         const SizedBox(height: 10),
         Row(children: intensityLabels.map<Widget>((item) => MirrorChip(
           label: item.$1,
