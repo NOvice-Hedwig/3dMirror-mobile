@@ -7,10 +7,14 @@ import 'package:shared_preferences/shared_preferences.dart';
 import '../../models/body_photo.dart';
 import 'api_http.dart';
 
+/// A failed photo request. Not shown to users (screens show their own translated text),
+/// so the message is a technical English description.
 class PhotoException implements Exception {
   final String message;
-  const PhotoException(this.message);
-  @override String toString() => message;
+  final int? status;
+  const PhotoException(this.message, [this.status]);
+  @override String toString() =>
+      status == null ? 'PhotoException: $message' : 'PhotoException($status): $message';
 }
 
 class PhotoApi {
@@ -41,7 +45,7 @@ class PhotoApi {
     final body     = await streamed.stream.bytesToString();
 
     if (streamed.statusCode != 200 && streamed.statusCode != 201) {
-      throw PhotoException('上传失败 (${streamed.statusCode})');
+      throw PhotoException('upload failed', streamed.statusCode);
     }
 
     final decoded = json.decode(body) as Map<String, dynamic>;
@@ -66,7 +70,7 @@ class PhotoApi {
       },
       body: formBody,
     );
-    if (r.statusCode != 200) throw PhotoException('体型分析请求失败 (${r.statusCode})');
+    if (r.statusCode != 200) throw PhotoException('analysis request failed', r.statusCode);
     return BodyAnalysis.fromJson(json.decode(r.body) as Map<String, dynamic>);
   }
 
@@ -78,7 +82,7 @@ class PhotoApi {
         .replace(queryParameters: okOnly ? {'status': 'ok'} : null);
     final r = await ApiHttp.instance.get(uri, headers: {'Authorization': 'Bearer $token'});
     if (r.statusCode == 404) return null;
-    if (r.statusCode != 200) throw PhotoException('获取体型分析失败 (${r.statusCode})');
+    if (r.statusCode != 200) throw PhotoException('fetching the latest analysis failed', r.statusCode);
     return BodyAnalysis.fromJson(json.decode(r.body) as Map<String, dynamic>);
   }
 
@@ -90,7 +94,7 @@ class PhotoApi {
         queryParameters: sessionId != null ? {'session_id': sessionId} : null);
     final r = await ApiHttp.instance.get(uri,
         headers: {'Authorization': 'Bearer $token'});
-    if (r.statusCode != 200) throw PhotoException('获取失败 (${r.statusCode})');
+    if (r.statusCode != 200) throw PhotoException('listing photos failed', r.statusCode);
     final decoded = json.decode(r.body) as Map<String, dynamic>;
     return (decoded['photos'] as List<dynamic>)
         .map((e) => BodyPhoto.fromJson(e as Map<String, dynamic>))
@@ -102,7 +106,7 @@ class PhotoApi {
   Future<String> _token() async {
     final prefs = await SharedPreferences.getInstance();
     final t = prefs.getString('mirror_token');
-    if (t == null) throw const PhotoException('未登录');
+    if (t == null) throw const PhotoException('not signed in');
     return t;
   }
 }

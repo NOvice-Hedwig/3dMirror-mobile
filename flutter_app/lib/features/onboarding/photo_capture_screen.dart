@@ -7,6 +7,8 @@ import 'package:go_router/go_router.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
+import '../../core/l10n/app_localizations.dart';
+import '../../core/l10n/photo_labels.dart';
 import '../../core/router/app_router.dart';
 import '../../core/theme/design_tokens.dart';
 import '../../models/body_photo.dart';
@@ -25,7 +27,7 @@ class _PhotoCaptureScreenState extends ConsumerState<PhotoCaptureScreen> {
   final _photos = <PhotoAngle, File>{};
 
   bool _uploading = false;
-  String? _errorMsg;
+  bool _uploadFailed = false;
 
   static const _angles = [PhotoAngle.front, PhotoAngle.side, PhotoAngle.back];
 
@@ -33,6 +35,7 @@ class _PhotoCaptureScreenState extends ConsumerState<PhotoCaptureScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final s = S.of(context);
     return Scaffold(
       backgroundColor: MirrorColors.bg,
       body: SafeArea(
@@ -46,14 +49,14 @@ class _PhotoCaptureScreenState extends ConsumerState<PhotoCaptureScreen> {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Text('BODY SCAN', style: MirrorText.overline)
+                    Text(s.photoScanEyebrow, style: MirrorText.overline)
                         .animate()
                         .fadeIn(duration: 400.ms, curve: MirrorCurve.enter),
                     const SizedBox(height: 12),
                     Text.rich(TextSpan(style: MirrorText.title, children: [
-                      const TextSpan(text: '记录你的\n'),
+                      TextSpan(text: s.photoTitleLead),
                       TextSpan(
-                          text: '体型',
+                          text: s.photoTitleEmphasis,
                           style:
                               MirrorText.title.copyWith(fontStyle: FontStyle.italic)),
                     ]))
@@ -66,7 +69,7 @@ class _PhotoCaptureScreenState extends ConsumerState<PhotoCaptureScreen> {
                             curve: MirrorCurve.enter),
                     const SizedBox(height: 8),
                     Text(
-                      '拍摄三个角度的照片，帮助 AI 建立更准确的 3D 体型模型。',
+                      s.photoIntro,
                       style: MirrorText.body.copyWith(color: MirrorColors.text2),
                     )
                         .animate(delay: 160.ms)
@@ -106,10 +109,10 @@ class _PhotoCaptureScreenState extends ConsumerState<PhotoCaptureScreen> {
                     ),
                     const SizedBox(height: 20),
 
-                    if (_errorMsg != null)
+                    if (_uploadFailed)
                       Padding(
                         padding: const EdgeInsets.only(bottom: 8),
-                        child: Text(_errorMsg!,
+                        child: Text(s.photoUploadFailed,
                             style: MirrorText.body
                                 .copyWith(color: MirrorColors.gold)),
                       ),
@@ -131,7 +134,7 @@ class _PhotoCaptureScreenState extends ConsumerState<PhotoCaptureScreen> {
           padding: const EdgeInsets.fromLTRB(
               MirrorSpacing.pagePad, 20, MirrorSpacing.pagePad, 12),
           child: Text(
-            '3D MIRROR',
+            S.of(context).brandMasthead,
             style: MirrorText.overline.copyWith(
                 color: MirrorColors.gold, fontSize: 11, letterSpacing: 4.0),
             textAlign: TextAlign.center,
@@ -164,7 +167,7 @@ class _PhotoCaptureScreenState extends ConsumerState<PhotoCaptureScreen> {
         borderRadius: BorderRadius.circular(MirrorRadius.full),
       ),
       child: Text(
-        count == 3 ? '全部完成 ✓' : '已完成 $count / 3',
+        count == 3 ? S.of(context).photoAllDone : S.of(context).photoProgress(count),
         style: MirrorText.overline.copyWith(
             color: count == 3 ? MirrorColors.bg : MirrorColors.text2,
             fontSize: 10),
@@ -180,7 +183,7 @@ class _PhotoCaptureScreenState extends ConsumerState<PhotoCaptureScreen> {
         child: Row(children: [
           TextButton(
             onPressed: _uploading ? null : _skip,
-            child: Text('稍后再说',
+            child: Text(S.of(context).photoLater,
                 style:
                     MirrorText.body.copyWith(color: MirrorColors.text3)),
           ),
@@ -197,7 +200,9 @@ class _PhotoCaptureScreenState extends ConsumerState<PhotoCaptureScreen> {
                         height: 18,
                         child: CircularProgressIndicator(
                             color: MirrorColors.bg, strokeWidth: 1.5))
-                    : Text(_photos.length == 3 ? '上传并完成' : '跳过剩余并完成'),
+                    : Text(_photos.length == 3
+                        ? S.of(context).photoUploadAndFinish
+                        : S.of(context).photoSkipRestAndFinish),
               ),
             ),
           ),
@@ -215,7 +220,7 @@ class _PhotoCaptureScreenState extends ConsumerState<PhotoCaptureScreen> {
     if (xFile == null) return;
     setState(() {
       _photos[angle] = File(xFile.path);
-      _errorMsg = null;
+      _uploadFailed = false;
     });
   }
 
@@ -227,7 +232,7 @@ class _PhotoCaptureScreenState extends ConsumerState<PhotoCaptureScreen> {
   }
 
   Future<void> _submit() async {
-    setState(() { _uploading = true; _errorMsg = null; });
+    setState(() { _uploading = true; _uploadFailed = false; });
     try {
       final photoIds = await PhotoApi.instance.uploadPhotos(_photos);
 
@@ -243,7 +248,7 @@ class _PhotoCaptureScreenState extends ConsumerState<PhotoCaptureScreen> {
       context.go(MirrorRoute.home);
     } catch (e) {
       setState(() {
-        _errorMsg = '上传失败，请检查网络连接后重试。';
+        _uploadFailed = true;
         _uploading = false;
       });
     }
@@ -314,7 +319,7 @@ class _AngleCardState extends State<_AngleCard> {
                           ),
                         ),
                         child: Text(
-                          widget.angle.label,
+                          photoAngleLabel(S.of(context), widget.angle),
                           style: MirrorText.overline.copyWith(
                               color: Colors.white, fontSize: 9),
                           textAlign: TextAlign.center,
@@ -339,7 +344,7 @@ class _AngleCardState extends State<_AngleCard> {
                       const Icon(Icons.camera_alt_outlined,
                           size: 26, color: MirrorColors.text3),
                       const SizedBox(height: 8),
-                      Text(widget.angle.label,
+                      Text(photoAngleLabel(S.of(context), widget.angle),
                           style: MirrorText.bodyS
                               .copyWith(color: MirrorColors.text2)),
                       const SizedBox(height: 4),
@@ -347,7 +352,7 @@ class _AngleCardState extends State<_AngleCard> {
                         padding:
                             const EdgeInsets.symmetric(horizontal: 8),
                         child: Text(
-                          widget.angle.hint,
+                          photoAngleHint(S.of(context), widget.angle),
                           style: MirrorText.caption,
                           textAlign: TextAlign.center,
                         ),

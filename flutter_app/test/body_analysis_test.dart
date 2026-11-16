@@ -1,4 +1,8 @@
+import 'dart:ui';
+
 import 'package:flutter_test/flutter_test.dart';
+import 'package:mirror_3d/core/l10n/app_localizations.dart';
+import 'package:mirror_3d/core/l10n/photo_labels.dart';
 import 'package:mirror_3d/models/body_photo.dart';
 import 'package:mirror_3d/models/models.dart';
 
@@ -26,6 +30,9 @@ const base = AvatarParams(
 );
 
 void main() {
+  final zh = lookupS(const Locale('zh'));
+  final en = lookupS(const Locale('en'));
+
   group('BodyAnalysis.fromJson', () {
     test('ok record', () {
       final a = BodyAnalysis.fromJson(record());
@@ -36,28 +43,41 @@ void main() {
       expect(a.photoIds, hasLength(1));
       expect(a.createdAt.isUtc, isFalse);                          // converted to local
       expect(a.createdAt.toUtc(), DateTime.utc(2026, 11, 14, 3, 30));
-      expect(a.statusLabel, '体型分析已完成');
+      expect(bodyAnalysisStatusLabel(zh, a.status), '体型分析已完成');
+      expect(bodyAnalysisStatusLabel(en, a.status), 'Body analysis complete');
     });
 
-    test('unavailable and failed records carry no values and a Chinese label', () {
+    test('unavailable and failed records carry no values; labels in both languages', () {
       final u = BodyAnalysis.fromJson(record(status: 'unavailable',
           shoulder: null, waist: null, hip: null, limb: null,
           detail: 'ANTHROPIC_API_KEY is not configured'));
       expect(u.status, AnalysisStatus.unavailable);
       expect(u.values.hasAnyValue, isFalse);
       expect(u.model, isNull);
-      expect(u.statusLabel, '体型分析暂不可用');
+      expect(bodyAnalysisStatusLabel(zh, u.status), '体型分析暂不可用');
+      expect(bodyAnalysisStatusLabel(en, u.status), 'Body analysis is currently unavailable');
 
       final f = BodyAnalysis.fromJson(record(status: 'failed',
           shoulder: null, waist: null, hip: null, limb: null, detail: 'API error 529'));
       expect(f.status, AnalysisStatus.failed);
       expect(f.detail, 'API error 529');
-      expect(f.statusLabel, '体型分析失败，请稍后重新拍照');
+      expect(bodyAnalysisStatusLabel(zh, f.status), '体型分析失败，请稍后重新拍照');
+      expect(bodyAnalysisStatusLabel(en, f.status),
+          'Body analysis failed. Please retake the photos later');
     });
 
     test('an unknown status is treated as failed', () {
       expect(BodyAnalysis.fromJson(record(status: 'mystery')).status, AnalysisStatus.failed);
     });
+  });
+
+  test('photo angles have a label and a hint in both languages', () {
+    for (final angle in PhotoAngle.values) {
+      expect(photoAngleLabel(zh, angle), isNot(photoAngleLabel(en, angle)));
+      expect(photoAngleHint(zh, angle), isNot(photoAngleHint(en, angle)));
+    }
+    expect(photoAngleLabel(zh, PhotoAngle.front), '前视图');
+    expect(photoAngleLabel(en, PhotoAngle.side), 'Side');
   });
 
   group('toAvatarOverrides bridges to the unchanged AvatarParams.applyPhotoAnalysis', () {

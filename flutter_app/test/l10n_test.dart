@@ -27,6 +27,11 @@ const migratedFiles = [
   'lib/features/home/widgets/log_sheets/supplement_log_sheet.dart',
   'lib/features/home/widgets/log_sheets/workout_log_sheet.dart',
   'lib/models/log_models.dart',
+  // batch 3: onboarding and photos
+  'lib/features/onboarding/onboarding_screen.dart',
+  'lib/features/onboarding/photo_capture_screen.dart',
+  'lib/models/body_photo.dart',
+  'lib/services/api/photo_api.dart',
 ];
 
 Map<String, dynamic> readArb(String lang) =>

@@ -458,8 +458,9 @@ Environment variables only (§2.2), read at **import time** as module globals in
 - **Migrated so far:**
   - Me;
   - login (screen, validation messages, country picker, server errors) and the expired-session snackbar;
-  - the home FAB and the five log sheets.
-- **Remaining batches:** onboarding and photo capture; input, history, snapshot, compare and predict; challenge, coach and exercise library; backend coach suggestion templates (as `code` + `params`). `UnauthorizedException.toString()` in `api_http.dart` is still Chinese and moves with the screens that display exception text.
+  - the home FAB and the five log sheets;
+  - onboarding and photo capture. Photo-angle labels and the analysis status text moved out of `models/body_photo.dart` into `core/l10n/photo_labels.dart` (`photoAngleLabel`, `photoAngleHint`, `bodyAnalysisStatusLabel`). `PhotoException` messages are now technical English with the HTTP status, because no screen shows them.
+- **Remaining batches:** input, history, snapshot, compare and predict; challenge, coach and exercise library; backend coach suggestion templates (as `code` + `params`). `UnauthorizedException.toString()` in `api_http.dart` is still Chinese and moves with the screens that display exception text.
 - **Avatar-owned files (not migrated, for the avatar owner):** these files belong to the 3D avatar work and were left untouched. Each string needs an ARB key; `loadFailed` and `retry` already exist.
 
   | File | Strings |
@@ -507,7 +508,7 @@ Environment variables only (§2.2), read at **import time** as module globals in
 **Reading it in the app:**
 - `ref.watch(latestBodyAnalysisProvider)` gives an `AsyncValue<BodyAnalysis?>`.
 - `.values` is a `PhotoAnalysisResult` (`shoulderWidthNorm`, `waistNorm`, `hipNorm`, `limbProportionNorm`).
-- `.statusLabel` gives Chinese status text.
+- `bodyAnalysisStatusLabel(S.of(context), analysis.status)` (`core/l10n/photo_labels.dart`) gives the status text in the app language. It replaced `BodyAnalysis.statusLabel`, so the model holds data only.
 - `PhotoApi.fetchLatestAnalysis(okOnly: true)` (`?status=ok`) gets the latest run that has values.
 
 > **Note for the avatar owner (decision needed):** `AvatarParams.applyPhotoAnalysis` (`models.dart`) reads the key **`shoulder_norm`**, but the analysis field is **`shoulder_width_norm`**. Passing the analysis values directly would silently ignore the shoulder estimate.
@@ -549,7 +550,8 @@ Environment variables only (§2.2), read at **import time** as module globals in
 | Flutter i18n (2026-11-15) | `test/l10n_test.dart` (ARB parity, Chinese-literal check, locale resolution, persistence, runtime switch) and `test/error_text_test.dart` (code → text in both languages, response parsing, fallbacks), 23 tests | **23 pass** |
 | Flutter smoke test (2026-11-15) | `flutter_app/test/widget_test.dart`, 2 tests | **2 pass**: pumps the real app root (`MirrorApp` in a `ProviderScope`) and checks a signed-out start shows the login screen, in Chinese and in English. Replaced the counter template, which didn't compile |
 | Flutter stored log values (2026-11-15) | `test/log_values_test.dart`, 12 tests | **12 pass**: exact stored values, backend CHECK/`coach.py` agreement, labels in both languages, and each log sheet saved in English sends the Chinese value |
-| **Flutter total** | `flutter test` | **78 pass, 0 fail** |
+| Flutter onboarding and photos (2026-11-15) | `test/onboarding_l10n_test.dart`, 3 tests, plus a photo-angle label test in `body_analysis_test.dart` | **pass**: onboarding walked through in English (goal id still stored), Chinese text unchanged, photo capture in both languages |
+| **Flutter total** | `flutter test` | **82 pass, 0 fail** |
 | iOS/macOS | `RunnerTests.swift` | Xcode template stubs |
 
 **Run backend unit tests:**
@@ -649,7 +651,7 @@ All verified by the integration tests in §7.
    - It reads `'shoulder_norm'` while the analysis field is `shoulder_width_norm`; `toAvatarOverrides()` bridges this until the avatar owner decides.
    - `limb_proportion_norm` has no consumer.
    - HEIC photos are skipped rather than converted; the app itself only uploads JPEG (#8).
-3. **i18n is partly migrated.** The language switch, Me, login and the home log sheets are done, and login errors are translated from codes. The other screens are still hard-coded (mostly Chinese), and so are the backend coach cards. Remaining batches and the avatar-owned strings are listed in §6 "i18n".
+3. **i18n is partly migrated.** The language switch, Me, login, the home log sheets, onboarding and photo capture are done, and login errors are translated from codes. The other screens are still hard-coded (mostly Chinese), and so are the backend coach cards. Remaining batches and the avatar-owned strings are listed in §6 "i18n".
 4. **Supplement reminders are not implemented.** The supplement sheet lets the user switch a reminder on and pick a time, and the backend stores `reminder_time`/`reminder_enabled`, but **nothing schedules a reminder**. There's no notification package, no Android notification permission, and no server scheduler or push.
    - **Preferred approach:** schedule on the device (e.g. `flutter_local_notifications`) at the chosen wall-clock time. The phone's own timezone handles it, so **no server-side timezone** (`users.timezone`) is needed. That's only required if reminders are ever sent by server push.
    - **Data model:** reminders are currently stored per log entry (`supplement_logs`). They should become a **standing reminder per supplement** (e.g. a `supplements` or `supplement_reminders` table: user, supplement, time, enabled), separate from the log of doses taken.

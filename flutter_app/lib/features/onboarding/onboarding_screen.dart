@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_animate/flutter_animate.dart';
 import 'package:go_router/go_router.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+import '../../core/l10n/app_localizations.dart';
 import '../../core/theme/design_tokens.dart';
 import '../../core/router/app_router.dart';
 
@@ -33,6 +34,8 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
   bool _ctaPressed = false;
 
   static const _steps = 3;
+
+  S get _s => S.of(context);
 
   bool get _canProceed {
     if (_step == 0) return _termsAccepted && _privacyAccepted;
@@ -85,7 +88,7 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
         padding: const EdgeInsets.fromLTRB(
             MirrorSpacing.pagePad, 20, MirrorSpacing.pagePad, 12),
         child: Text(
-          '3D MIRROR',
+          _s.brandMasthead,
           style: MirrorText.overline.copyWith(
             color: MirrorColors.gold,
             fontSize: 11,
@@ -148,12 +151,12 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
     padding: const EdgeInsets.fromLTRB(
         MirrorSpacing.pagePad, 32, MirrorSpacing.pagePad, 0),
     child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-      Text('LEGAL & PRIVACY', style: MirrorText.overline)
+      Text(_s.onboardingConsentEyebrow, style: MirrorText.overline)
           .animate().fadeIn(duration: const Duration(milliseconds: 400), curve: MirrorCurve.enter),
       const SizedBox(height: 12),
       Text.rich(TextSpan(style: MirrorText.title, children: [
-        const TextSpan(text: '条款与\n'),
-        TextSpan(text: '隐私协议',
+        TextSpan(text: _s.onboardingConsentTitle),
+        TextSpan(text: _s.onboardingConsentItalic,
             style: MirrorText.title.copyWith(fontStyle: FontStyle.italic)),
       ]))
       .animate(delay: 80.ms)
@@ -162,14 +165,17 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
       const SizedBox(height: 28),
 
       Text(
-        '在开始使用 3D Mirror 之前，请确认以下内容：',
+        _s.onboardingConsentIntro,
         style: MirrorText.body,
       )
       .animate(delay: 160.ms)
       .fadeIn(duration: 400.ms, curve: MirrorCurve.enter),
       const SizedBox(height: 16),
 
-      ..._consentBullets.asMap().entries.map((e) =>
+      ...[
+        _s.onboardingConsentBullet1, _s.onboardingConsentBullet2,
+        _s.onboardingConsentBullet3, _s.onboardingConsentBullet4,
+      ].asMap().entries.map((e) =>
         _BulletItem(text: e.value)
         .animate(delay: Duration(milliseconds: 240 + e.key * 60))
         .fadeIn(duration: 350.ms, curve: MirrorCurve.enter)
@@ -178,8 +184,8 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
       const SizedBox(height: 28),
 
       _ConsentRow(
-        label: '我已阅读并同意《服务条款》',
-        sublabel: 'Terms of Service',
+        label: _s.onboardingAcceptTerms,
+        sublabel: _s.onboardingAcceptTermsSub,
         value: _termsAccepted,
         onChanged: (v) => setState(() => _termsAccepted = v),
       )
@@ -188,8 +194,8 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
       const SizedBox(height: 12),
 
       _ConsentRow(
-        label: '我已阅读并同意《隐私政策》',
-        sublabel: 'Privacy Policy — AI Data Usage',
+        label: _s.onboardingAcceptPrivacy,
+        sublabel: _s.onboardingAcceptPrivacySub,
         value: _privacyAccepted,
         onChanged: (v) => setState(() => _privacyAccepted = v),
       )
@@ -198,25 +204,18 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
     ]),
   );
 
-  static const _consentBullets = [
-    '你的身体数据（身高、体重、三围）将用于生成专属 3D 体型模型',
-    '体型照片将上传至服务器，由 AI 分析体型比例，仅用于建模，不作其他用途',
-    '所有数据经过加密存储，我们不会出售或共享你的个人信息',
-    'AI 预测结果仅供参考，不构成医疗建议',
-  ];
-
   // ── Step 1: Basic Info ────────────────────────────────────────────────────
 
   Widget _stepBasicInfo() => SingleChildScrollView(
     padding: const EdgeInsets.fromLTRB(
         MirrorSpacing.pagePad, 32, MirrorSpacing.pagePad, 0),
     child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-      Text('ABOUT YOU', style: MirrorText.overline)
+      Text(_s.onboardingStep1Eyebrow, style: MirrorText.overline)
           .animate().fadeIn(duration: 400.ms, curve: MirrorCurve.enter),
       const SizedBox(height: 12),
       Text.rich(TextSpan(style: MirrorText.title, children: [
-        const TextSpan(text: '告诉我\n你的'),
-        TextSpan(text: '基本信息',
+        TextSpan(text: _s.onboardingStep1Title),
+        TextSpan(text: _s.onboardingStep1Italic,
             style: MirrorText.title.copyWith(fontStyle: FontStyle.italic)),
       ]))
       .animate(delay: 80.ms)
@@ -245,7 +244,7 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
                     borderRadius: BorderRadius.circular(MirrorRadius.sm),
                   ),
                   alignment: Alignment.center,
-                  child: Text(g == 'female' ? '女' : '男',
+                  child: Text(g == 'female' ? _s.genderFemale : _s.genderMale,
                       style: MirrorText.body.copyWith(
                         color: sel ? MirrorColors.text1 : MirrorColors.text3,
                         fontWeight: sel ? FontWeight.w500 : FontWeight.w300,
@@ -261,19 +260,19 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
       .slideY(begin: 0.05, end: 0, duration: 400.ms, curve: MirrorCurve.enter),
       const SizedBox(height: 8),
 
-      _PickRow(label: '年龄', value: '$_age 岁',
-          onTap: () => _pickInt('年龄', 10, 80, _age,
+      _PickRow(label: _s.labelAge, value: _s.onboardingAgeValue(_age),
+          onTap: () => _pickInt(_s.labelAge, 10, 80, _age,
               (v) => setState(() => _age = v)))
       .animate(delay: 240.ms).fadeIn(duration: 400.ms, curve: MirrorCurve.enter),
 
-      _PickRow(label: '身高', value: '${_height.toStringAsFixed(0)} cm',
-          onTap: () => _pickDec('身高 (cm)', 130, 220, _height, 0.5,
+      _PickRow(label: _s.labelHeight, value: '${_height.toStringAsFixed(0)} cm',
+          onTap: () => _pickDec(_s.onboardingHeightPicker, 130, 220, _height, 0.5,
               (v) => setState(() => _height = v)))
       .animate(delay: 320.ms).fadeIn(duration: 400.ms, curve: MirrorCurve.enter),
 
-      _PickRow(label: '体重', value: '${_weight.toStringAsFixed(1)} kg',
+      _PickRow(label: _s.labelWeight, value: '${_weight.toStringAsFixed(1)} kg',
           isLast: true,
-          onTap: () => _pickDec('体重 (kg)', 30, 150, _weight, 0.5,
+          onTap: () => _pickDec(_s.onboardingWeightPicker, 30, 150, _weight, 0.5,
               (v) => setState(() => _weight = v)))
       .animate(delay: 400.ms).fadeIn(duration: 400.ms, curve: MirrorCurve.enter),
     ]),
@@ -285,12 +284,12 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
     padding: const EdgeInsets.fromLTRB(
         MirrorSpacing.pagePad, 32, MirrorSpacing.pagePad, 0),
     child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-      Text('YOUR GOAL', style: MirrorText.overline)
+      Text(_s.onboardingStep2Eyebrow, style: MirrorText.overline)
           .animate().fadeIn(duration: 400.ms, curve: MirrorCurve.enter),
       const SizedBox(height: 12),
       Text.rich(TextSpan(style: MirrorText.title, children: [
-        const TextSpan(text: '你的\n'),
-        TextSpan(text: '目标',
+        TextSpan(text: _s.onboardingStep2Title),
+        TextSpan(text: _s.onboardingStep2Italic,
             style: MirrorText.title.copyWith(fontStyle: FontStyle.italic)),
       ]))
       .animate(delay: 80.ms)
@@ -298,10 +297,11 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
       .slideY(begin: 0.06, end: 0, duration: MirrorDuration.slow, curve: MirrorCurve.enter),
       const SizedBox(height: 32),
       ...[
-        ('lose_fat',     '减脂',   'Fat Loss — 减少体脂，提升体型'),
-        ('build_muscle', '增肌',   'Muscle — 增加肌肉量，提升力量'),
-        ('recomp',       '塑形',   'Recomposition — 减脂增肌同步'),
-        ('health',       '健康',   'Wellness — 保持健康，改善体能'),
+        // The id is stored (prefs mirror_goal); only the text is translated.
+        ('lose_fat',     _s.goalLoseFat,     _s.goalLoseFatSub),
+        ('build_muscle', _s.goalBuildMuscle, _s.goalBuildMuscleSub),
+        ('recomp',       _s.goalRecomp,      _s.goalRecompSub),
+        ('health',       _s.goalHealth,      _s.goalHealthSub),
       ].asMap().entries.map((e) {
         final i    = e.key;
         final item = e.value;
@@ -338,7 +338,7 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
               shape: RoundedRectangleBorder(
                   borderRadius: BorderRadius.circular(MirrorRadius.lg)),
             ),
-            child: Text('返回',
+            child: Text(_s.btnBack,
                 style: MirrorText.button.copyWith(color: MirrorColors.text2)),
           ),
         ),
@@ -363,7 +363,7 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
                     ? const SizedBox(width: 18, height: 18,
                         child: CircularProgressIndicator(
                             color: MirrorColors.bg, strokeWidth: 1.5))
-                    : Text(_step < _steps - 1 ? '下一步' : '开始使用'),
+                    : Text(_step < _steps - 1 ? _s.btnNext : _s.btnStart),
               ),
             ),
           ),
@@ -636,12 +636,13 @@ class _Sheet extends StatelessWidget {
     child: Column(children: [
       Row(mainAxisAlignment: MainAxisAlignment.spaceBetween, children: [
         CupertinoButton(
-          child: Text('取消', style: MirrorText.body.copyWith(color: MirrorColors.text3)),
+          child: Text(S.of(context).cancelBtn,
+              style: MirrorText.body.copyWith(color: MirrorColors.text3)),
           onPressed: () => Navigator.pop(context),
         ),
         Text(label, style: MirrorText.bodyS.copyWith(color: MirrorColors.text2)),
         CupertinoButton(
-          child: Text('确认', style: MirrorText.body.copyWith(
+          child: Text(S.of(context).confirmBtn, style: MirrorText.body.copyWith(
               color: MirrorColors.text1, fontWeight: FontWeight.w500)),
           onPressed: () { onConfirm(); Navigator.pop(context); },
         ),

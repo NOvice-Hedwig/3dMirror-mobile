@@ -208,13 +208,13 @@ abstract class S {
   /// No description provided for @onboardingStep1Eyebrow.
   ///
   /// In zh, this message translates to:
-  /// **'关于你'**
+  /// **'ABOUT YOU'**
   String get onboardingStep1Eyebrow;
 
   /// No description provided for @onboardingStep1Title.
   ///
   /// In zh, this message translates to:
-  /// **'告诉我你的'**
+  /// **'告诉我\n你的'**
   String get onboardingStep1Title;
 
   /// No description provided for @onboardingStep1Italic.
@@ -226,13 +226,13 @@ abstract class S {
   /// No description provided for @onboardingStep2Eyebrow.
   ///
   /// In zh, this message translates to:
-  /// **'最后一步'**
+  /// **'YOUR GOAL'**
   String get onboardingStep2Eyebrow;
 
   /// No description provided for @onboardingStep2Title.
   ///
   /// In zh, this message translates to:
-  /// **'你的'**
+  /// **'你的\n'**
   String get onboardingStep2Title;
 
   /// No description provided for @onboardingStep2Italic.
@@ -274,7 +274,7 @@ abstract class S {
   /// No description provided for @goalLoseFatSub.
   ///
   /// In zh, this message translates to:
-  /// **'减少体脂，提升体型'**
+  /// **'Fat Loss — 减少体脂，提升体型'**
   String get goalLoseFatSub;
 
   /// No description provided for @goalBuildMuscle.
@@ -286,7 +286,7 @@ abstract class S {
   /// No description provided for @goalBuildMuscleSub.
   ///
   /// In zh, this message translates to:
-  /// **'增加肌肉量，提升力量'**
+  /// **'Muscle — 增加肌肉量，提升力量'**
   String get goalBuildMuscleSub;
 
   /// No description provided for @goalRecomp.
@@ -298,19 +298,19 @@ abstract class S {
   /// No description provided for @goalRecompSub.
   ///
   /// In zh, this message translates to:
-  /// **'减脂增肌同步进行'**
+  /// **'Recomposition — 减脂增肌同步'**
   String get goalRecompSub;
 
   /// No description provided for @goalHealth.
   ///
   /// In zh, this message translates to:
-  /// **'健康管理'**
+  /// **'健康'**
   String get goalHealth;
 
   /// No description provided for @goalHealthSub.
   ///
   /// In zh, this message translates to:
-  /// **'保持健康，改善体能'**
+  /// **'Wellness — 保持健康，改善体能'**
   String get goalHealthSub;
 
   /// No description provided for @btnNext.
@@ -1614,6 +1614,210 @@ abstract class S {
   /// In zh, this message translates to:
   /// **'锌'**
   String get supplementZinc;
+
+  /// No description provided for @onboardingConsentEyebrow.
+  ///
+  /// In zh, this message translates to:
+  /// **'LEGAL & PRIVACY'**
+  String get onboardingConsentEyebrow;
+
+  /// No description provided for @onboardingConsentTitle.
+  ///
+  /// In zh, this message translates to:
+  /// **'条款与\n'**
+  String get onboardingConsentTitle;
+
+  /// No description provided for @onboardingConsentItalic.
+  ///
+  /// In zh, this message translates to:
+  /// **'隐私协议'**
+  String get onboardingConsentItalic;
+
+  /// No description provided for @onboardingConsentIntro.
+  ///
+  /// In zh, this message translates to:
+  /// **'在开始使用 3D Mirror 之前，请确认以下内容：'**
+  String get onboardingConsentIntro;
+
+  /// No description provided for @onboardingConsentBullet1.
+  ///
+  /// In zh, this message translates to:
+  /// **'你的身体数据（身高、体重、三围）将用于生成专属 3D 体型模型'**
+  String get onboardingConsentBullet1;
+
+  /// No description provided for @onboardingConsentBullet2.
+  ///
+  /// In zh, this message translates to:
+  /// **'体型照片将上传至服务器，由 AI 分析体型比例，仅用于建模，不作其他用途'**
+  String get onboardingConsentBullet2;
+
+  /// No description provided for @onboardingConsentBullet3.
+  ///
+  /// In zh, this message translates to:
+  /// **'所有数据经过加密存储，我们不会出售或共享你的个人信息'**
+  String get onboardingConsentBullet3;
+
+  /// No description provided for @onboardingConsentBullet4.
+  ///
+  /// In zh, this message translates to:
+  /// **'AI 预测结果仅供参考，不构成医疗建议'**
+  String get onboardingConsentBullet4;
+
+  /// No description provided for @onboardingAcceptTerms.
+  ///
+  /// In zh, this message translates to:
+  /// **'我已阅读并同意《服务条款》'**
+  String get onboardingAcceptTerms;
+
+  /// No description provided for @onboardingAcceptTermsSub.
+  ///
+  /// In zh, this message translates to:
+  /// **'Terms of Service'**
+  String get onboardingAcceptTermsSub;
+
+  /// No description provided for @onboardingAcceptPrivacy.
+  ///
+  /// In zh, this message translates to:
+  /// **'我已阅读并同意《隐私政策》'**
+  String get onboardingAcceptPrivacy;
+
+  /// No description provided for @onboardingAcceptPrivacySub.
+  ///
+  /// In zh, this message translates to:
+  /// **'Privacy Policy — AI Data Usage'**
+  String get onboardingAcceptPrivacySub;
+
+  /// No description provided for @onboardingAgeValue.
+  ///
+  /// In zh, this message translates to:
+  /// **'{age} 岁'**
+  String onboardingAgeValue(int age);
+
+  /// No description provided for @onboardingHeightPicker.
+  ///
+  /// In zh, this message translates to:
+  /// **'身高 (cm)'**
+  String get onboardingHeightPicker;
+
+  /// No description provided for @onboardingWeightPicker.
+  ///
+  /// In zh, this message translates to:
+  /// **'体重 (kg)'**
+  String get onboardingWeightPicker;
+
+  /// No description provided for @photoScanEyebrow.
+  ///
+  /// In zh, this message translates to:
+  /// **'BODY SCAN'**
+  String get photoScanEyebrow;
+
+  /// No description provided for @photoTitleLead.
+  ///
+  /// In zh, this message translates to:
+  /// **'记录你的\n'**
+  String get photoTitleLead;
+
+  /// No description provided for @photoTitleEmphasis.
+  ///
+  /// In zh, this message translates to:
+  /// **'体型'**
+  String get photoTitleEmphasis;
+
+  /// No description provided for @photoIntro.
+  ///
+  /// In zh, this message translates to:
+  /// **'拍摄三个角度的照片，帮助 AI 建立更准确的 3D 体型模型。'**
+  String get photoIntro;
+
+  /// No description provided for @photoAllDone.
+  ///
+  /// In zh, this message translates to:
+  /// **'全部完成 ✓'**
+  String get photoAllDone;
+
+  /// No description provided for @photoProgress.
+  ///
+  /// In zh, this message translates to:
+  /// **'已完成 {count} / 3'**
+  String photoProgress(int count);
+
+  /// No description provided for @photoLater.
+  ///
+  /// In zh, this message translates to:
+  /// **'稍后再说'**
+  String get photoLater;
+
+  /// No description provided for @photoUploadAndFinish.
+  ///
+  /// In zh, this message translates to:
+  /// **'上传并完成'**
+  String get photoUploadAndFinish;
+
+  /// No description provided for @photoSkipRestAndFinish.
+  ///
+  /// In zh, this message translates to:
+  /// **'跳过剩余并完成'**
+  String get photoSkipRestAndFinish;
+
+  /// No description provided for @photoUploadFailed.
+  ///
+  /// In zh, this message translates to:
+  /// **'上传失败，请检查网络连接后重试。'**
+  String get photoUploadFailed;
+
+  /// No description provided for @photoAngleFront.
+  ///
+  /// In zh, this message translates to:
+  /// **'前视图'**
+  String get photoAngleFront;
+
+  /// No description provided for @photoAngleSide.
+  ///
+  /// In zh, this message translates to:
+  /// **'侧视图'**
+  String get photoAngleSide;
+
+  /// No description provided for @photoAngleBack.
+  ///
+  /// In zh, this message translates to:
+  /// **'后视图'**
+  String get photoAngleBack;
+
+  /// No description provided for @photoHintFront.
+  ///
+  /// In zh, this message translates to:
+  /// **'面向镜头站立'**
+  String get photoHintFront;
+
+  /// No description provided for @photoHintSide.
+  ///
+  /// In zh, this message translates to:
+  /// **'侧身 90° 站立'**
+  String get photoHintSide;
+
+  /// No description provided for @photoHintBack.
+  ///
+  /// In zh, this message translates to:
+  /// **'背对镜头站立'**
+  String get photoHintBack;
+
+  /// No description provided for @analysisStatusOk.
+  ///
+  /// In zh, this message translates to:
+  /// **'体型分析已完成'**
+  String get analysisStatusOk;
+
+  /// No description provided for @analysisStatusUnavailable.
+  ///
+  /// In zh, this message translates to:
+  /// **'体型分析暂不可用'**
+  String get analysisStatusUnavailable;
+
+  /// No description provided for @analysisStatusFailed.
+  ///
+  /// In zh, this message translates to:
+  /// **'体型分析失败，请稍后重新拍照'**
+  String get analysisStatusFailed;
 }
 
 class _SDelegate extends LocalizationsDelegate<S> {

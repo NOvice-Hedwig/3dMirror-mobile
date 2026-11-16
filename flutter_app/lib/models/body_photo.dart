@@ -2,23 +2,8 @@ import 'dart:io';
 
 enum PhotoAngle { front, side, back }
 
+// Display text: photoAngleLabel / photoAngleHint in core/l10n/photo_labels.dart.
 extension PhotoAngleLabel on PhotoAngle {
-  String get label {
-    switch (this) {
-      case PhotoAngle.front: return '前视图';
-      case PhotoAngle.side:  return '侧视图';
-      case PhotoAngle.back:  return '后视图';
-    }
-  }
-
-  String get hint {
-    switch (this) {
-      case PhotoAngle.front: return '面向镜头站立';
-      case PhotoAngle.side:  return '侧身 90° 站立';
-      case PhotoAngle.back:  return '背对镜头站立';
-    }
-  }
-
   String get apiValue {
     switch (this) {
       case PhotoAngle.front: return 'front';
@@ -118,12 +103,7 @@ class BodyAnalysis {
     detail:    j['detail'] as String?,
   );
 
-  /// Short user-facing status text.
-  String get statusLabel => switch (status) {
-    AnalysisStatus.ok          => '体型分析已完成',
-    AnalysisStatus.unavailable => '体型分析暂不可用',
-    AnalysisStatus.failed      => '体型分析失败，请稍后重新拍照',
-  };
+  // User-facing status text: bodyAnalysisStatusLabel in core/l10n/photo_labels.dart.
 }
 
 // ─── BodyPhoto ────────────────────────────────────────────────────────────────

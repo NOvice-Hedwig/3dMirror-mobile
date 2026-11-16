@@ -25,11 +25,11 @@
   "errorInvalidCode": "Invalid or expired code",
   "errorSendFailed": "Failed to send. Please try again",
   "errorNetwork": "Network error. Check your connection",
-  "onboardingStep1Eyebrow": "About you",
-  "onboardingStep1Title": "Tell me your",
+  "onboardingStep1Eyebrow": "ABOUT YOU",
+  "onboardingStep1Title": "Tell me\nyour ",
   "onboardingStep1Italic": "basics",
-  "onboardingStep2Eyebrow": "Last step",
-  "onboardingStep2Title": "Your",
+  "onboardingStep2Eyebrow": "YOUR GOAL",
+  "onboardingStep2Title": "Your\n",
   "onboardingStep2Italic": "goal",
   "genderMale": "Male",
   "genderFemale": "Female",
@@ -41,7 +41,7 @@
   "goalBuildMuscleSub": "Increase muscle mass and strength",
   "goalRecomp": "Body recomp",
   "goalRecompSub": "Lose fat and build muscle together",
-  "goalHealth": "General health",
+  "goalHealth": "Wellness",
   "goalHealthSub": "Stay healthy, improve fitness",
   "btnNext": "Next",
   "btnBack": "Back",
@@ -280,5 +280,53 @@
   "supplementIron": "Iron",
   "supplementFolicAcid": "Folic acid",
   "supplementMagnesium": "Magnesium",
-  "supplementZinc": "Zinc"
+  "supplementZinc": "Zinc",
+  "onboardingConsentEyebrow": "LEGAL & PRIVACY",
+  "onboardingConsentTitle": "Terms &\n",
+  "onboardingConsentItalic": "privacy",
+  "onboardingConsentIntro": "Before you start using 3D Mirror, please confirm the following:",
+  "onboardingConsentBullet1": "Your body data (height, weight, measurements) is used to build your personal 3D body model",
+  "onboardingConsentBullet2": "Body photos are uploaded to our server, where AI analyzes your proportions. They are used only for modeling, nothing else",
+  "onboardingConsentBullet3": "All data is stored encrypted. We never sell or share your personal information",
+  "onboardingConsentBullet4": "AI predictions are for reference only and are not medical advice",
+  "onboardingAcceptTerms": "I have read and agree to the Terms of Service",
+  "onboardingAcceptTermsSub": "Required to use 3D Mirror",
+  "onboardingAcceptPrivacy": "I have read and agree to the Privacy Policy",
+  "onboardingAcceptPrivacySub": "Includes how AI uses your data",
+  "onboardingAgeValue": "{age} yrs",
+  "@onboardingAgeValue": {
+    "placeholders": {
+      "age": {
+        "type": "int"
+      }
+    }
+  },
+  "onboardingHeightPicker": "Height (cm)",
+  "onboardingWeightPicker": "Weight (kg)",
+  "photoScanEyebrow": "BODY SCAN",
+  "photoTitleLead": "Capture your\n",
+  "photoTitleEmphasis": "shape",
+  "photoIntro": "Take photos from three angles to help the AI build a more accurate 3D body model.",
+  "photoAllDone": "All done ✓",
+  "photoProgress": "{count} / 3 done",
+  "@photoProgress": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "photoLater": "Later",
+  "photoUploadAndFinish": "Upload and finish",
+  "photoSkipRestAndFinish": "Skip the rest and finish",
+  "photoUploadFailed": "Upload failed. Check your connection and try again.",
+  "photoAngleFront": "Front",
+  "photoAngleSide": "Side",
+  "photoAngleBack": "Back",
+  "photoHintFront": "Face the camera",
+  "photoHintSide": "Stand side-on (90°)",
+  "photoHintBack": "Face away from the camera",
+  "analysisStatusOk": "Body analysis complete",
+  "analysisStatusUnavailable": "Body analysis is currently unavailable",
+  "analysisStatusFailed": "Body analysis failed. Please retake the photos later"
 }

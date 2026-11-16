@@ -65,19 +65,19 @@ class SEn extends S {
   String get errorNetwork => 'Network error. Check your connection';
 
   @override
-  String get onboardingStep1Eyebrow => 'About you';
+  String get onboardingStep1Eyebrow => 'ABOUT YOU';
 
   @override
-  String get onboardingStep1Title => 'Tell me your';
+  String get onboardingStep1Title => 'Tell me\nyour ';
 
   @override
   String get onboardingStep1Italic => 'basics';
 
   @override
-  String get onboardingStep2Eyebrow => 'Last step';
+  String get onboardingStep2Eyebrow => 'YOUR GOAL';
 
   @override
-  String get onboardingStep2Title => 'Your';
+  String get onboardingStep2Title => 'Your\n';
 
   @override
   String get onboardingStep2Italic => 'goal';
@@ -113,7 +113,7 @@ class SEn extends S {
   String get goalRecompSub => 'Lose fat and build muscle together';
 
   @override
-  String get goalHealth => 'General health';
+  String get goalHealth => 'Wellness';
 
   @override
   String get goalHealthSub => 'Stay healthy, improve fitness';
@@ -776,4 +776,121 @@ class SEn extends S {
 
   @override
   String get supplementZinc => 'Zinc';
+
+  @override
+  String get onboardingConsentEyebrow => 'LEGAL & PRIVACY';
+
+  @override
+  String get onboardingConsentTitle => 'Terms &\n';
+
+  @override
+  String get onboardingConsentItalic => 'privacy';
+
+  @override
+  String get onboardingConsentIntro =>
+      'Before you start using 3D Mirror, please confirm the following:';
+
+  @override
+  String get onboardingConsentBullet1 =>
+      'Your body data (height, weight, measurements) is used to build your personal 3D body model';
+
+  @override
+  String get onboardingConsentBullet2 =>
+      'Body photos are uploaded to our server, where AI analyzes your proportions. They are used only for modeling, nothing else';
+
+  @override
+  String get onboardingConsentBullet3 =>
+      'All data is stored encrypted. We never sell or share your personal information';
+
+  @override
+  String get onboardingConsentBullet4 =>
+      'AI predictions are for reference only and are not medical advice';
+
+  @override
+  String get onboardingAcceptTerms =>
+      'I have read and agree to the Terms of Service';
+
+  @override
+  String get onboardingAcceptTermsSub => 'Required to use 3D Mirror';
+
+  @override
+  String get onboardingAcceptPrivacy =>
+      'I have read and agree to the Privacy Policy';
+
+  @override
+  String get onboardingAcceptPrivacySub => 'Includes how AI uses your data';
+
+  @override
+  String onboardingAgeValue(int age) {
+    return '$age yrs';
+  }
+
+  @override
+  String get onboardingHeightPicker => 'Height (cm)';
+
+  @override
+  String get onboardingWeightPicker => 'Weight (kg)';
+
+  @override
+  String get photoScanEyebrow => 'BODY SCAN';
+
+  @override
+  String get photoTitleLead => 'Capture your\n';
+
+  @override
+  String get photoTitleEmphasis => 'shape';
+
+  @override
+  String get photoIntro =>
+      'Take photos from three angles to help the AI build a more accurate 3D body model.';
+
+  @override
+  String get photoAllDone => 'All done ✓';
+
+  @override
+  String photoProgress(int count) {
+    return '$count / 3 done';
+  }
+
+  @override
+  String get photoLater => 'Later';
+
+  @override
+  String get photoUploadAndFinish => 'Upload and finish';
+
+  @override
+  String get photoSkipRestAndFinish => 'Skip the rest and finish';
+
+  @override
+  String get photoUploadFailed =>
+      'Upload failed. Check your connection and try again.';
+
+  @override
+  String get photoAngleFront => 'Front';
+
+  @override
+  String get photoAngleSide => 'Side';
+
+  @override
+  String get photoAngleBack => 'Back';
+
+  @override
+  String get photoHintFront => 'Face the camera';
+
+  @override
+  String get photoHintSide => 'Stand side-on (90°)';
+
+  @override
+  String get photoHintBack => 'Face away from the camera';
+
+  @override
+  String get analysisStatusOk => 'Body analysis complete';
+
+  @override
+  String get analysisStatusUnavailable =>
+      'Body analysis is currently unavailable';
+
+  @override
+  String get analysisStatusFailed =>
+      'Body analysis failed. Please retake the photos later';
 }

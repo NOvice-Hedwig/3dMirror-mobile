@@ -65,19 +65,19 @@ class SZh extends S {
   String get errorNetwork => '网络错误，请检查连接';
 
   @override
-  String get onboardingStep1Eyebrow => '关于你';
+  String get onboardingStep1Eyebrow => 'ABOUT YOU';
 
   @override
-  String get onboardingStep1Title => '告诉我你的';
+  String get onboardingStep1Title => '告诉我\n你的';
 
   @override
   String get onboardingStep1Italic => '基本信息';
 
   @override
-  String get onboardingStep2Eyebrow => '最后一步';
+  String get onboardingStep2Eyebrow => 'YOUR GOAL';
 
   @override
-  String get onboardingStep2Title => '你的';
+  String get onboardingStep2Title => '你的\n';
 
   @override
   String get onboardingStep2Italic => '目标';
@@ -98,25 +98,25 @@ class SZh extends S {
   String get goalLoseFat => '减脂';
 
   @override
-  String get goalLoseFatSub => '减少体脂，提升体型';
+  String get goalLoseFatSub => 'Fat Loss — 减少体脂，提升体型';
 
   @override
   String get goalBuildMuscle => '增肌';
 
   @override
-  String get goalBuildMuscleSub => '增加肌肉量，提升力量';
+  String get goalBuildMuscleSub => 'Muscle — 增加肌肉量，提升力量';
 
   @override
   String get goalRecomp => '塑形';
 
   @override
-  String get goalRecompSub => '减脂增肌同步进行';
+  String get goalRecompSub => 'Recomposition — 减脂增肌同步';
 
   @override
-  String get goalHealth => '健康管理';
+  String get goalHealth => '健康';
 
   @override
-  String get goalHealthSub => '保持健康，改善体能';
+  String get goalHealthSub => 'Wellness — 保持健康，改善体能';
 
   @override
   String get btnNext => '下一步';
@@ -774,4 +774,110 @@ class SZh extends S {
 
   @override
   String get supplementZinc => '锌';
+
+  @override
+  String get onboardingConsentEyebrow => 'LEGAL & PRIVACY';
+
+  @override
+  String get onboardingConsentTitle => '条款与\n';
+
+  @override
+  String get onboardingConsentItalic => '隐私协议';
+
+  @override
+  String get onboardingConsentIntro => '在开始使用 3D Mirror 之前，请确认以下内容：';
+
+  @override
+  String get onboardingConsentBullet1 => '你的身体数据（身高、体重、三围）将用于生成专属 3D 体型模型';
+
+  @override
+  String get onboardingConsentBullet2 => '体型照片将上传至服务器，由 AI 分析体型比例，仅用于建模，不作其他用途';
+
+  @override
+  String get onboardingConsentBullet3 => '所有数据经过加密存储，我们不会出售或共享你的个人信息';
+
+  @override
+  String get onboardingConsentBullet4 => 'AI 预测结果仅供参考，不构成医疗建议';
+
+  @override
+  String get onboardingAcceptTerms => '我已阅读并同意《服务条款》';
+
+  @override
+  String get onboardingAcceptTermsSub => 'Terms of Service';
+
+  @override
+  String get onboardingAcceptPrivacy => '我已阅读并同意《隐私政策》';
+
+  @override
+  String get onboardingAcceptPrivacySub => 'Privacy Policy — AI Data Usage';
+
+  @override
+  String onboardingAgeValue(int age) {
+    return '$age 岁';
+  }
+
+  @override
+  String get onboardingHeightPicker => '身高 (cm)';
+
+  @override
+  String get onboardingWeightPicker => '体重 (kg)';
+
+  @override
+  String get photoScanEyebrow => 'BODY SCAN';
+
+  @override
+  String get photoTitleLead => '记录你的\n';
+
+  @override
+  String get photoTitleEmphasis => '体型';
+
+  @override
+  String get photoIntro => '拍摄三个角度的照片，帮助 AI 建立更准确的 3D 体型模型。';
+
+  @override
+  String get photoAllDone => '全部完成 ✓';
+
+  @override
+  String photoProgress(int count) {
+    return '已完成 $count / 3';
+  }
+
+  @override
+  String get photoLater => '稍后再说';
+
+  @override
+  String get photoUploadAndFinish => '上传并完成';
+
+  @override
+  String get photoSkipRestAndFinish => '跳过剩余并完成';
+
+  @override
+  String get photoUploadFailed => '上传失败，请检查网络连接后重试。';
+
+  @override
+  String get photoAngleFront => '前视图';
+
+  @override
+  String get photoAngleSide => '侧视图';
+
+  @override
+  String get photoAngleBack => '后视图';
+
+  @override
+  String get photoHintFront => '面向镜头站立';
+
+  @override
+  String get photoHintSide => '侧身 90° 站立';
+
+  @override
+  String get photoHintBack => '背对镜头站立';
+
+  @override
+  String get analysisStatusOk => '体型分析已完成';
+
+  @override
+  String get analysisStatusUnavailable => '体型分析暂不可用';
+
+  @override
+  String get analysisStatusFailed => '体型分析失败，请稍后重新拍照';
 }
