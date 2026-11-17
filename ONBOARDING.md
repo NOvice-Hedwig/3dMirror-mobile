@@ -576,9 +576,9 @@ Environment variables only (§2.2), read at **import time** as module globals in
 | Flutter smoke test (2026-11-15) | `flutter_app/test/widget_test.dart`, 2 tests | **2 pass**: pumps the real app root (`MirrorApp` in a `ProviderScope`) and checks a signed-out start shows the login screen, in Chinese and in English. Replaced the counter template, which didn't compile |
 | Flutter stored log values (2026-11-15) | `test/log_values_test.dart`, 13 tests | **13 pass**: exact stored values, backend CHECK/`coach.py` agreement, labels in both languages, and each log sheet saved in English sends the Chinese value |
 | Flutter onboarding and photos (2026-11-15) | `test/onboarding_l10n_test.dart`, 3 tests, plus a photo-angle label test in `body_analysis_test.dart` | **pass**: onboarding walked through in English (goal id still stored), Chinese text unchanged, photo capture in both languages |
-| Flutter records (2026-11-16) | `test/records_l10n_test.dart`, 10 tests | **10 pass**: workout-type and intensity labels (Chinese unchanged), the predict error code, and the input, history, snapshot and predict screens in English and Chinese with no overflow, including history compare mode without a prediction |
-| Flutter Me and Coach (2026-11-16) | `test/coach_me_l10n_test.dart`, 8 tests | **8 pass**: coach codes match `coach.py`, Chinese card text equals the server's, English text with params, fallbacks, JSON parsing, and the coach, exercise library and challenge screens in English |
-| **Flutter total** | `flutter test` | **101 pass, 0 fail** |
+| Flutter records (2026-11-16) | `test/records_l10n_test.dart`, 10 tests | **10 pass**: workout-type and intensity labels (Chinese unchanged), the predict error code, and the input, history, snapshot and predict screens in English and Chinese with no overflow, including history compare mode without a prediction, the snapshot values sharing one baseline, and the English input title |
+| Flutter Me and Coach (2026-11-16) | `test/coach_me_l10n_test.dart`, 9 tests | **9 pass**: coach codes match `coach.py`, Chinese card text equals the server's, English text with params, fallbacks, JSON parsing, the coach, exercise library and challenge screens in English, and the goal-slider label column (fits the widest label; 52 in Chinese) |
+| **Flutter total** | `flutter test` | **102 pass, 0 fail** |
 | iOS/macOS | `RunnerTests.swift` | Xcode template stubs |
 
 **Run backend unit tests:**
@@ -665,7 +665,7 @@ All verified by the integration tests in §7.
 
 ### 8.2 Open issues
 
-**Most important first:**
+**Most important first** (new items are appended to keep the numbers stable; **#18 is high priority**):
 
 1. **Unity avatar is not wired up.**
    - There's no `flutter_unity_widget`, and no native MethodChannel handler in `MainActivity.kt` or `AppDelegate.swift`. Every `UnityBridge` call throws `MissingPluginException`, which the callers swallow silently.
@@ -707,19 +707,22 @@ All verified by the integration tests in §7.
 12. **Onboarding doesn't send gender or height to the backend (found 2026-11-16).** `users.gender` and `height_cm` stay NULL for every account; `PATCH /users/me` is unused. The values live only in local prefs. `input_screen` falls back to `'male'` while onboarding defaults to `'female'`.
 13. **Back photo card is about 10px larger than Front and Side (low priority, 2026-11-16).** In `photo_capture_screen.dart` the three cards share a `Row` of `Expanded`s, but only the first two get `right: 10` padding, so the last card is 10px wider and, at a 3:4 ratio, taller. Not an i18n change; the old code did the same.
 14. **For the avatar owner: the home exercise tile still shows "--" after a workout is saved (2026-11-16).** Seen on the emulator after logging a workout from the FAB (`home_screen.dart` / `mirror_hud.dart`). Likely cause: home reads sessions, while FAB workouts go to `workout_logs` (see "Workout duplication" below). Not investigated: avatar-owned files.
-15. **Test account in `mirror_db` (2026-11-16).** `+8613800138001`, user_id prefix `43660d18` (`43660d18-3733-425f-ad30-a5a117b86d78`), created for the i18n emulator check with DEV_MODE code `123456`. It owns 1 `diet_logs`, 1 `workout_logs`, 1 `period_logs` and 2 `supplement_logs` rows (meal `午餐`, `球类`/`乒乓球`, symptoms `{痛经}`, `肌酸` and `Glutamine XL`). Keep it for testing, or delete it with its rows (cascade from `users`) before any real data exists.
+15. **Test account in `mirror_db` (2026-11-16).** `+8613800138001`, user_id prefix `43660d18` (`43660d18-3733-425f-ad30-a5a117b86d78`), created for the i18n emulator check with DEV_MODE code `123456`. It owns 2 `sessions` (65.3 kg strength and 63.5 kg yoga, both 2026-11-16, used for the records screens), 1 `diet_logs`, 1 `workout_logs`, 1 `period_logs` and 2 `supplement_logs` rows (meal `午餐`, `球类`/`乒乓球`, symptoms `{痛经}`, `肌酸` and `Glutamine XL`). Keep it for testing, or delete it with its rows (cascade from `users`) before any real data exists.
 16. ~~**History compare mode breaks when there's no prediction.**~~ Resolved 2026-11-16: `_PredictRow` uses `.valueOrNull`, so a range without a prediction shows `—`; covered by `test/records_l10n_test.dart`.
 17. **User profile and onboarding (follow-up after the i18n branch is merged, 2026-11-16).**
    - `users.display_name` exists (and `GET /users/me` returns it, `PATCH /users/me` accepts it), but the app never reads or sets it. The Me header shows a fixed "3D MIRROR USER" (`meUserName`) with a masked phone or email below it; no screen shows a name.
    - Apple sign-in saves `full_name` into `display_name` only when it creates a new account (`auth/router.py`). Apple sends the name only on the first authorization, so it should fill `display_name` whenever that is empty, not only for new accounts.
    - Related: onboarding stored per device (#11), onboarding not sending gender/height (#12), and the phone masking rule in `me_screen` (comment says "keep first 3 and last 2", code shows only the last 2; "Other logic bugs" below). Handle them together.
+18. **High priority: predictions extrapolate wildly from sessions close together (2026-11-16).** `GET /predict` (`routers/predict.py`) divides the change between the newest and oldest session by `days_span` in whole days, and uses 1 when they are on the same day. Two sessions on the same day 1.8 kg apart gave **13.1 kg in 4 weeks** (and negative weights at 8 and 12 weeks) on the emulator, shown on Predict and in history's compare mode. Fix ideas: use the real time span (hours) with a minimum span (e.g. 7 days) before extrapolating, require sessions on at least 2 different days, and clamp the result to a plausible range. Related, lower priority: missing body-fat or waist values are filled with made-up defaults (20 % / 75 cm) and returned as predictions.
+19. **Exercise library: the Back link overlaps the LIBRARY title (low priority, 2026-11-16).** In `exercise_library_screen.dart` the masthead is a `Stack` sized by the centred title, so `Positioned(left: 0)` places Back inside the title's own width. Same in both languages; not an i18n change. Fix: give the `Stack` the full width (e.g. `SizedBox(width: double.infinity)`), or use a `Row` like the challenge masthead.
+20. **Large numbers overlap their captions (low priority, 2026-11-16).** The display font's descenders (the "3" in "13.1" on Predict, the "30" above `DAYS · REMAINING` on Challenge) reach into the text below. Same in both languages. Fix: more spacing below `displayHero` numbers, or a `height`/`TextHeightBehavior` that includes descenders.
 
 **Other logic bugs:**
 - **Coach recovery card never triggers:** it checks `activity_data.get("type") == "无氧"`, but `sessions.activity_data` uses `workout_type` with English enum values (`strength`…). Workouts logged via the FAB go to `workout_logs`, which coach doesn't read. "Training days" counts distinct session days, not workouts.
 - **Challenge:**
   - The baseline needs a session on exactly the (local) start date. Otherwise it falls back to *current* values, which gives 0% progress.
   - `_pct_single` assumes lower is better, so gain goals (muscle) clamp to 0.
-- **Predict:** missing body-fat or waist values are filled with made-up defaults (20 % / 75 cm) and still returned as predictions. `days_span` uses whole days, so two same-day sessions get treated as 1 day apart and extrapolate wildly. `body_snapshots` measurements are never used.
+- **Predict:** see #18 (high priority) for the same-day extrapolation and made-up defaults. `body_snapshots` measurements are never used.
 - **Target avatar** is saved via `PUT /coach/target` but never loaded back. `/users/me` returns it and nothing reads it.
 - **Workout duplication:** strength workouts from the FAB send `duration_min: 0`. Home streak and week dots ignore FAB workouts entirely because they read sessions.
 - `me_screen` masking comment says "keep first 3 and last 2" but the code shows only the last 2.
