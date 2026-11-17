@@ -1009,4 +1009,197 @@ class SZh extends S {
 
   @override
   String get predictNotEnoughBody => '至少记录 2 次身体数据后\n预测功能将自动开启';
+
+  @override
+  String get labelHip => '臀围';
+
+  @override
+  String get labelShoulder => '肩宽';
+
+  @override
+  String get labelMuscle => '肌肉量';
+
+  @override
+  String get coachMasthead => 'COACH';
+
+  @override
+  String get coachGoalTarget => 'GOAL  ·  TARGET';
+
+  @override
+  String get coachNeedsSession => '先记录一次身体数据以开启目标设置';
+
+  @override
+  String get coachSaveTarget => 'SAVE  ·  TARGET';
+
+  @override
+  String get coachTargetSaved => '目标已保存 · 前往 Mirror 查看';
+
+  @override
+  String get coachInsights => 'THIS WEEK  ·  INSIGHTS';
+
+  @override
+  String get coachLibraryEntry => 'EXERCISE  ·  LIBRARY';
+
+  @override
+  String get coachCategoryTraining => 'TRAINING';
+
+  @override
+  String get coachCategoryNutrition => 'NUTRITION';
+
+  @override
+  String get coachCategoryRecovery => 'RECOVERY';
+
+  @override
+  String get coachTrainingNotStartedTitle => '本周尚未开始训练';
+
+  @override
+  String get coachTrainingNotStartedBody => '建议本周完成 3 次训练，从 30 分钟有氧开始。';
+
+  @override
+  String coachTrainingFewDaysTitle(int days) {
+    return '本周已训练 $days 天';
+  }
+
+  @override
+  String get coachTrainingFewDaysBody => '距离目标还有差距，明天安排一次力量训练效果更佳。';
+
+  @override
+  String coachTrainingOnTrackTitle(int days) {
+    return '本周已训练 $days 天，保持！';
+  }
+
+  @override
+  String get coachTrainingOnTrackBody => '训练频率良好，注意保留至少1天恢复日。';
+
+  @override
+  String get coachWeightStableTitle => '体重保持稳定';
+
+  @override
+  String get coachWeightStableBody => '若目标是减脂，可尝试每日增加 200kcal 热量缺口。';
+
+  @override
+  String coachWeightUpTitle(String delta) {
+    return '本周体重上升 ${delta}kg';
+  }
+
+  @override
+  String get coachWeightUpBody => '检查近期饮食，减少精制碳水和夜间进食。';
+
+  @override
+  String coachWeightDownTitle(String delta) {
+    return '本周体重下降 ${delta}kg';
+  }
+
+  @override
+  String get coachWeightDownBody => '进展良好！确保蛋白质摄入充足（每公斤体重 1.6g）。';
+
+  @override
+  String get coachDietStartLoggingTitle => '开始记录饮食';
+
+  @override
+  String get coachDietStartLoggingBody => '记录饮食是减脂成功的关键，从今天的一餐开始。';
+
+  @override
+  String get coachRecoveryAfterStrengthTitle => '力量训练后注意恢复';
+
+  @override
+  String get coachRecoveryAfterStrengthBody =>
+      '训练后 30 分钟内补充蛋白质，睡眠 7-9 小时促进肌肉合成。';
+
+  @override
+  String get coachRecoverySleepTitle => '睡眠是最好的恢复';
+
+  @override
+  String get coachRecoverySleepBody => '保持每晚 7-9 小时睡眠，有助于体脂代谢和体力恢复。';
+
+  @override
+  String get libraryMasthead => 'LIBRARY';
+
+  @override
+  String get librarySearchHint => '搜索动作或器械…';
+
+  @override
+  String get libraryAll => '全部';
+
+  @override
+  String get challengeMasthead => 'CHALLENGE';
+
+  @override
+  String get challengeStarted => '挑战已开始！坚持到月底';
+
+  @override
+  String challengeStartFailed(String error) {
+    return '设定失败: $error';
+  }
+
+  @override
+  String get challengeAbandonTitle => '放弃挑战？';
+
+  @override
+  String get challengeAbandonBody => '本月进度将清空，下月可重新开始。';
+
+  @override
+  String get challengeAbandonConfirm => '确认放弃';
+
+  @override
+  String challengeActionFailed(String error) {
+    return '操作失败: $error';
+  }
+
+  @override
+  String get challengeMonthly => 'MONTHLY  ·  CHALLENGE';
+
+  @override
+  String get challengeIntro => '设定本月目标，达成后下月订阅享 8 折优惠。';
+
+  @override
+  String get challengeLocked => '目标设定后本月不可修改。';
+
+  @override
+  String get challengeGoalType => 'GOAL  ·  TYPE';
+
+  @override
+  String get challengeComposite => '综合';
+
+  @override
+  String get challengeTargetValue => 'TARGET  ·  VALUE';
+
+  @override
+  String get challengeTargetWeight => '目标体重 kg';
+
+  @override
+  String get challengeTargetBodyFat => '目标体脂率 %';
+
+  @override
+  String get challengeTargetWaist => '目标腰围 cm';
+
+  @override
+  String get challengeStart => 'START  ·  CHALLENGE';
+
+  @override
+  String get challengeDaysRemaining => 'DAYS  ·  REMAINING';
+
+  @override
+  String get challengeAchieved => 'GOAL  ·  ACHIEVED';
+
+  @override
+  String get challengeDiscount => '下月订阅享 8 折优惠，续费时自动应用。';
+
+  @override
+  String get challengeAbandonLink => '放弃本月挑战';
+
+  @override
+  String get challengeNoData => '暂无数据';
+
+  @override
+  String get challengeColMetric => '指标';
+
+  @override
+  String get challengeColCurrent => '当前';
+
+  @override
+  String get challengeColTarget => '目标';
+
+  @override
+  String get challengeColDelta => '差值';
 }

@@ -8,6 +8,7 @@ from pydantic import BaseModel
 from auth.service import decode_jwt
 from database import Database
 import clock
+from api_errors import ApiError
 
 router = APIRouter()
 
@@ -84,7 +85,7 @@ async def get_progress(authorization: str = Header(...),
     user_row = await pool.fetchrow(
         "SELECT challenge_goal, challenge_start_date FROM users WHERE id = $1", uid)
     if not user_row or not user_row["challenge_goal"]:
-        raise HTTPException(404, "未设定挑战目标")
+        raise ApiError(404, "challenge_not_set", "未设定挑战目标")
 
     start_date = user_row["challenge_start_date"]   # Python date object
     goal       = ChallengeGoal(**user_row["challenge_goal"])

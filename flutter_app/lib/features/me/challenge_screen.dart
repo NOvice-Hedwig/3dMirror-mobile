@@ -3,6 +3,7 @@ import 'dart:math' as math;
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../../core/l10n/app_localizations.dart';
 import '../../core/theme/design_tokens.dart';
 import '../../core/widgets/animate_widgets.dart';
 import '../../core/widgets/delta_text.dart';
@@ -27,6 +28,8 @@ class _ChallengeScreenState extends ConsumerState<ChallengeScreen> {
 
   bool _isSaving = false;
 
+  S get _s => S.of(context);
+
   @override
   void dispose() {
     _weightCtrl.dispose();
@@ -47,6 +50,7 @@ class _ChallengeScreenState extends ConsumerState<ChallengeScreen> {
     if (_goalType == 'composite' && wt == null && bf == null && wc == null) return;
 
     setState(() => _isSaving = true);
+    final s = _s;
     try {
       final today = DateTime.now().toIso8601String().substring(0, 10);
       final goal  = ChallengeGoal(
@@ -61,12 +65,12 @@ class _ChallengeScreenState extends ConsumerState<ChallengeScreen> {
       ref.invalidate(challengeProgressProvider);
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(content: Text('挑战已开始！坚持到月底')));
+            SnackBar(content: Text(s.challengeStarted)));
       }
     } catch (e) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(content: Text('设定失败: $e')));
+            SnackBar(content: Text(s.challengeStartFailed('$e'))));
       }
     } finally {
       if (mounted) setState(() => _isSaving = false);
@@ -74,22 +78,23 @@ class _ChallengeScreenState extends ConsumerState<ChallengeScreen> {
   }
 
   Future<void> _abandonChallenge() async {
+    final s = _s;
     final confirmed = await showDialog<bool>(
       context: context,
       builder: (_) => AlertDialog(
         backgroundColor: MirrorColors.bg2,
-        title:   Text('放弃挑战？', style: MirrorText.body),
-        content: Text('本月进度将清空，下月可重新开始。',
+        title:   Text(s.challengeAbandonTitle, style: MirrorText.body),
+        content: Text(s.challengeAbandonBody,
             style: MirrorText.bodyS.copyWith(color: MirrorColors.text2)),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(context, false),
-            child: Text('取消',
+            child: Text(s.cancelBtn,
                 style: MirrorText.bodyS.copyWith(color: MirrorColors.text2)),
           ),
           TextButton(
             onPressed: () => Navigator.pop(context, true),
-            child: Text('确认放弃',
+            child: Text(s.challengeAbandonConfirm,
                 style: MirrorText.bodyS.copyWith(color: MirrorColors.text2)),
           ),
         ],
@@ -102,7 +107,7 @@ class _ChallengeScreenState extends ConsumerState<ChallengeScreen> {
     } catch (e) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(content: Text('操作失败: $e')));
+            SnackBar(content: Text(s.challengeActionFailed('$e'))));
       }
     }
   }
@@ -140,9 +145,9 @@ class _ChallengeScreenState extends ConsumerState<ChallengeScreen> {
             child: const Icon(Icons.arrow_back_ios_new_rounded,
                 size: 16, color: MirrorColors.text3),
           ),
-          const Expanded(
-            child: Text('CHALLENGE',
-              style: TextStyle(
+          Expanded(
+            child: Text(_s.challengeMasthead,
+              style: const TextStyle(
                 fontFamily: 'Barlow', fontSize: 11,
                 fontWeight: FontWeight.w600, letterSpacing: 4.0,
                 color: MirrorColors.gold),
@@ -175,12 +180,12 @@ class _ChallengeScreenState extends ConsumerState<ChallengeScreen> {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Text('MONTHLY  ·  CHALLENGE', style: MirrorText.overline),
+              Text(_s.challengeMonthly, style: MirrorText.overline),
               const SizedBox(height: 12),
-              Text('设定本月目标，达成后下月订阅享 8 折优惠。',
+              Text(_s.challengeIntro,
                   style: MirrorText.bodyS.copyWith(color: MirrorColors.text2)),
               const SizedBox(height: 4),
-              Text('目标设定后本月不可修改。',
+              Text(_s.challengeLocked,
                   style: MirrorText.caption),
             ],
           ),
@@ -202,14 +207,15 @@ class _ChallengeScreenState extends ConsumerState<ChallengeScreen> {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Text('GOAL  ·  TYPE', style: MirrorText.overline),
+              Text(_s.challengeGoalType, style: MirrorText.overline),
               const SizedBox(height: 16),
-              Row(
+              Wrap(   // English labels may not fit one row
+                runSpacing: 8,
                 children: [
-                  ('weight',    '体重'),
-                  ('body_fat',  '体脂率'),
-                  ('waist',     '腰围'),
-                  ('composite', '综合'),
+                  ('weight',    _s.labelWeight),
+                  ('body_fat',  _s.labelBodyFat),
+                  ('waist',     _s.labelWaist),
+                  ('composite', _s.challengeComposite),
                 ].map((item) => MirrorChip(
                   label:    item.$2,
                   selected: _goalType == item.$1,
@@ -236,12 +242,12 @@ class _ChallengeScreenState extends ConsumerState<ChallengeScreen> {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Text('TARGET  ·  VALUE', style: MirrorText.overline),
+              Text(_s.challengeTargetValue, style: MirrorText.overline),
               const SizedBox(height: 16),
               if (_goalType == 'weight' || _goalType == 'composite') ...[
                 TextField(
                   controller: _weightCtrl,
-                  decoration: sheetInputDecoration('目标体重 kg'),
+                  decoration: sheetInputDecoration(_s.challengeTargetWeight),
                   keyboardType: const TextInputType.numberWithOptions(decimal: true),
                   style: MirrorText.body.copyWith(color: MirrorColors.text1),
                 ),
@@ -250,7 +256,7 @@ class _ChallengeScreenState extends ConsumerState<ChallengeScreen> {
               if (_goalType == 'body_fat' || _goalType == 'composite') ...[
                 TextField(
                   controller: _bodyFatCtrl,
-                  decoration: sheetInputDecoration('目标体脂率 %'),
+                  decoration: sheetInputDecoration(_s.challengeTargetBodyFat),
                   keyboardType: const TextInputType.numberWithOptions(decimal: true),
                   style: MirrorText.body.copyWith(color: MirrorColors.text1),
                 ),
@@ -259,7 +265,7 @@ class _ChallengeScreenState extends ConsumerState<ChallengeScreen> {
               if (_goalType == 'waist' || _goalType == 'composite') ...[
                 TextField(
                   controller: _waistCtrl,
-                  decoration: sheetInputDecoration('目标腰围 cm'),
+                  decoration: sheetInputDecoration(_s.challengeTargetWaist),
                   keyboardType: const TextInputType.numberWithOptions(decimal: true),
                   style: MirrorText.body.copyWith(color: MirrorColors.text1),
                 ),
@@ -293,7 +299,7 @@ class _ChallengeScreenState extends ConsumerState<ChallengeScreen> {
                     width: 16, height: 16,
                     child: CircularProgressIndicator(
                         color: MirrorColors.text1, strokeWidth: 1))
-                : Text('START  ·  CHALLENGE',
+                : Text(_s.challengeStart,
                     style: MirrorText.overline.copyWith(
                         color: MirrorColors.text2, letterSpacing: 2.5)),
           ),
@@ -336,7 +342,7 @@ class _ChallengeScreenState extends ConsumerState<ChallengeScreen> {
               Text('${progress.daysRemaining}',
                   style: MirrorText.displayHero),
               const SizedBox(height: 4),
-              Text('DAYS  ·  REMAINING', style: MirrorText.overline),
+              Text(_s.challengeDaysRemaining, style: MirrorText.overline),
             ],
           ),
         ),
@@ -378,11 +384,11 @@ class _ChallengeScreenState extends ConsumerState<ChallengeScreen> {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Text('GOAL  ·  ACHIEVED',
+                  Text(_s.challengeAchieved,
                       style: MirrorText.overline.copyWith(
                           color: MirrorColors.gold)),
                   const SizedBox(height: 8),
-                  Text('下月订阅享 8 折优惠，续费时自动应用。',
+                  Text(_s.challengeDiscount,
                       style: MirrorText.bodyS.copyWith(
                           color: MirrorColors.text2)),
                 ],
@@ -401,7 +407,7 @@ class _ChallengeScreenState extends ConsumerState<ChallengeScreen> {
           child: GestureDetector(
             onTap: _abandonChallenge,
             child: Text(
-              '放弃本月挑战',
+              _s.challengeAbandonLink,
               style: MirrorText.caption.copyWith(
                 color: MirrorColors.text3,
                 decoration: TextDecoration.underline,
@@ -488,12 +494,13 @@ class _GoalMetricGrid extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final s    = S.of(context);
     final rows = <_MetricRow>[];
     final goal = progress.goal;
 
     if (goal.targetWeightKg != null && progress.currentWeight != null) {
       rows.add(_MetricRow(
-        label:   '体重',
+        label:   s.labelWeight,
         unit:    'kg',
         current: progress.currentWeight!,
         target:  goal.targetWeightKg!,
@@ -501,7 +508,7 @@ class _GoalMetricGrid extends StatelessWidget {
     }
     if (goal.targetBodyFat != null && progress.currentBodyFat != null) {
       rows.add(_MetricRow(
-        label:   '体脂率',
+        label:   s.labelBodyFat,
         unit:    '%',
         current: progress.currentBodyFat!,
         target:  goal.targetBodyFat!,
@@ -509,7 +516,7 @@ class _GoalMetricGrid extends StatelessWidget {
     }
     if (goal.targetWaistCm != null && progress.currentWaist != null) {
       rows.add(_MetricRow(
-        label:   '腰围',
+        label:   s.labelWaist,
         unit:    'cm',
         current: progress.currentWaist!,
         target:  goal.targetWaistCm!,
@@ -517,22 +524,22 @@ class _GoalMetricGrid extends StatelessWidget {
     }
 
     if (rows.isEmpty) {
-      return Text('暂无数据', style: MirrorText.caption);
+      return Text(s.challengeNoData, style: MirrorText.caption);
     }
 
     return Column(
       children: [
         // Header
         Row(children: [
-          Expanded(child: Text('指标', style: MirrorText.overline)),
+          Expanded(child: Text(s.challengeColMetric, style: MirrorText.overline)),
           SizedBox(width: 72,
-              child: Text('当前', style: MirrorText.overline,
+              child: Text(s.challengeColCurrent, style: MirrorText.overline,
                   textAlign: TextAlign.end)),
           SizedBox(width: 72,
-              child: Text('目标', style: MirrorText.overline,
+              child: Text(s.challengeColTarget, style: MirrorText.overline,
                   textAlign: TextAlign.end)),
           SizedBox(width: 64,
-              child: Text('差值', style: MirrorText.overline,
+              child: Text(s.challengeColDelta, style: MirrorText.overline,
                   textAlign: TextAlign.end)),
         ]),
         const SizedBox(height: 12),

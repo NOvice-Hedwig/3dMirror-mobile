@@ -286,6 +286,9 @@ def test_predict_and_coach_read_session_json(client, fresh_auth):
     r = client.get("/coach/suggestions", headers=fresh_auth)
     assert r.status_code == 200, _describe(r)
     assert r.json()["data_points"] == 2
+    for card in r.json()["cards"]:   # translatable code + params next to the old text
+        assert card["code"] and isinstance(card["params"], dict), card
+        assert card["title"] and card["body"], card
 
 
 def test_predict_with_too_few_sessions_returns_a_code(client, fresh_auth):
@@ -310,6 +313,9 @@ def test_coach_target_roundtrip_via_users_me(client, fresh_auth):
 
 
 def test_challenge_goal_roundtrip(client, fresh_auth):
+    r = client.get("/challenge/progress", headers=fresh_auth)   # no goal yet
+    assert r.status_code == 404, _describe(r)
+    assert r.json() == {"detail": "未设定挑战目标", "code": "challenge_not_set"}
     r = client.post("/sessions", json=_session_payload(), headers=fresh_auth)
     assert r.status_code == 200, _describe(r)
     start = user_today()

@@ -40,6 +40,13 @@ const migratedFiles = [
   'lib/features/predict/predict_screen.dart',
   'lib/services/api/predict_api.dart',
   'lib/core/l10n/session_labels.dart',
+  // batch 5: me, challenge, coach and exercise library
+  'lib/features/me/challenge_screen.dart',
+  'lib/features/coach/coach_screen.dart',
+  'lib/features/coach/exercise_library_screen.dart',
+  'lib/core/l10n/coach_text.dart',
+  'lib/models/coach_models.dart',
+  'lib/services/api/api_http.dart',
 ];
 
 Map<String, dynamic> readArb(String lang) =>

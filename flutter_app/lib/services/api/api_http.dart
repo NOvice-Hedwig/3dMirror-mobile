@@ -10,10 +10,12 @@ import 'local_time.dart';
 ///
 /// By the time a caller sees it, the session has already been cleared and the app root
 /// is navigating to the login screen, so screens can treat it like any other error.
+/// The user-facing message is the root's translated `sessionExpired` snackbar; this text is
+/// technical, like other exceptions' toString.
 class UnauthorizedException implements Exception {
   const UnauthorizedException();
   @override
-  String toString() => '登录已过期，请重新登录';
+  String toString() => 'UnauthorizedException: session expired (401)';
 }
 
 enum SessionEndReason { expired, signedOut }

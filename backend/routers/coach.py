@@ -29,6 +29,11 @@ class TargetAvatarParams(BaseModel):
 
 class SuggestionCard(BaseModel):
     category: str   # 'training' | 'nutrition' | 'recovery'
+    # Stable key for the card's text; the app translates it with `params`. Codes are API
+    # contract: add new ones, never rename or reuse one (list in ONBOARDING.md §6 "i18n").
+    code:     str
+    params:   dict[str, float | int] = {}
+    # The Chinese text as before, for app builds that don't know `code`.
     title:    str
     body:     str
     priority: int   # 1=高 2=中 3=低
@@ -40,41 +45,29 @@ class CoachSuggestionsResponse(BaseModel):
     generated_at: str
 
 
-@router.get("/suggestions", response_model=CoachSuggestionsResponse)
-async def get_suggestions(authorization: str = Header(...),
-                          tz: ZoneInfo = Depends(clock.user_timezone)):
-    uid  = _uid(authorization)
-    pool = Database.pool()
-    rows = await pool.fetch(
-        "SELECT body_data, activity_data, created_at"
-        " FROM sessions"
-        " WHERE user_id = $1"
-        "   AND created_at >= $2"
-        " ORDER BY created_at DESC",
-        uid, clock.now_utc() - timedelta(days=7),
-    )
-
+def suggestion_cards(rows, tz: ZoneInfo) -> list[SuggestionCard]:
+    """Cards for the last 7 days of sessions (`rows`: body_data, activity_data, created_at)."""
     cards: list[SuggestionCard] = []
 
     # 运动频率 — count distinct days in the user's local calendar, not UTC
     workout_days = len({r["created_at"].astimezone(tz).date() for r in rows})
     if workout_days == 0:
         cards.append(SuggestionCard(
-            category="training",
+            category="training", code="training_not_started",
             title="本周尚未开始训练",
             body="建议本周完成 3 次训练，从 30 分钟有氧开始。",
             priority=1,
         ))
     elif workout_days <= 2:
         cards.append(SuggestionCard(
-            category="training",
+            category="training", code="training_few_days", params={"days": workout_days},
             title=f"本周已训练 {workout_days} 天",
             body="距离目标还有差距，明天安排一次力量训练效果更佳。",
             priority=2,
         ))
     else:
         cards.append(SuggestionCard(
-            category="training",
+            category="training", code="training_on_track", params={"days": workout_days},
             title=f"本周已训练 {workout_days} 天，保持！",
             body="训练频率良好，注意保留至少1天恢复日。",
             priority=3,
@@ -90,28 +83,29 @@ async def get_suggestions(authorization: str = Header(...),
         delta = weights[0] - weights[-1]
         if abs(delta) < 0.3:
             cards.append(SuggestionCard(
-                category="nutrition",
+                category="nutrition", code="weight_stable",
                 title="体重保持稳定",
                 body="若目标是减脂，可尝试每日增加 200kcal 热量缺口。",
                 priority=2,
             ))
         elif delta > 0:
             cards.append(SuggestionCard(
-                category="nutrition",
+                category="nutrition", code="weight_up", params={"delta_kg": round(delta, 1)},
                 title=f"本周体重上升 {delta:.1f}kg",
                 body="检查近期饮食，减少精制碳水和夜间进食。",
                 priority=1,
             ))
         else:
             cards.append(SuggestionCard(
-                category="nutrition",
+                category="nutrition", code="weight_down",
+                params={"delta_kg": round(abs(delta), 1)},
                 title=f"本周体重下降 {abs(delta):.1f}kg",
                 body="进展良好！确保蛋白质摄入充足（每公斤体重 1.6g）。",
                 priority=3,
             ))
     else:
         cards.append(SuggestionCard(
-            category="nutrition",
+            category="nutrition", code="diet_start_logging",
             title="开始记录饮食",
             body="记录饮食是减脂成功的关键，从今天的一餐开始。",
             priority=2,
@@ -124,21 +118,37 @@ async def get_suggestions(authorization: str = Header(...),
     )
     if has_strength:
         cards.append(SuggestionCard(
-            category="recovery",
+            category="recovery", code="recovery_after_strength",
             title="力量训练后注意恢复",
             body="训练后 30 分钟内补充蛋白质，睡眠 7-9 小时促进肌肉合成。",
             priority=2,
         ))
     else:
         cards.append(SuggestionCard(
-            category="recovery",
+            category="recovery", code="recovery_sleep",
             title="睡眠是最好的恢复",
             body="保持每晚 7-9 小时睡眠，有助于体脂代谢和体力恢复。",
             priority=3,
         ))
 
+    return sorted(cards, key=lambda c: c.priority)
+
+
+@router.get("/suggestions", response_model=CoachSuggestionsResponse)
+async def get_suggestions(authorization: str = Header(...),
+                          tz: ZoneInfo = Depends(clock.user_timezone)):
+    uid  = _uid(authorization)
+    pool = Database.pool()
+    rows = await pool.fetch(
+        "SELECT body_data, activity_data, created_at"
+        " FROM sessions"
+        " WHERE user_id = $1"
+        "   AND created_at >= $2"
+        " ORDER BY created_at DESC",
+        uid, clock.now_utc() - timedelta(days=7),
+    )
     return CoachSuggestionsResponse(
-        cards=sorted(cards, key=lambda c: c.priority),
+        cards=suggestion_cards(rows, tz),
         data_points=len(rows),
         generated_at=clock.now_utc().isoformat(),
     )

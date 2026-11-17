@@ -2052,6 +2052,366 @@ abstract class S {
   /// In zh, this message translates to:
   /// **'至少记录 2 次身体数据后\n预测功能将自动开启'**
   String get predictNotEnoughBody;
+
+  /// No description provided for @labelHip.
+  ///
+  /// In zh, this message translates to:
+  /// **'臀围'**
+  String get labelHip;
+
+  /// No description provided for @labelShoulder.
+  ///
+  /// In zh, this message translates to:
+  /// **'肩宽'**
+  String get labelShoulder;
+
+  /// No description provided for @labelMuscle.
+  ///
+  /// In zh, this message translates to:
+  /// **'肌肉量'**
+  String get labelMuscle;
+
+  /// No description provided for @coachMasthead.
+  ///
+  /// In zh, this message translates to:
+  /// **'COACH'**
+  String get coachMasthead;
+
+  /// No description provided for @coachGoalTarget.
+  ///
+  /// In zh, this message translates to:
+  /// **'GOAL  ·  TARGET'**
+  String get coachGoalTarget;
+
+  /// No description provided for @coachNeedsSession.
+  ///
+  /// In zh, this message translates to:
+  /// **'先记录一次身体数据以开启目标设置'**
+  String get coachNeedsSession;
+
+  /// No description provided for @coachSaveTarget.
+  ///
+  /// In zh, this message translates to:
+  /// **'SAVE  ·  TARGET'**
+  String get coachSaveTarget;
+
+  /// No description provided for @coachTargetSaved.
+  ///
+  /// In zh, this message translates to:
+  /// **'目标已保存 · 前往 Mirror 查看'**
+  String get coachTargetSaved;
+
+  /// No description provided for @coachInsights.
+  ///
+  /// In zh, this message translates to:
+  /// **'THIS WEEK  ·  INSIGHTS'**
+  String get coachInsights;
+
+  /// No description provided for @coachLibraryEntry.
+  ///
+  /// In zh, this message translates to:
+  /// **'EXERCISE  ·  LIBRARY'**
+  String get coachLibraryEntry;
+
+  /// No description provided for @coachCategoryTraining.
+  ///
+  /// In zh, this message translates to:
+  /// **'TRAINING'**
+  String get coachCategoryTraining;
+
+  /// No description provided for @coachCategoryNutrition.
+  ///
+  /// In zh, this message translates to:
+  /// **'NUTRITION'**
+  String get coachCategoryNutrition;
+
+  /// No description provided for @coachCategoryRecovery.
+  ///
+  /// In zh, this message translates to:
+  /// **'RECOVERY'**
+  String get coachCategoryRecovery;
+
+  /// No description provided for @coachTrainingNotStartedTitle.
+  ///
+  /// In zh, this message translates to:
+  /// **'本周尚未开始训练'**
+  String get coachTrainingNotStartedTitle;
+
+  /// No description provided for @coachTrainingNotStartedBody.
+  ///
+  /// In zh, this message translates to:
+  /// **'建议本周完成 3 次训练，从 30 分钟有氧开始。'**
+  String get coachTrainingNotStartedBody;
+
+  /// No description provided for @coachTrainingFewDaysTitle.
+  ///
+  /// In zh, this message translates to:
+  /// **'本周已训练 {days} 天'**
+  String coachTrainingFewDaysTitle(int days);
+
+  /// No description provided for @coachTrainingFewDaysBody.
+  ///
+  /// In zh, this message translates to:
+  /// **'距离目标还有差距，明天安排一次力量训练效果更佳。'**
+  String get coachTrainingFewDaysBody;
+
+  /// No description provided for @coachTrainingOnTrackTitle.
+  ///
+  /// In zh, this message translates to:
+  /// **'本周已训练 {days} 天，保持！'**
+  String coachTrainingOnTrackTitle(int days);
+
+  /// No description provided for @coachTrainingOnTrackBody.
+  ///
+  /// In zh, this message translates to:
+  /// **'训练频率良好，注意保留至少1天恢复日。'**
+  String get coachTrainingOnTrackBody;
+
+  /// No description provided for @coachWeightStableTitle.
+  ///
+  /// In zh, this message translates to:
+  /// **'体重保持稳定'**
+  String get coachWeightStableTitle;
+
+  /// No description provided for @coachWeightStableBody.
+  ///
+  /// In zh, this message translates to:
+  /// **'若目标是减脂，可尝试每日增加 200kcal 热量缺口。'**
+  String get coachWeightStableBody;
+
+  /// No description provided for @coachWeightUpTitle.
+  ///
+  /// In zh, this message translates to:
+  /// **'本周体重上升 {delta}kg'**
+  String coachWeightUpTitle(String delta);
+
+  /// No description provided for @coachWeightUpBody.
+  ///
+  /// In zh, this message translates to:
+  /// **'检查近期饮食，减少精制碳水和夜间进食。'**
+  String get coachWeightUpBody;
+
+  /// No description provided for @coachWeightDownTitle.
+  ///
+  /// In zh, this message translates to:
+  /// **'本周体重下降 {delta}kg'**
+  String coachWeightDownTitle(String delta);
+
+  /// No description provided for @coachWeightDownBody.
+  ///
+  /// In zh, this message translates to:
+  /// **'进展良好！确保蛋白质摄入充足（每公斤体重 1.6g）。'**
+  String get coachWeightDownBody;
+
+  /// No description provided for @coachDietStartLoggingTitle.
+  ///
+  /// In zh, this message translates to:
+  /// **'开始记录饮食'**
+  String get coachDietStartLoggingTitle;
+
+  /// No description provided for @coachDietStartLoggingBody.
+  ///
+  /// In zh, this message translates to:
+  /// **'记录饮食是减脂成功的关键，从今天的一餐开始。'**
+  String get coachDietStartLoggingBody;
+
+  /// No description provided for @coachRecoveryAfterStrengthTitle.
+  ///
+  /// In zh, this message translates to:
+  /// **'力量训练后注意恢复'**
+  String get coachRecoveryAfterStrengthTitle;
+
+  /// No description provided for @coachRecoveryAfterStrengthBody.
+  ///
+  /// In zh, this message translates to:
+  /// **'训练后 30 分钟内补充蛋白质，睡眠 7-9 小时促进肌肉合成。'**
+  String get coachRecoveryAfterStrengthBody;
+
+  /// No description provided for @coachRecoverySleepTitle.
+  ///
+  /// In zh, this message translates to:
+  /// **'睡眠是最好的恢复'**
+  String get coachRecoverySleepTitle;
+
+  /// No description provided for @coachRecoverySleepBody.
+  ///
+  /// In zh, this message translates to:
+  /// **'保持每晚 7-9 小时睡眠，有助于体脂代谢和体力恢复。'**
+  String get coachRecoverySleepBody;
+
+  /// No description provided for @libraryMasthead.
+  ///
+  /// In zh, this message translates to:
+  /// **'LIBRARY'**
+  String get libraryMasthead;
+
+  /// No description provided for @librarySearchHint.
+  ///
+  /// In zh, this message translates to:
+  /// **'搜索动作或器械…'**
+  String get librarySearchHint;
+
+  /// No description provided for @libraryAll.
+  ///
+  /// In zh, this message translates to:
+  /// **'全部'**
+  String get libraryAll;
+
+  /// No description provided for @challengeMasthead.
+  ///
+  /// In zh, this message translates to:
+  /// **'CHALLENGE'**
+  String get challengeMasthead;
+
+  /// No description provided for @challengeStarted.
+  ///
+  /// In zh, this message translates to:
+  /// **'挑战已开始！坚持到月底'**
+  String get challengeStarted;
+
+  /// No description provided for @challengeStartFailed.
+  ///
+  /// In zh, this message translates to:
+  /// **'设定失败: {error}'**
+  String challengeStartFailed(String error);
+
+  /// No description provided for @challengeAbandonTitle.
+  ///
+  /// In zh, this message translates to:
+  /// **'放弃挑战？'**
+  String get challengeAbandonTitle;
+
+  /// No description provided for @challengeAbandonBody.
+  ///
+  /// In zh, this message translates to:
+  /// **'本月进度将清空，下月可重新开始。'**
+  String get challengeAbandonBody;
+
+  /// No description provided for @challengeAbandonConfirm.
+  ///
+  /// In zh, this message translates to:
+  /// **'确认放弃'**
+  String get challengeAbandonConfirm;
+
+  /// No description provided for @challengeActionFailed.
+  ///
+  /// In zh, this message translates to:
+  /// **'操作失败: {error}'**
+  String challengeActionFailed(String error);
+
+  /// No description provided for @challengeMonthly.
+  ///
+  /// In zh, this message translates to:
+  /// **'MONTHLY  ·  CHALLENGE'**
+  String get challengeMonthly;
+
+  /// No description provided for @challengeIntro.
+  ///
+  /// In zh, this message translates to:
+  /// **'设定本月目标，达成后下月订阅享 8 折优惠。'**
+  String get challengeIntro;
+
+  /// No description provided for @challengeLocked.
+  ///
+  /// In zh, this message translates to:
+  /// **'目标设定后本月不可修改。'**
+  String get challengeLocked;
+
+  /// No description provided for @challengeGoalType.
+  ///
+  /// In zh, this message translates to:
+  /// **'GOAL  ·  TYPE'**
+  String get challengeGoalType;
+
+  /// No description provided for @challengeComposite.
+  ///
+  /// In zh, this message translates to:
+  /// **'综合'**
+  String get challengeComposite;
+
+  /// No description provided for @challengeTargetValue.
+  ///
+  /// In zh, this message translates to:
+  /// **'TARGET  ·  VALUE'**
+  String get challengeTargetValue;
+
+  /// No description provided for @challengeTargetWeight.
+  ///
+  /// In zh, this message translates to:
+  /// **'目标体重 kg'**
+  String get challengeTargetWeight;
+
+  /// No description provided for @challengeTargetBodyFat.
+  ///
+  /// In zh, this message translates to:
+  /// **'目标体脂率 %'**
+  String get challengeTargetBodyFat;
+
+  /// No description provided for @challengeTargetWaist.
+  ///
+  /// In zh, this message translates to:
+  /// **'目标腰围 cm'**
+  String get challengeTargetWaist;
+
+  /// No description provided for @challengeStart.
+  ///
+  /// In zh, this message translates to:
+  /// **'START  ·  CHALLENGE'**
+  String get challengeStart;
+
+  /// No description provided for @challengeDaysRemaining.
+  ///
+  /// In zh, this message translates to:
+  /// **'DAYS  ·  REMAINING'**
+  String get challengeDaysRemaining;
+
+  /// No description provided for @challengeAchieved.
+  ///
+  /// In zh, this message translates to:
+  /// **'GOAL  ·  ACHIEVED'**
+  String get challengeAchieved;
+
+  /// No description provided for @challengeDiscount.
+  ///
+  /// In zh, this message translates to:
+  /// **'下月订阅享 8 折优惠，续费时自动应用。'**
+  String get challengeDiscount;
+
+  /// No description provided for @challengeAbandonLink.
+  ///
+  /// In zh, this message translates to:
+  /// **'放弃本月挑战'**
+  String get challengeAbandonLink;
+
+  /// No description provided for @challengeNoData.
+  ///
+  /// In zh, this message translates to:
+  /// **'暂无数据'**
+  String get challengeNoData;
+
+  /// No description provided for @challengeColMetric.
+  ///
+  /// In zh, this message translates to:
+  /// **'指标'**
+  String get challengeColMetric;
+
+  /// No description provided for @challengeColCurrent.
+  ///
+  /// In zh, this message translates to:
+  /// **'当前'**
+  String get challengeColCurrent;
+
+  /// No description provided for @challengeColTarget.
+  ///
+  /// In zh, this message translates to:
+  /// **'目标'**
+  String get challengeColTarget;
+
+  /// No description provided for @challengeColDelta.
+  ///
+  /// In zh, this message translates to:
+  /// **'差值'**
+  String get challengeColDelta;
 }
 
 class _SDelegate extends LocalizationsDelegate<S> {

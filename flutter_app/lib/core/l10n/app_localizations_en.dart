@@ -1023,4 +1023,211 @@ class SEn extends S {
   @override
   String get predictNotEnoughBody =>
       'Log your body data at least twice\nto unlock predictions';
+
+  @override
+  String get labelHip => 'Hips';
+
+  @override
+  String get labelShoulder => 'Shoulders';
+
+  @override
+  String get labelMuscle => 'Muscle';
+
+  @override
+  String get coachMasthead => 'COACH';
+
+  @override
+  String get coachGoalTarget => 'GOAL  ·  TARGET';
+
+  @override
+  String get coachNeedsSession => 'Log your body data once to set a goal';
+
+  @override
+  String get coachSaveTarget => 'SAVE  ·  TARGET';
+
+  @override
+  String get coachTargetSaved => 'Goal saved · see it in Mirror';
+
+  @override
+  String get coachInsights => 'THIS WEEK  ·  INSIGHTS';
+
+  @override
+  String get coachLibraryEntry => 'EXERCISE  ·  LIBRARY';
+
+  @override
+  String get coachCategoryTraining => 'TRAINING';
+
+  @override
+  String get coachCategoryNutrition => 'NUTRITION';
+
+  @override
+  String get coachCategoryRecovery => 'RECOVERY';
+
+  @override
+  String get coachTrainingNotStartedTitle => 'No training yet this week';
+
+  @override
+  String get coachTrainingNotStartedBody =>
+      'Aim for 3 workouts this week. Start with 30 minutes of cardio.';
+
+  @override
+  String coachTrainingFewDaysTitle(int days) {
+    return 'Training days this week: $days';
+  }
+
+  @override
+  String get coachTrainingFewDaysBody =>
+      'You\'re short of your goal. A strength workout tomorrow would help.';
+
+  @override
+  String coachTrainingOnTrackTitle(int days) {
+    return 'Training days this week: $days. Keep it up!';
+  }
+
+  @override
+  String get coachTrainingOnTrackBody =>
+      'Good training frequency. Keep at least one rest day.';
+
+  @override
+  String get coachWeightStableTitle => 'Your weight is stable';
+
+  @override
+  String get coachWeightStableBody =>
+      'If your goal is fat loss, try eating 200 kcal less each day.';
+
+  @override
+  String coachWeightUpTitle(String delta) {
+    return 'Up $delta kg this week';
+  }
+
+  @override
+  String get coachWeightUpBody =>
+      'Check your recent meals: cut back on refined carbs and late-night eating.';
+
+  @override
+  String coachWeightDownTitle(String delta) {
+    return 'Down $delta kg this week';
+  }
+
+  @override
+  String get coachWeightDownBody =>
+      'Good progress! Get enough protein (1.6 g per kg of body weight).';
+
+  @override
+  String get coachDietStartLoggingTitle => 'Start logging your meals';
+
+  @override
+  String get coachDietStartLoggingBody =>
+      'Logging what you eat is key to losing fat. Start with one meal today.';
+
+  @override
+  String get coachRecoveryAfterStrengthTitle =>
+      'Recover after strength training';
+
+  @override
+  String get coachRecoveryAfterStrengthBody =>
+      'Have protein within 30 minutes of training, and sleep 7–9 hours to build muscle.';
+
+  @override
+  String get coachRecoverySleepTitle => 'Sleep is the best recovery';
+
+  @override
+  String get coachRecoverySleepBody =>
+      'Sleep 7–9 hours a night. It helps fat metabolism and recovery.';
+
+  @override
+  String get libraryMasthead => 'LIBRARY';
+
+  @override
+  String get librarySearchHint => 'Search exercises or equipment…';
+
+  @override
+  String get libraryAll => 'All';
+
+  @override
+  String get challengeMasthead => 'CHALLENGE';
+
+  @override
+  String get challengeStarted =>
+      'Challenge started! Keep going to the end of the month';
+
+  @override
+  String challengeStartFailed(String error) {
+    return 'Couldn\'t start the challenge: $error';
+  }
+
+  @override
+  String get challengeAbandonTitle => 'Give up the challenge?';
+
+  @override
+  String get challengeAbandonBody =>
+      'This month\'s progress will be cleared. You can start again next month.';
+
+  @override
+  String get challengeAbandonConfirm => 'Give up';
+
+  @override
+  String challengeActionFailed(String error) {
+    return 'Something went wrong: $error';
+  }
+
+  @override
+  String get challengeMonthly => 'MONTHLY  ·  CHALLENGE';
+
+  @override
+  String get challengeIntro =>
+      'Set a goal for this month. Reach it and get 20% off next month\'s subscription.';
+
+  @override
+  String get challengeLocked =>
+      'Once set, the goal can\'t be changed this month.';
+
+  @override
+  String get challengeGoalType => 'GOAL  ·  TYPE';
+
+  @override
+  String get challengeComposite => 'Combined';
+
+  @override
+  String get challengeTargetValue => 'TARGET  ·  VALUE';
+
+  @override
+  String get challengeTargetWeight => 'Target weight kg';
+
+  @override
+  String get challengeTargetBodyFat => 'Target body fat %';
+
+  @override
+  String get challengeTargetWaist => 'Target waist cm';
+
+  @override
+  String get challengeStart => 'START  ·  CHALLENGE';
+
+  @override
+  String get challengeDaysRemaining => 'DAYS  ·  REMAINING';
+
+  @override
+  String get challengeAchieved => 'GOAL  ·  ACHIEVED';
+
+  @override
+  String get challengeDiscount =>
+      '20% off next month\'s subscription, applied automatically when you renew.';
+
+  @override
+  String get challengeAbandonLink => 'Give up this month\'s challenge';
+
+  @override
+  String get challengeNoData => 'No data yet';
+
+  @override
+  String get challengeColMetric => 'METRIC';
+
+  @override
+  String get challengeColCurrent => 'NOW';
+
+  @override
+  String get challengeColTarget => 'TARGET';
+
+  @override
+  String get challengeColDelta => 'DIFF';
 }

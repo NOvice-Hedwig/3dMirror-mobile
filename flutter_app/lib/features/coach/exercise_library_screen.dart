@@ -3,7 +3,10 @@ import 'package:flutter_animate/flutter_animate.dart';
 import 'package:go_router/go_router.dart';
 
 import '../../constants/exercise_library.dart';
+import '../../core/l10n/app_localizations.dart';
+import '../../core/l10n/log_value_labels.dart';
 import '../../core/theme/design_tokens.dart';
+import '../../models/log_values.dart';
 
 class ExerciseLibraryScreen extends StatefulWidget {
   const ExerciseLibraryScreen({super.key});
@@ -14,7 +17,9 @@ class ExerciseLibraryScreen extends StatefulWidget {
 
 class _ExerciseLibraryScreenState extends State<ExerciseLibraryScreen> {
   String  _search        = '';
-  String? _selectedGroup;
+  String? _selectedGroup;   // a stored muscle-group value (MuscleGroupValue); null = all
+
+  S get _s => S.of(context);
 
   List<ExerciseItem> get _filtered =>
       searchExercises(_search, muscleGroup: _selectedGroup);
@@ -33,7 +38,7 @@ class _ExerciseLibraryScreenState extends State<ExerciseLibraryScreen> {
           child: TextField(
             style: MirrorText.body.copyWith(color: MirrorColors.text1),
             decoration: InputDecoration(
-              hintText: '搜索动作或器械…',
+              hintText: _s.librarySearchHint,
               hintStyle: MirrorText.body,
               prefixIcon: const Icon(Icons.search_rounded,
                   size: 18, color: MirrorColors.text3),
@@ -56,9 +61,9 @@ class _ExerciseLibraryScreenState extends State<ExerciseLibraryScreen> {
           padding: const EdgeInsets.fromLTRB(
               MirrorSpacing.pagePad, 12, MirrorSpacing.pagePad, 0),
           child: Row(
-            children: ['全部', '胸', '背', '腿', '肩', '手臂', '核心']
+            children: <String?>[null, ...MuscleGroupValue.all]
                 .map((g) {
-              final isAll = g == '全部';
+              final isAll = g == null;
               final selected = isAll
                   ? _selectedGroup == null
                   : _selectedGroup == g;
@@ -81,7 +86,7 @@ class _ExerciseLibraryScreenState extends State<ExerciseLibraryScreen> {
                           : TextDecoration.none,
                       decorationColor: MirrorColors.text1,
                     ),
-                    child: Text(g),
+                    child: Text(isAll ? _s.libraryAll : muscleGroupLabel(_s, g)),
                   ),
                 ),
               );
@@ -113,7 +118,7 @@ class _ExerciseLibraryScreenState extends State<ExerciseLibraryScreen> {
                       ],
                     ),
                   ),
-                  Text(ex.group, style: MirrorText.overline),
+                  Text(muscleGroupLabel(_s, ex.group), style: MirrorText.overline),
                 ]),
               );
             },
@@ -132,7 +137,7 @@ class _ExerciseLibraryScreenState extends State<ExerciseLibraryScreen> {
           alignment: Alignment.center,
           children: [
             Text(
-              'LIBRARY',
+              _s.libraryMasthead,
               style: MirrorText.overline.copyWith(
                   color: MirrorColors.gold,
                   fontSize: 11,
@@ -147,7 +152,7 @@ class _ExerciseLibraryScreenState extends State<ExerciseLibraryScreen> {
                   const Icon(Icons.arrow_back_ios_new_rounded,
                       size: 13, color: MirrorColors.text3),
                   const SizedBox(width: 4),
-                  Text('返回', style: MirrorText.bodyS.copyWith(
+                  Text(_s.btnBack, style: MirrorText.bodyS.copyWith(
                       color: MirrorColors.text3)),
                 ]),
               ),

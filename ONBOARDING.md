@@ -344,11 +344,11 @@ Formats:
 | `POST /logs/supplements` | `[{name, dosage?, reminder_time?, reminder_enabled}]` | 201 `{count}` |
 | `PUT /logs/measurements` | `{date?, weight_kg?, waist_cm?, hip_cm?, chest_cm?, thigh_cm?}` + `X-Timezone` | `{date}` |
 | `GET /logs/today-stats` | `X-Timezone` | `{total_kcal_in, sleep_hours, workout_minutes}` for the user's local today |
-| `GET /predict?weeks=4` | — | `{weeks, predicted_weight_kg, weight_delta_kg, predicted_body_fat_pct, body_fat_delta_pct, predicted_waist_cm, waist_delta_cm, confidence, data_points}`; 400 if fewer than 2 sessions |
-| `GET /coach/suggestions` | — | `{cards[{category, title, body, priority}], data_points, generated_at}` |
+| `GET /predict?weeks=4` | — | `{weeks, predicted_weight_kg, weight_delta_kg, predicted_body_fat_pct, body_fat_delta_pct, predicted_waist_cm, waist_delta_cm, confidence, data_points}`; 400 `predict_not_enough_data` if fewer than 2 sessions |
+| `GET /coach/suggestions` | — | `{cards[{category, code, params, title, body, priority}], data_points, generated_at}`; see §6 "i18n" for the codes |
 | `PUT /coach/target` | `AvatarParams` (no lighting) | `{ok}` |
 | `POST /challenge/goal` | `{goal_type, target_*?, start_date, end_date}` | `{ok}` |
-| `GET /challenge/progress` | — | `{goal, current_*, progress_pct, days_remaining, is_completed, discount_eligible}`; 404 if no goal |
+| `GET /challenge/progress` | — | `{goal, current_*, progress_pct, days_remaining, is_completed, discount_eligible}`; 404 `challenge_not_set` if no goal |
 | `DELETE /challenge/goal` | — | `{ok}` |
 
 Contract drift between client and server (fields the server drops silently): `WorkoutLogEntry.weight_kg`, `DietLogEntry.carbs_g/fat_g`, `AvatarParams.photo_enhanced`, `SessionRecord.photo_ids`, and the `X-User-Id` header.
@@ -439,8 +439,29 @@ Environment variables only (§2.2), read at **import time** as module globals in
     - `rate_limited` (429)
     - `code_invalid`, `apple_token_invalid` (400)
     - `predict_not_enough_data` (400, `GET /predict` with fewer than 2 sessions; the app shows its own "not enough data" state)
+    - `challenge_not_set` (404, `GET /challenge/progress` with no goal; the app shows the setup view, not the text)
     - `sms_send_failed`, `email_send_failed` (500)
     - `user_not_found` (404, `/auth/me`; not shown by the app)
+  - Errors still without a code, none shown to users as text:
+    - 401s (`Invalid token`, `Missing Bearer token`, `Invalid or expired token`): `ApiHttp` ends the session and the app shows its translated session-expired snackbar;
+    - the `X-Timezone` 422s in `clock.py` (the app always sends the header);
+    - `Session not found`, `User not found` (users) and `No valid fields to update` (English);
+    - the photo upload checks (400/413/415, English), and the photo lookups `照片编号格式不正确` (422), `未找到对应的照片` and `尚无体型分析结果` (404), which `PhotoApi` turns into technical exceptions.
+- **Coach cards** (`GET /coach/suggestions`, `backend/routers/coach.py` → `suggestion_cards`): each card has a `code` and numeric `params` next to the unchanged Chinese `title`/`body` (older builds show those). The app's `core/l10n/coach_text.dart` turns code + params into text; an unknown code, or a missing param, shows the server text. Codes are API contract, like error codes:
+
+  | Code | Params | Category |
+  |---|---|---|
+  | `training_not_started` | — | training |
+  | `training_few_days` | `days` (int, 1–2) | training |
+  | `training_on_track` | `days` (int, ≥ 3) | training |
+  | `weight_stable` | — | nutrition |
+  | `weight_up` | `delta_kg` (float, 1 decimal) | nutrition |
+  | `weight_down` | `delta_kg` (float, 1 decimal, positive) | nutrition |
+  | `diet_start_logging` | — | nutrition |
+  | `recovery_after_strength` | — | recovery |
+  | `recovery_sleep` | — | recovery |
+
+  `test/coach_me_l10n_test.dart` reads `coach.py` and fails if the app and the backend disagree on the set of codes, or if a Chinese body differs from the server's.
 - **Stored values stay Chinese:** some values are data, not display text, so translate only how they are shown, never the value sent to the server.
   - They are defined once in `lib/models/log_values.dart`, and `lib/core/l10n/log_value_labels.dart` turns them into labels.
   - In Chinese the label is the stored value itself. A value with no label (a custom name or old data) is shown as it is.
@@ -461,8 +482,9 @@ Environment variables only (§2.2), read at **import time** as module globals in
   - login (screen, validation messages, country picker, server errors) and the expired-session snackbar;
   - the home FAB and the five log sheets;
   - onboarding and photo capture. Photo-angle labels and the analysis status text moved out of `models/body_photo.dart` into `core/l10n/photo_labels.dart` (`photoAngleLabel`, `photoAngleHint`, `bodyAnalysisStatusLabel`). `PhotoException` messages are now technical English with the HTTP status, because no screen shows them;
+  - Me, challenge, coach (including the cards above) and the exercise library. The library's muscle-group chips use the stored `MuscleGroupValue`s with `muscleGroupLabel`; exercise names and equipment stay Chinese (§8.2 #9). `UnauthorizedException.toString()` is now technical English; users see the translated session-expired snackbar;
   - records: input, history, snapshot, compare and predict. Session workout types and intensity (`WorkoutType`, `Intensity` in `models/models.dart`, stored by enum name) get their labels from `core/l10n/session_labels.dart`. `PredictApi` recognises the `predict_not_enough_data` code (not every 400). Dates (`2026.11.15`) and month abbreviations (`NOV`) are the same in both languages, as before.
-- **Remaining batches:** challenge, coach and exercise library; backend coach suggestion templates (as `code` + `params`). `UnauthorizedException.toString()` in `api_http.dart` is still Chinese and moves with the screens that display exception text.
+- **Remaining:** no app screen outside the avatar-owned files (below) has Chinese string literals left. Still Chinese by design: the stored values (`models/log_values.dart`), the exercise and food libraries (§8.2 #9) and the country names' Chinese column (`core/data/country_names.dart`, shown next to the English name).
 - **Avatar-owned files (not migrated, for the avatar owner):** these files belong to the 3D avatar work and were left untouched. Each string needs an ARB key; `loadFailed` and `retry` already exist.
 
   | File | Strings |
@@ -541,20 +563,22 @@ Environment variables only (§2.2), read at **import time** as module globals in
 | Suite | Location | Status (run 2026-10-12) |
 |---|---|---|
 | Backend unit | `backend/tests/test_auth.py`, 5 tests | **5 pass** with `DEV_MODE=true`. **3 pass, 2 fail** with `DEV_MODE=false` (open, see §8.2) |
-| Backend integration | `backend/tests/integration/test_api_integration.py`, 48 tests | **48 pass** against a live server and a disposable Postgres database (2026-11-16: added the `predict_not_enough_data` check) |
+| Backend integration | `backend/tests/integration/test_api_integration.py`, 48 tests | **48 pass** against a live server and a disposable Postgres database (2026-11-16: checks for `predict_not_enough_data`, `challenge_not_set`, and code + params on coach cards) |
 | Backend timezone rules | `backend/tests/integration/test_timezone_rules.py`, 10 tests | **10 pass** in-process with a frozen clock against the same disposable database |
 | Backend login identifiers (unit) | `backend/tests/test_identity.py`, 45 tests | **45 pass**: phone and email rules, legacy forms, SMS routing, rate limiter (no DB) |
 | Backend login identifiers (integration) | `backend/tests/integration/test_auth_identity.py`, 41 tests | **41 pass** in-process against the disposable database: routes, 422/429, legacy rows, collisions |
 | Backend photo analysis (unit) | `backend/tests/test_photo_analysis.py`, 26 tests | **26 pass**: image type detection, reply parsing, every outcome, using a fake Anthropic client (no network, no cost) |
 | Backend photo analysis (integration) | `backend/tests/integration/test_photo_analysis_api.py`, 9 tests | **9 pass** in-process against the disposable database (needs `body_analyses`, i.e. `migration.sql` applied); uploads go to a temp dir |
 | Backend API error codes | `backend/tests/test_api_errors.py`, 4 tests | **4 pass**: `{detail, code}` shape and headers; plain `HTTPException` and validation errors unchanged |
+| Backend coach cards (2026-11-16) | `backend/tests/test_coach_cards.py`, 11 tests | **11 pass**: every card's code and params, the exact Chinese title/body, sort order, JSON shape, and the full set of codes (no DB) |
 | Flutter | `test/body_analysis_test.dart`, `login_identity_test.dart`, `api_http_test.dart`, `home_provider_error_test.dart`, 41 tests | **41 pass** |
 | Flutter i18n (2026-11-15) | `test/l10n_test.dart` (ARB parity, Chinese-literal check, locale resolution, persistence, runtime switch) and `test/error_text_test.dart` (code → text in both languages, response parsing, fallbacks), 23 tests | **23 pass** |
 | Flutter smoke test (2026-11-15) | `flutter_app/test/widget_test.dart`, 2 tests | **2 pass**: pumps the real app root (`MirrorApp` in a `ProviderScope`) and checks a signed-out start shows the login screen, in Chinese and in English. Replaced the counter template, which didn't compile |
 | Flutter stored log values (2026-11-15) | `test/log_values_test.dart`, 13 tests | **13 pass**: exact stored values, backend CHECK/`coach.py` agreement, labels in both languages, and each log sheet saved in English sends the Chinese value |
 | Flutter onboarding and photos (2026-11-15) | `test/onboarding_l10n_test.dart`, 3 tests, plus a photo-angle label test in `body_analysis_test.dart` | **pass**: onboarding walked through in English (goal id still stored), Chinese text unchanged, photo capture in both languages |
 | Flutter records (2026-11-16) | `test/records_l10n_test.dart`, 9 tests | **9 pass**: workout-type and intensity labels (Chinese unchanged), the predict error code, and the input, history, snapshot and predict screens in English and Chinese with no overflow |
-| **Flutter total** | `flutter test` | **92 pass, 0 fail** |
+| Flutter Me and Coach (2026-11-16) | `test/coach_me_l10n_test.dart`, 8 tests | **8 pass**: coach codes match `coach.py`, Chinese card text equals the server's, English text with params, fallbacks, JSON parsing, and the coach, exercise library and challenge screens in English |
+| **Flutter total** | `flutter test` | **100 pass, 0 fail** |
 | iOS/macOS | `RunnerTests.swift` | Xcode template stubs |
 
 **Run backend unit tests:**
@@ -654,7 +678,7 @@ All verified by the integration tests in §7.
    - It reads `'shoulder_norm'` while the analysis field is `shoulder_width_norm`; `toAvatarOverrides()` bridges this until the avatar owner decides.
    - `limb_proportion_norm` has no consumer.
    - HEIC photos are skipped rather than converted; the app itself only uploads JPEG (#8).
-3. **i18n is partly migrated.** The language switch, Me, login, the home log sheets, onboarding and photo capture are done, and login errors are translated from codes. The other screens are still hard-coded (mostly Chinese), and so are the backend coach cards. Remaining batches and the avatar-owned strings are listed in §6 "i18n".
+3. **i18n: avatar-owned screens remain.** Every other screen, the server error codes and the coach cards (code + params) are translated (§6 "i18n"). Left: the strings in the avatar-owned files (home, HUD, result, viewport; listed in §6) and the exercise and food library names (#9).
 4. **Supplement reminders are not implemented.** The supplement sheet lets the user switch a reminder on and pick a time, and the backend stores `reminder_time`/`reminder_enabled`, but **nothing schedules a reminder**. There's no notification package, no Android notification permission, and no server scheduler or push.
    - **Preferred approach:** schedule on the device (e.g. `flutter_local_notifications`) at the chosen wall-clock time. The phone's own timezone handles it, so **no server-side timezone** (`users.timezone`) is needed. That's only required if reminders are ever sent by server push.
    - **Data model:** reminders are currently stored per log entry (`supplement_logs`). They should become a **standing reminder per supplement** (e.g. a `supplements` or `supplement_reminders` table: user, supplement, time, enabled), separate from the log of doses taken.

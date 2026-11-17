@@ -3,6 +3,8 @@ import 'package:flutter_animate/flutter_animate.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
+import '../../core/l10n/app_localizations.dart';
+import '../../core/l10n/coach_text.dart';
 import '../../core/router/app_router.dart';
 import '../../core/theme/design_tokens.dart';
 import '../../core/widgets/animate_widgets.dart';
@@ -23,6 +25,8 @@ class _CoachScreenState extends ConsumerState<CoachScreen> {
   bool _isDirty  = false;
   bool _isSaving = false;
   bool _loading  = true;
+
+  S get _s => S.of(context);
 
   @override
   void initState() {
@@ -74,6 +78,7 @@ class _CoachScreenState extends ConsumerState<CoachScreen> {
   Future<void> _saveTarget() async {
     if (_targetParams == null || _isSaving) return;
     setState(() => _isSaving = true);
+    final s = _s;
     try {
       await ref
           .read(targetParamsNotifierProvider.notifier)
@@ -81,12 +86,12 @@ class _CoachScreenState extends ConsumerState<CoachScreen> {
       if (mounted) {
         setState(() => _isDirty = false);
         ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(content: Text('目标已保存 · 前往 Mirror 查看')));
+            SnackBar(content: Text(s.coachTargetSaved)));
       }
     } catch (e) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(content: Text('保存失败: $e')));
+            SnackBar(content: Text(s.saveFailedDetail('$e'))));
       }
     } finally {
       if (mounted) setState(() => _isSaving = false);
@@ -115,7 +120,7 @@ class _CoachScreenState extends ConsumerState<CoachScreen> {
         padding: const EdgeInsets.fromLTRB(
             MirrorSpacing.pagePad, 20, MirrorSpacing.pagePad, 12),
         child: Text(
-          'COACH',
+          _s.coachMasthead,
           style: MirrorText.overline.copyWith(
               color: MirrorColors.gold, fontSize: 11, letterSpacing: 4.0),
           textAlign: TextAlign.center,
@@ -147,7 +152,7 @@ class _CoachScreenState extends ConsumerState<CoachScreen> {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Text('GOAL  ·  TARGET', style: MirrorText.overline),
+            Text(_s.coachGoalTarget, style: MirrorText.overline),
             const SizedBox(height: 20),
             if (_loading)
               const Center(child: Padding(
@@ -158,37 +163,37 @@ class _CoachScreenState extends ConsumerState<CoachScreen> {
             else if (_targetParams == null)
               Padding(
                 padding: const EdgeInsets.symmetric(vertical: 16),
-                child: Text('先记录一次身体数据以开启目标设置',
+                child: Text(_s.coachNeedsSession,
                     style: MirrorText.caption),
               )
             else ...[
               _GoalSlider(
-                label: '体重',
+                label: _s.labelWeight,
                 value: _targetParams!.weightNorm,
                 onChanged: (v) => _onSliderChanged(v, 'weight'),
               ),
               _GoalSlider(
-                label: '体脂率',
+                label: _s.labelBodyFat,
                 value: _targetParams!.bodyFatNorm,
                 onChanged: (v) => _onSliderChanged(v, 'bodyFat'),
               ),
               _GoalSlider(
-                label: '腰围',
+                label: _s.labelWaist,
                 value: _targetParams!.waistNorm,
                 onChanged: (v) => _onSliderChanged(v, 'waist'),
               ),
               _GoalSlider(
-                label: '臀围',
+                label: _s.labelHip,
                 value: _targetParams!.hipNorm,
                 onChanged: (v) => _onSliderChanged(v, 'hip'),
               ),
               _GoalSlider(
-                label: '肩宽',
+                label: _s.labelShoulder,
                 value: _targetParams!.shoulderNorm,
                 onChanged: (v) => _onSliderChanged(v, 'shoulder'),
               ),
               _GoalSlider(
-                label: '肌肉量',
+                label: _s.labelMuscle,
                 value: _targetParams!.muscleNorm,
                 onChanged: (v) => _onSliderChanged(v, 'muscle'),
               ),
@@ -213,7 +218,7 @@ class _CoachScreenState extends ConsumerState<CoachScreen> {
                             width: 16, height: 16,
                             child: CircularProgressIndicator(
                                 color: MirrorColors.text2, strokeWidth: 1.5))
-                        : Text('SAVE  ·  TARGET',
+                        : Text(_s.coachSaveTarget,
                             style: MirrorText.overline.copyWith(
                                 color: MirrorColors.text2,
                                 letterSpacing: 2.5)),
@@ -239,7 +244,7 @@ class _CoachScreenState extends ConsumerState<CoachScreen> {
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             const EditorialDivider(),
-            Text('THIS WEEK  ·  INSIGHTS', style: MirrorText.overline),
+            Text(_s.coachInsights, style: MirrorText.overline),
             const SizedBox(height: 16),
             ref.watch(coachSuggestionsProvider).when(
               loading: () => const Center(child: Padding(
@@ -249,7 +254,7 @@ class _CoachScreenState extends ConsumerState<CoachScreen> {
               )),
               error: (e, _) => Padding(
                 padding: const EdgeInsets.symmetric(vertical: 16),
-                child: Text('加载失败', style: MirrorText.body),
+                child: Text(_s.loadFailed, style: MirrorText.body),
               ),
               data: (resp) => Column(
                 children: resp.cards
@@ -279,7 +284,7 @@ class _CoachScreenState extends ConsumerState<CoachScreen> {
             child: Padding(
               padding: const EdgeInsets.symmetric(vertical: 8),
               child: Row(children: [
-                Text('EXERCISE  ·  LIBRARY', style: MirrorText.overline),
+                Text(_s.coachLibraryEntry, style: MirrorText.overline),
                 const Spacer(),
                 const Icon(Icons.arrow_forward_ios_rounded,
                     size: 12, color: MirrorColors.text3),
@@ -312,7 +317,11 @@ class _GoalSlider extends StatelessWidget {
       child: Row(children: [
         SizedBox(
           width: 52,
-          child: Text(label, style: MirrorText.overline),
+          child: FittedBox(   // English labels are longer than the 2-3 Chinese characters
+            fit: BoxFit.scaleDown,
+            alignment: Alignment.centerLeft,
+            child: Text(label, style: MirrorText.overline),
+          ),
         ),
         Expanded(
           child: SliderTheme(
@@ -350,15 +359,10 @@ class _SuggestionCard extends StatelessWidget {
   const _SuggestionCard({required this.card});
   final SuggestionCard card;
 
-  String _categoryLabel(String cat) => switch (cat) {
-    'training'  => 'TRAINING',
-    'nutrition' => 'NUTRITION',
-    'recovery'  => 'RECOVERY',
-    _           => cat.toUpperCase(),
-  };
-
   @override
   Widget build(BuildContext context) {
+    final s = S.of(context);
+    final (title, body) = coachCardText(s, card);
     return Container(
       margin: const EdgeInsets.only(bottom: 16),
       padding: const EdgeInsets.all(16),
@@ -369,14 +373,14 @@ class _SuggestionCard extends StatelessWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text(_categoryLabel(card.category), style: MirrorText.overline),
+          Text(coachCategoryLabel(s, card.category), style: MirrorText.overline),
           const SizedBox(height: 8),
-          Text(card.title,
+          Text(title,
               style: MirrorText.body.copyWith(
                   color: MirrorColors.text1,
                   fontWeight: FontWeight.w500)),
           const SizedBox(height: 6),
-          Text(card.body,
+          Text(body,
               style: MirrorText.bodyS.copyWith(
                   color: MirrorColors.text2)),
         ],
