@@ -2,6 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
+import '../../core/l10n/app_localizations.dart';
+import '../../core/l10n/session_labels.dart';
 import '../../core/router/app_router.dart';
 import '../../core/theme/design_tokens.dart';
 import '../../core/widgets/animate_widgets.dart';
@@ -17,6 +19,8 @@ class SnapshotScreen extends ConsumerStatefulWidget {
 }
 
 class _SnapshotScreenState extends ConsumerState<SnapshotScreen> {
+  S get _s => S.of(context);
+
   List<SessionRecord> _sessions = [];
   bool    _loading = true;
   String? _error;
@@ -62,7 +66,7 @@ class _SnapshotScreenState extends ConsumerState<SnapshotScreen> {
         padding: const EdgeInsets.fromLTRB(
             MirrorSpacing.pagePad, 20, MirrorSpacing.pagePad, 12),
         child: Text(
-          'SNAPSHOTS',
+          _s.snapshotMasthead,
           style: MirrorText.overline.copyWith(
               color: MirrorColors.gold, fontSize: 11, letterSpacing: 4.0),
           textAlign: TextAlign.center,
@@ -81,14 +85,14 @@ class _SnapshotScreenState extends ConsumerState<SnapshotScreen> {
 
   Widget _buildError() => Center(
     child: Column(mainAxisSize: MainAxisSize.min, children: [
-      Text('加载失败', style: MirrorText.body),
+      Text(_s.loadFailed, style: MirrorText.body),
       const SizedBox(height: 12),
       ElevatedButton(
         onPressed: () {
           setState(() { _loading = true; _error = null; });
           _load();
         },
-        child: const Text('重试'),
+        child: Text(_s.retry),
       ),
     ]),
   );
@@ -115,10 +119,10 @@ class _SnapshotScreenState extends ConsumerState<SnapshotScreen> {
                   const Icon(Icons.arrow_back_ios_new_rounded,
                       size: 13, color: MirrorColors.text3),
                   const SizedBox(width: 4),
-                  Text('返回', style: MirrorText.bodyS),
+                  Text(_s.btnBack, style: MirrorText.bodyS),
                 ]),
               ),
-              Text('${_sessions.length} RECORDS',
+              Text(_s.snapshotRecordCount(_sessions.length),
                   style: MirrorText.overline),
             ],
           ),
@@ -138,7 +142,7 @@ class _SnapshotScreenState extends ConsumerState<SnapshotScreen> {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Text('WEIGHT  ·  TREND', style: MirrorText.overline),
+              Text(_s.snapshotWeightTrend, style: MirrorText.overline),
               const SizedBox(height: 16),
               AnimatedSparkline(
                 values: _sessions
@@ -154,9 +158,9 @@ class _SnapshotScreenState extends ConsumerState<SnapshotScreen> {
                 Row(
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
-                    Text(_formatDate(_sessions.last.createdAt),
+                    Text(dotDate(_sessions.last.createdAt),
                         style: MirrorText.caption),
-                    Text(_formatDate(_sessions.first.createdAt),
+                    Text(dotDate(_sessions.first.createdAt),
                         style: MirrorText.caption),
                   ],
                 ),
@@ -232,7 +236,7 @@ class _SnapshotScreenState extends ConsumerState<SnapshotScreen> {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Text('记录次数', style: MirrorText.overline),
+              Text(_s.snapshotSessions, style: MirrorText.overline),
               const SizedBox(height: 8),
               Row(
                 crossAxisAlignment: CrossAxisAlignment.end,
@@ -246,7 +250,7 @@ class _SnapshotScreenState extends ConsumerState<SnapshotScreen> {
                   const SizedBox(width: 3),
                   Padding(
                     padding: const EdgeInsets.only(bottom: 4),
-                    child: Text('次', style: MirrorText.unit),
+                    child: Text(_s.snapshotSessionsUnit, style: MirrorText.unit),
                   ),
                 ],
               ),
@@ -265,7 +269,7 @@ class _SnapshotScreenState extends ConsumerState<SnapshotScreen> {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Text('体重变化', style: MirrorText.overline),
+              Text(_s.snapshotWeightChange, style: MirrorText.overline),
               const SizedBox(height: 8),
               DeltaText(delta: weightDelta, unit: 'kg'),
             ],
@@ -283,7 +287,7 @@ class _SnapshotScreenState extends ConsumerState<SnapshotScreen> {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Text('坚持天数', style: MirrorText.overline),
+              Text(_s.snapshotDaysActive, style: MirrorText.overline),
               const SizedBox(height: 8),
               Row(
                 crossAxisAlignment: CrossAxisAlignment.end,
@@ -297,7 +301,7 @@ class _SnapshotScreenState extends ConsumerState<SnapshotScreen> {
                   const SizedBox(width: 3),
                   Padding(
                     padding: const EdgeInsets.only(bottom: 4),
-                    child: Text('天', style: MirrorText.unit),
+                    child: Text(_s.snapshotDaysUnit, style: MirrorText.unit),
                   ),
                 ],
               ),
@@ -308,11 +312,6 @@ class _SnapshotScreenState extends ConsumerState<SnapshotScreen> {
     );
   }
 }
-
-// ── 日期格式化 ─────────────────────────────────────────────────────────────────
-
-String _formatDate(DateTime d) =>
-    '${d.year}.${d.month.toString().padLeft(2, '0')}.${d.day.toString().padLeft(2, '0')}';
 
 // ── Snapshot Card ─────────────────────────────────────────────────────────────
 
@@ -327,16 +326,9 @@ class _SnapshotCard extends StatelessWidget {
   final bool          isLatest;
   final VoidCallback  onTap;
 
-  String _workoutLabel(WorkoutType t) => {
-    WorkoutType.strength: '力量', WorkoutType.cardio: '有氧',
-    WorkoutType.hiit:     'HIIT', WorkoutType.walk:   '步行',
-    WorkoutType.yoga:     '瑜伽', WorkoutType.swim:   '游泳',
-    WorkoutType.cycling:  '骑行', WorkoutType.rest:   '休息日',
-    WorkoutType.other:    '其他',
-  }[t] ?? '其他';
-
   @override
   Widget build(BuildContext context) {
+    final s = S.of(context);
     return GestureDetector(
       onTap: onTap,
       child: Container(
@@ -356,16 +348,16 @@ class _SnapshotCard extends StatelessWidget {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text(_formatDate(session.createdAt),
+                Text(dotDate(session.createdAt),
                     style: MirrorText.overline),
                 const SizedBox(height: 6),
                 if (isLatest)
-                  Text('LATEST',
+                  Text(s.snapshotLatest,
                       style: MirrorText.caption.copyWith(
                           color: MirrorColors.text2)),
                 if (session.activityData != null)
                   Text(
-                    _workoutLabel(session.activityData!.workoutType),
+                    workoutKindLabel(s, session.activityData!.workoutType),
                     style: MirrorText.caption,
                   ),
               ],

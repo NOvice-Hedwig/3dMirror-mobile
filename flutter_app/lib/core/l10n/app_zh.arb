@@ -47,7 +47,7 @@
   "btnBack": "返回",
   "btnStart": "开始使用",
   "inputEyebrow": "今日记录",
-  "inputTitle": "告诉我你的",
+  "inputTitle": "告诉我\n你的",
   "inputItalic": "身体",
   "inputSubtitle": "数据越多，镜像越准",
   "labelWeight": "体重",
@@ -80,12 +80,12 @@
   "metricWeight": "体重",
   "metricBodyFat": "体脂率",
   "metricLeanMass": "瘦体重",
-  "compareTitle": "时间对比",
+  "compareTitle": "COMPARE",
   "compareNow": "现在",
   "rotateHint": "拖动旋转",
   "saveShare": "保存 · 分享",
-  "historyEyebrow": "蜕变轨迹",
-  "historyTitle": "每一次",
+  "historyEyebrow": "TRANSFORMATION",
+  "historyTitle": "每一次\n",
   "historyItalic": "记录",
   "historyEmpty": "还没有记录",
   "historyEmptySub": "完成第一次输入开始追踪",
@@ -328,5 +328,89 @@
   "photoHintBack": "背对镜头站立",
   "analysisStatusOk": "体型分析已完成",
   "analysisStatusUnavailable": "体型分析暂不可用",
-  "analysisStatusFailed": "体型分析失败，请稍后重新拍照"
+  "analysisStatusFailed": "体型分析失败，请稍后重新拍照",
+  "workoutOther": "其他",
+  "inputBodyDataTitle": "BODY  ·  DATA",
+  "inputActivityTitle": "TODAY'S ACTIVITY",
+  "inputDayLabel": "DAY {day}  ·  {date}",
+  "@inputDayLabel": {
+    "placeholders": {
+      "day": {
+        "type": "int"
+      },
+      "date": {
+        "type": "String"
+      }
+    }
+  },
+  "inputPickWeight": "体重 (kg)",
+  "inputPickBodyFat": "体脂率 (%)",
+  "inputPickWaist": "腰围 (cm)",
+  "inputPickDuration": "训练时长 (min)",
+  "historyTodayRecord": "TODAY  ·  RECORD",
+  "historyRecordsTitle": "RECORDS",
+  "historyCompareSelect": "COMPARE  ·  SELECT",
+  "historySelectedTwo": "已选 2 项",
+  "historySelectMore": "再选 {count} 项",
+  "@historySelectMore": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "historyCompareAction": "对比",
+  "historyVsPrev": "vs prev",
+  "predictTag": "预测",
+  "snapshotMasthead": "SNAPSHOTS",
+  "snapshotRecordCount": "{count} RECORDS",
+  "@snapshotRecordCount": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "snapshotWeightTrend": "WEIGHT  ·  TREND",
+  "snapshotSessions": "记录次数",
+  "snapshotSessionsUnit": "次",
+  "snapshotWeightChange": "体重变化",
+  "snapshotDaysActive": "坚持天数",
+  "snapshotDaysUnit": "天",
+  "snapshotLatest": "LATEST",
+  "compareBodyCompare": "BODY  ·  COMPARE",
+  "compareOverlay": "叠加",
+  "compareDelta": "DELTA",
+  "comparePredictLabel": "预测 · {weeks}W",
+  "@comparePredictLabel": {
+    "placeholders": {
+      "weeks": {
+        "type": "int"
+      }
+    }
+  },
+  "predictMasthead": "PREDICT",
+  "predictBodyFuture": "BODY  ·  FUTURE",
+  "predictTimeRange": "TIME  ·  RANGE",
+  "predictWeeks": "{weeks} W",
+  "@predictWeeks": {
+    "placeholders": {
+      "weeks": {
+        "type": "int"
+      }
+    }
+  },
+  "predictHistoryCompare": "HISTORY  ·  COMPARE",
+  "predictedWeight": "PREDICTED  ·  WEIGHT",
+  "predictConfidence": "置信度",
+  "predictBasedOn": "基于 {count} 条记录",
+  "@predictBasedOn": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "predictNotEnoughTitle": "数据不足",
+  "predictNotEnoughBody": "至少记录 2 次身体数据后\n预测功能将自动开启"
 }

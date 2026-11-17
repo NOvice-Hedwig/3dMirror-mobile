@@ -3,6 +3,8 @@ import 'package:flutter/material.dart';
 import 'package:flutter_animate/flutter_animate.dart';
 import 'package:go_router/go_router.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+import '../../core/l10n/app_localizations.dart';
+import '../../core/l10n/session_labels.dart';
 import '../../core/theme/design_tokens.dart';
 import '../../core/router/app_router.dart';
 import '../../core/widgets/animate_widgets.dart';
@@ -23,6 +25,8 @@ class _InputScreenState extends State<InputScreen> {
   Intensity? _intensity;
   bool    _loading    = false;
   bool    _ctaPressed = false;
+
+  S get _s => S.of(context);
 
   @override
   Widget build(BuildContext context) {
@@ -54,8 +58,8 @@ class _InputScreenState extends State<InputScreen> {
                         duration: MirrorDuration.slow,
                         offsetY: 16,
                         child: Text.rich(TextSpan(style: MirrorText.title, children: [
-                          const TextSpan(text: '告诉我\n你的'),
-                          TextSpan(text: '身体',
+                          TextSpan(text: _s.inputTitle),
+                          TextSpan(text: _s.inputItalic,
                               style: MirrorText.title.copyWith(fontStyle: FontStyle.italic)),
                         ])),
                       ),
@@ -64,7 +68,7 @@ class _InputScreenState extends State<InputScreen> {
                         delay: const Duration(milliseconds: 160),
                         duration: const Duration(milliseconds: 400),
                         offsetY: 8,
-                        child: Text('数据越多，镜像越准', style: MirrorText.body),
+                        child: Text(_s.inputSubtitle, style: MirrorText.body),
                       ),
                       const SizedBox(height: 32),
                     ],
@@ -90,7 +94,7 @@ class _InputScreenState extends State<InputScreen> {
                     delay: const Duration(milliseconds: 300),
                     duration: const Duration(milliseconds: 400),
                     offsetY: 6,
-                    child: Text('BODY  ·  DATA', style: MirrorText.overline),
+                    child: Text(_s.inputBodyDataTitle, style: MirrorText.overline),
                   )),
                 ),
                 const SliverToBoxAdapter(child: SizedBox(height: 12)),
@@ -103,15 +107,15 @@ class _InputScreenState extends State<InputScreen> {
                     duration: const Duration(milliseconds: 400),
                     offsetY: 8,
                     child: Column(children: [
-                      _Row(label: '体重', value: _weight > 0 ? _weight.toStringAsFixed(1) : null,
-                          unit: 'kg', onTap: () => _dec('体重 (kg)', 30, 200, _weight.clamp(30,200), 0.1,
+                      _Row(label: _s.labelWeight, value: _weight > 0 ? _weight.toStringAsFixed(1) : null,
+                          unit: 'kg', onTap: () => _dec(_s.inputPickWeight, 30, 200, _weight.clamp(30,200), 0.1,
                               (v) => setState(() => _weight = v))),
-                      _Row(label: '体脂率', value: _hasBf ? _bodyFat.toStringAsFixed(1) : null,
-                          unit: '%', onTap: () => _dec('体脂率 (%)', 3, 60, _hasBf ? _bodyFat : 20, 0.1,
+                      _Row(label: _s.labelBodyFat, value: _hasBf ? _bodyFat.toStringAsFixed(1) : null,
+                          unit: '%', onTap: () => _dec(_s.inputPickBodyFat, 3, 60, _hasBf ? _bodyFat : 20, 0.1,
                               (v) => setState(() { _bodyFat = v; _hasBf = true; }))),
-                      _Row(label: '腰围', value: _hasWaist ? _waist.toStringAsFixed(1) : null,
+                      _Row(label: _s.labelWaist, value: _hasWaist ? _waist.toStringAsFixed(1) : null,
                           unit: 'cm', isLast: true,
-                          onTap: () => _dec('腰围 (cm)', 50, 160, _hasWaist ? _waist : 80, 0.5,
+                          onTap: () => _dec(_s.inputPickWaist, 50, 160, _hasWaist ? _waist : 80, 0.5,
                               (v) => setState(() { _waist = v; _hasWaist = true; }))),
                     ]),
                   )),
@@ -160,7 +164,7 @@ class _InputScreenState extends State<InputScreen> {
         padding: const EdgeInsets.fromLTRB(
             MirrorSpacing.pagePad, 20, MirrorSpacing.pagePad, 12),
         child: Text(
-          '3D MIRROR',
+          _s.brandMasthead,
           style: MirrorText.overline.copyWith(
             color: MirrorColors.gold,
             fontSize: 11,
@@ -206,7 +210,7 @@ class _InputScreenState extends State<InputScreen> {
                   borderRadius: BorderRadius.circular(MirrorRadius.sm),
                 ),
                 alignment: Alignment.center,
-                child: Text(g == 'male' ? '男' : '女',
+                child: Text(g == 'male' ? _s.genderMale : _s.genderFemale,
                     style: MirrorText.body.copyWith(
                       color: sel ? MirrorColors.text1 : MirrorColors.text3,
                       fontWeight: sel ? FontWeight.w500 : FontWeight.w300,
@@ -222,18 +226,17 @@ class _InputScreenState extends State<InputScreen> {
   String _gender = 'female';
 
   Widget _activitySection() {
-    final types = [
-      (WorkoutType.strength, '力量'), (WorkoutType.cardio, '有氧'),
-      (WorkoutType.hiit, 'HIIT'),    (WorkoutType.walk, '步行'),
-      (WorkoutType.yoga, '瑜伽'),    (WorkoutType.rest, '休息日'),
+    const types = [
+      WorkoutType.strength, WorkoutType.cardio, WorkoutType.hiit,
+      WorkoutType.walk,     WorkoutType.yoga,   WorkoutType.rest,
     ];
     return Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-      Text("TODAY'S ACTIVITY", style: MirrorText.overline),
+      Text(_s.inputActivityTitle, style: MirrorText.overline),
       const SizedBox(height: 12),
       Wrap(spacing: 8, runSpacing: 8, children: types.map((t) {
-        final sel = _workout == t.$1;
+        final sel = _workout == t;
         return GestureDetector(
-          onTap: () => setState(() => _workout = t.$1),
+          onTap: () => setState(() => _workout = t),
           child: AnimatedContainer(
             duration: MirrorDuration.fast,
             padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 9),
@@ -241,7 +244,7 @@ class _InputScreenState extends State<InputScreen> {
               color: sel ? MirrorColors.text1 : MirrorColors.bg2,
               borderRadius: BorderRadius.circular(MirrorRadius.full),
             ),
-            child: Text(t.$2,
+            child: Text(workoutKindLabel(_s, t),
                 style: MirrorText.bodyS.copyWith(
                     color: sel ? MirrorColors.bg : MirrorColors.text2)),
           ),
@@ -250,16 +253,16 @@ class _InputScreenState extends State<InputScreen> {
 
       if (_workout != WorkoutType.rest) ...[
         const SizedBox(height: 20),
-        _Row(label: '时长',
+        _Row(label: _s.labelDuration,
             value: _duration > 0 ? '$_duration' : null, unit: 'min',
-            onTap: () => _int('训练时长 (min)', 5, 240, _duration > 0 ? _duration : 45,
+            onTap: () => _int(_s.inputPickDuration, 5, 240, _duration > 0 ? _duration : 45,
                 (v) => setState(() => _duration = v))),
         const SizedBox(height: 14),
         Row(children: [
-          Text('强度', style: MirrorText.body),
+          Text(_s.labelIntensity, style: MirrorText.body),
           const Spacer(),
           ...Intensity.values.map((iv) {
-            final lbl = {Intensity.low:'轻',Intensity.medium:'中',Intensity.high:'强'}[iv]!;
+            final lbl = intensityLabel(_s, iv);
             final sel = _intensity == iv;
             return Padding(
               padding: const EdgeInsets.only(left: 8),
@@ -309,7 +312,7 @@ class _InputScreenState extends State<InputScreen> {
               ? const SizedBox(width: 18, height: 18,
                   child: CircularProgressIndicator(
                       color: MirrorColors.bg, strokeWidth: 1.5))
-              : const Text('生成角色'),
+              : Text(_s.ctaGenerate),
         ),
       ),
     ),
@@ -317,6 +320,7 @@ class _InputScreenState extends State<InputScreen> {
 
   Future<void> _submit() async {
     setState(() => _loading = true);
+    final s = _s;
     try {
       final userId = await AuthApi.instance.getUserId() ?? '';
       final prefs  = await SharedPreferences.getInstance();
@@ -349,7 +353,7 @@ class _InputScreenState extends State<InputScreen> {
     } catch (e) {
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('保存失败: $e'), backgroundColor: MirrorColors.text1));
+        SnackBar(content: Text(s.saveFailedDetail('$e')), backgroundColor: MirrorColors.text1));
     } finally {
       if (mounted) setState(() => _loading = false);
     }
@@ -388,12 +392,12 @@ class _InputScreenState extends State<InputScreen> {
           Container(height: 280, color: MirrorColors.surface, child: Column(children: [
             Row(mainAxisAlignment: MainAxisAlignment.spaceBetween, children: [
               CupertinoButton(
-                child: Text('取消',
+                child: Text(_s.cancelBtn,
                     style: MirrorText.body.copyWith(color: MirrorColors.text3)),
                 onPressed: () => Navigator.pop(ctx)),
               Text(lbl, style: MirrorText.bodyS.copyWith(color: MirrorColors.text2)),
               CupertinoButton(
-                child: Text('确认', style: MirrorText.body.copyWith(
+                child: Text(_s.confirmBtn, style: MirrorText.body.copyWith(
                     color: MirrorColors.text1, fontWeight: FontWeight.w500)),
                 onPressed: () { onOk(); Navigator.pop(ctx); }),
             ]),
@@ -402,9 +406,7 @@ class _InputScreenState extends State<InputScreen> {
 
   String _dayLabel() {
     final n = DateTime.now();
-    return 'DAY ${n.difference(DateTime(n.year, 1, 1)).inDays + 1}'
-        '  ·  ${n.year}.${n.month.toString().padLeft(2,'0')}'
-        '.${n.day.toString().padLeft(2,'0')}';
+    return _s.inputDayLabel(n.difference(DateTime(n.year, 1, 1)).inDays + 1, dotDate(n));
   }
 }
 

@@ -340,7 +340,7 @@ abstract class S {
   /// No description provided for @inputTitle.
   ///
   /// In zh, this message translates to:
-  /// **'告诉我你的'**
+  /// **'告诉我\n你的'**
   String get inputTitle;
 
   /// No description provided for @inputItalic.
@@ -538,7 +538,7 @@ abstract class S {
   /// No description provided for @compareTitle.
   ///
   /// In zh, this message translates to:
-  /// **'时间对比'**
+  /// **'COMPARE'**
   String get compareTitle;
 
   /// No description provided for @compareNow.
@@ -562,13 +562,13 @@ abstract class S {
   /// No description provided for @historyEyebrow.
   ///
   /// In zh, this message translates to:
-  /// **'蜕变轨迹'**
+  /// **'TRANSFORMATION'**
   String get historyEyebrow;
 
   /// No description provided for @historyTitle.
   ///
   /// In zh, this message translates to:
-  /// **'每一次'**
+  /// **'每一次\n'**
   String get historyTitle;
 
   /// No description provided for @historyItalic.
@@ -1818,6 +1818,240 @@ abstract class S {
   /// In zh, this message translates to:
   /// **'体型分析失败，请稍后重新拍照'**
   String get analysisStatusFailed;
+
+  /// No description provided for @workoutOther.
+  ///
+  /// In zh, this message translates to:
+  /// **'其他'**
+  String get workoutOther;
+
+  /// No description provided for @inputBodyDataTitle.
+  ///
+  /// In zh, this message translates to:
+  /// **'BODY  ·  DATA'**
+  String get inputBodyDataTitle;
+
+  /// No description provided for @inputActivityTitle.
+  ///
+  /// In zh, this message translates to:
+  /// **'TODAY\'S ACTIVITY'**
+  String get inputActivityTitle;
+
+  /// No description provided for @inputDayLabel.
+  ///
+  /// In zh, this message translates to:
+  /// **'DAY {day}  ·  {date}'**
+  String inputDayLabel(int day, String date);
+
+  /// No description provided for @inputPickWeight.
+  ///
+  /// In zh, this message translates to:
+  /// **'体重 (kg)'**
+  String get inputPickWeight;
+
+  /// No description provided for @inputPickBodyFat.
+  ///
+  /// In zh, this message translates to:
+  /// **'体脂率 (%)'**
+  String get inputPickBodyFat;
+
+  /// No description provided for @inputPickWaist.
+  ///
+  /// In zh, this message translates to:
+  /// **'腰围 (cm)'**
+  String get inputPickWaist;
+
+  /// No description provided for @inputPickDuration.
+  ///
+  /// In zh, this message translates to:
+  /// **'训练时长 (min)'**
+  String get inputPickDuration;
+
+  /// No description provided for @historyTodayRecord.
+  ///
+  /// In zh, this message translates to:
+  /// **'TODAY  ·  RECORD'**
+  String get historyTodayRecord;
+
+  /// No description provided for @historyRecordsTitle.
+  ///
+  /// In zh, this message translates to:
+  /// **'RECORDS'**
+  String get historyRecordsTitle;
+
+  /// No description provided for @historyCompareSelect.
+  ///
+  /// In zh, this message translates to:
+  /// **'COMPARE  ·  SELECT'**
+  String get historyCompareSelect;
+
+  /// No description provided for @historySelectedTwo.
+  ///
+  /// In zh, this message translates to:
+  /// **'已选 2 项'**
+  String get historySelectedTwo;
+
+  /// No description provided for @historySelectMore.
+  ///
+  /// In zh, this message translates to:
+  /// **'再选 {count} 项'**
+  String historySelectMore(int count);
+
+  /// No description provided for @historyCompareAction.
+  ///
+  /// In zh, this message translates to:
+  /// **'对比'**
+  String get historyCompareAction;
+
+  /// No description provided for @historyVsPrev.
+  ///
+  /// In zh, this message translates to:
+  /// **'vs prev'**
+  String get historyVsPrev;
+
+  /// No description provided for @predictTag.
+  ///
+  /// In zh, this message translates to:
+  /// **'预测'**
+  String get predictTag;
+
+  /// No description provided for @snapshotMasthead.
+  ///
+  /// In zh, this message translates to:
+  /// **'SNAPSHOTS'**
+  String get snapshotMasthead;
+
+  /// No description provided for @snapshotRecordCount.
+  ///
+  /// In zh, this message translates to:
+  /// **'{count} RECORDS'**
+  String snapshotRecordCount(int count);
+
+  /// No description provided for @snapshotWeightTrend.
+  ///
+  /// In zh, this message translates to:
+  /// **'WEIGHT  ·  TREND'**
+  String get snapshotWeightTrend;
+
+  /// No description provided for @snapshotSessions.
+  ///
+  /// In zh, this message translates to:
+  /// **'记录次数'**
+  String get snapshotSessions;
+
+  /// No description provided for @snapshotSessionsUnit.
+  ///
+  /// In zh, this message translates to:
+  /// **'次'**
+  String get snapshotSessionsUnit;
+
+  /// No description provided for @snapshotWeightChange.
+  ///
+  /// In zh, this message translates to:
+  /// **'体重变化'**
+  String get snapshotWeightChange;
+
+  /// No description provided for @snapshotDaysActive.
+  ///
+  /// In zh, this message translates to:
+  /// **'坚持天数'**
+  String get snapshotDaysActive;
+
+  /// No description provided for @snapshotDaysUnit.
+  ///
+  /// In zh, this message translates to:
+  /// **'天'**
+  String get snapshotDaysUnit;
+
+  /// No description provided for @snapshotLatest.
+  ///
+  /// In zh, this message translates to:
+  /// **'LATEST'**
+  String get snapshotLatest;
+
+  /// No description provided for @compareBodyCompare.
+  ///
+  /// In zh, this message translates to:
+  /// **'BODY  ·  COMPARE'**
+  String get compareBodyCompare;
+
+  /// No description provided for @compareOverlay.
+  ///
+  /// In zh, this message translates to:
+  /// **'叠加'**
+  String get compareOverlay;
+
+  /// No description provided for @compareDelta.
+  ///
+  /// In zh, this message translates to:
+  /// **'DELTA'**
+  String get compareDelta;
+
+  /// No description provided for @comparePredictLabel.
+  ///
+  /// In zh, this message translates to:
+  /// **'预测 · {weeks}W'**
+  String comparePredictLabel(int weeks);
+
+  /// No description provided for @predictMasthead.
+  ///
+  /// In zh, this message translates to:
+  /// **'PREDICT'**
+  String get predictMasthead;
+
+  /// No description provided for @predictBodyFuture.
+  ///
+  /// In zh, this message translates to:
+  /// **'BODY  ·  FUTURE'**
+  String get predictBodyFuture;
+
+  /// No description provided for @predictTimeRange.
+  ///
+  /// In zh, this message translates to:
+  /// **'TIME  ·  RANGE'**
+  String get predictTimeRange;
+
+  /// No description provided for @predictWeeks.
+  ///
+  /// In zh, this message translates to:
+  /// **'{weeks} W'**
+  String predictWeeks(int weeks);
+
+  /// No description provided for @predictHistoryCompare.
+  ///
+  /// In zh, this message translates to:
+  /// **'HISTORY  ·  COMPARE'**
+  String get predictHistoryCompare;
+
+  /// No description provided for @predictedWeight.
+  ///
+  /// In zh, this message translates to:
+  /// **'PREDICTED  ·  WEIGHT'**
+  String get predictedWeight;
+
+  /// No description provided for @predictConfidence.
+  ///
+  /// In zh, this message translates to:
+  /// **'置信度'**
+  String get predictConfidence;
+
+  /// No description provided for @predictBasedOn.
+  ///
+  /// In zh, this message translates to:
+  /// **'基于 {count} 条记录'**
+  String predictBasedOn(int count);
+
+  /// No description provided for @predictNotEnoughTitle.
+  ///
+  /// In zh, this message translates to:
+  /// **'数据不足'**
+  String get predictNotEnoughTitle;
+
+  /// No description provided for @predictNotEnoughBody.
+  ///
+  /// In zh, this message translates to:
+  /// **'至少记录 2 次身体数据后\n预测功能将自动开启'**
+  String get predictNotEnoughBody;
 }
 
 class _SDelegate extends LocalizationsDelegate<S> {

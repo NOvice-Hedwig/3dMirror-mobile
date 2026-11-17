@@ -32,6 +32,14 @@ const migratedFiles = [
   'lib/features/onboarding/photo_capture_screen.dart',
   'lib/models/body_photo.dart',
   'lib/services/api/photo_api.dart',
+  // batch 4: records
+  'lib/features/input/input_screen.dart',
+  'lib/features/history/history_screen.dart',
+  'lib/features/snapshot/snapshot_screen.dart',
+  'lib/features/compare/compare_screen.dart',
+  'lib/features/predict/predict_screen.dart',
+  'lib/services/api/predict_api.dart',
+  'lib/core/l10n/session_labels.dart',
 ];
 
 Map<String, dynamic> readArb(String lang) =>

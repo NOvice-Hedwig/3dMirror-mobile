@@ -1,4 +1,6 @@
 from fastapi import APIRouter, HTTPException, Header
+
+from api_errors import ApiError
 from pydantic import BaseModel
 from database import Database
 from auth.service import decode_jwt
@@ -37,7 +39,7 @@ async def get_predict(weeks: int = 4, authorization: str = Header(...)):
     )
 
     if len(rows) < 2:
-        raise HTTPException(400, "数据不足，请至少记录 2 次")
+        raise ApiError(400, "predict_not_enough_data", "数据不足，请至少记录 2 次")
 
     newest = rows[0]
     oldest = rows[-1]

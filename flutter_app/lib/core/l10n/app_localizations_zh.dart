@@ -131,7 +131,7 @@ class SZh extends S {
   String get inputEyebrow => '今日记录';
 
   @override
-  String get inputTitle => '告诉我你的';
+  String get inputTitle => '告诉我\n你的';
 
   @override
   String get inputItalic => '身体';
@@ -230,7 +230,7 @@ class SZh extends S {
   String get metricLeanMass => '瘦体重';
 
   @override
-  String get compareTitle => '时间对比';
+  String get compareTitle => 'COMPARE';
 
   @override
   String get compareNow => '现在';
@@ -242,10 +242,10 @@ class SZh extends S {
   String get saveShare => '保存 · 分享';
 
   @override
-  String get historyEyebrow => '蜕变轨迹';
+  String get historyEyebrow => 'TRANSFORMATION';
 
   @override
-  String get historyTitle => '每一次';
+  String get historyTitle => '每一次\n';
 
   @override
   String get historyItalic => '记录';
@@ -880,4 +880,133 @@ class SZh extends S {
 
   @override
   String get analysisStatusFailed => '体型分析失败，请稍后重新拍照';
+
+  @override
+  String get workoutOther => '其他';
+
+  @override
+  String get inputBodyDataTitle => 'BODY  ·  DATA';
+
+  @override
+  String get inputActivityTitle => 'TODAY\'S ACTIVITY';
+
+  @override
+  String inputDayLabel(int day, String date) {
+    return 'DAY $day  ·  $date';
+  }
+
+  @override
+  String get inputPickWeight => '体重 (kg)';
+
+  @override
+  String get inputPickBodyFat => '体脂率 (%)';
+
+  @override
+  String get inputPickWaist => '腰围 (cm)';
+
+  @override
+  String get inputPickDuration => '训练时长 (min)';
+
+  @override
+  String get historyTodayRecord => 'TODAY  ·  RECORD';
+
+  @override
+  String get historyRecordsTitle => 'RECORDS';
+
+  @override
+  String get historyCompareSelect => 'COMPARE  ·  SELECT';
+
+  @override
+  String get historySelectedTwo => '已选 2 项';
+
+  @override
+  String historySelectMore(int count) {
+    return '再选 $count 项';
+  }
+
+  @override
+  String get historyCompareAction => '对比';
+
+  @override
+  String get historyVsPrev => 'vs prev';
+
+  @override
+  String get predictTag => '预测';
+
+  @override
+  String get snapshotMasthead => 'SNAPSHOTS';
+
+  @override
+  String snapshotRecordCount(int count) {
+    return '$count RECORDS';
+  }
+
+  @override
+  String get snapshotWeightTrend => 'WEIGHT  ·  TREND';
+
+  @override
+  String get snapshotSessions => '记录次数';
+
+  @override
+  String get snapshotSessionsUnit => '次';
+
+  @override
+  String get snapshotWeightChange => '体重变化';
+
+  @override
+  String get snapshotDaysActive => '坚持天数';
+
+  @override
+  String get snapshotDaysUnit => '天';
+
+  @override
+  String get snapshotLatest => 'LATEST';
+
+  @override
+  String get compareBodyCompare => 'BODY  ·  COMPARE';
+
+  @override
+  String get compareOverlay => '叠加';
+
+  @override
+  String get compareDelta => 'DELTA';
+
+  @override
+  String comparePredictLabel(int weeks) {
+    return '预测 · ${weeks}W';
+  }
+
+  @override
+  String get predictMasthead => 'PREDICT';
+
+  @override
+  String get predictBodyFuture => 'BODY  ·  FUTURE';
+
+  @override
+  String get predictTimeRange => 'TIME  ·  RANGE';
+
+  @override
+  String predictWeeks(int weeks) {
+    return '$weeks W';
+  }
+
+  @override
+  String get predictHistoryCompare => 'HISTORY  ·  COMPARE';
+
+  @override
+  String get predictedWeight => 'PREDICTED  ·  WEIGHT';
+
+  @override
+  String get predictConfidence => '置信度';
+
+  @override
+  String predictBasedOn(int count) {
+    return '基于 $count 条记录';
+  }
+
+  @override
+  String get predictNotEnoughTitle => '数据不足';
+
+  @override
+  String get predictNotEnoughBody => '至少记录 2 次身体数据后\n预测功能将自动开启';
 }

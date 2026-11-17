@@ -47,7 +47,7 @@
   "btnBack": "Back",
   "btnStart": "Get started",
   "inputEyebrow": "Today's log",
-  "inputTitle": "Tell me about your",
+  "inputTitle": "Tell me\nabout your",
   "inputItalic": "body",
   "inputSubtitle": "More data, better mirror",
   "labelWeight": "Weight",
@@ -56,9 +56,9 @@
   "labelWorkout": "Today's workout",
   "labelDuration": "Duration",
   "labelIntensity": "Intensity",
-  "intensityLow": "Easy",
-  "intensityMed": "Moderate",
-  "intensityHigh": "Hard",
+  "intensityLow": "Low",
+  "intensityMed": "Med",
+  "intensityHigh": "High",
   "workoutStrength": "Strength",
   "workoutCardio": "Cardio",
   "workoutHiit": "HIIT",
@@ -80,12 +80,12 @@
   "metricWeight": "Weight",
   "metricBodyFat": "Body fat",
   "metricLeanMass": "Lean mass",
-  "compareTitle": "Compare",
+  "compareTitle": "COMPARE",
   "compareNow": "Now",
   "rotateHint": "Drag to rotate",
   "saveShare": "Save · Share",
-  "historyEyebrow": "Your journey",
-  "historyTitle": "Every",
+  "historyEyebrow": "TRANSFORMATION",
+  "historyTitle": "Every\n",
   "historyItalic": "session",
   "historyEmpty": "No sessions yet",
   "historyEmptySub": "Complete your first input to start",
@@ -328,5 +328,89 @@
   "photoHintBack": "Face away from the camera",
   "analysisStatusOk": "Body analysis complete",
   "analysisStatusUnavailable": "Body analysis is currently unavailable",
-  "analysisStatusFailed": "Body analysis failed. Please retake the photos later"
+  "analysisStatusFailed": "Body analysis failed. Please retake the photos later",
+  "workoutOther": "Other",
+  "inputBodyDataTitle": "BODY  ·  DATA",
+  "inputActivityTitle": "TODAY'S ACTIVITY",
+  "inputDayLabel": "DAY {day}  ·  {date}",
+  "@inputDayLabel": {
+    "placeholders": {
+      "day": {
+        "type": "int"
+      },
+      "date": {
+        "type": "String"
+      }
+    }
+  },
+  "inputPickWeight": "Weight (kg)",
+  "inputPickBodyFat": "Body fat (%)",
+  "inputPickWaist": "Waist (cm)",
+  "inputPickDuration": "Workout duration (min)",
+  "historyTodayRecord": "TODAY  ·  RECORD",
+  "historyRecordsTitle": "RECORDS",
+  "historyCompareSelect": "COMPARE  ·  SELECT",
+  "historySelectedTwo": "2 selected",
+  "historySelectMore": "Select {count} more",
+  "@historySelectMore": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "historyCompareAction": "Compare",
+  "historyVsPrev": "vs prev",
+  "predictTag": "PREDICT",
+  "snapshotMasthead": "SNAPSHOTS",
+  "snapshotRecordCount": "{count} RECORDS",
+  "@snapshotRecordCount": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "snapshotWeightTrend": "WEIGHT  ·  TREND",
+  "snapshotSessions": "SESSIONS",
+  "snapshotSessionsUnit": "total",
+  "snapshotWeightChange": "WEIGHT CHANGE",
+  "snapshotDaysActive": "DAYS ACTIVE",
+  "snapshotDaysUnit": "days",
+  "snapshotLatest": "LATEST",
+  "compareBodyCompare": "BODY  ·  COMPARE",
+  "compareOverlay": "Overlay",
+  "compareDelta": "DELTA",
+  "comparePredictLabel": "Predicted · {weeks}W",
+  "@comparePredictLabel": {
+    "placeholders": {
+      "weeks": {
+        "type": "int"
+      }
+    }
+  },
+  "predictMasthead": "PREDICT",
+  "predictBodyFuture": "BODY  ·  FUTURE",
+  "predictTimeRange": "TIME  ·  RANGE",
+  "predictWeeks": "{weeks} W",
+  "@predictWeeks": {
+    "placeholders": {
+      "weeks": {
+        "type": "int"
+      }
+    }
+  },
+  "predictHistoryCompare": "HISTORY  ·  COMPARE",
+  "predictedWeight": "PREDICTED  ·  WEIGHT",
+  "predictConfidence": "Confidence",
+  "predictBasedOn": "Based on {count} records",
+  "@predictBasedOn": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "predictNotEnoughTitle": "Not enough data",
+  "predictNotEnoughBody": "Log your body data at least twice\nto unlock predictions"
 }

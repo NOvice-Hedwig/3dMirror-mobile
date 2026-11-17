@@ -16,6 +16,7 @@ abstract final class ErrorCode {
   static const smsSendFailed         = 'sms_send_failed';
   static const emailSendFailed       = 'email_send_failed';
   static const appleTokenInvalid     = 'apple_token_invalid';
+  static const predictNotEnoughData  = 'predict_not_enough_data';
 }
 
 /// Translated text for [code], or null if the app doesn't know it.
@@ -31,6 +32,7 @@ String? errorCodeText(S s, String? code) => switch (code) {
   ErrorCode.smsSendFailed ||
   ErrorCode.emailSendFailed       => s.errorSendFailed,
   ErrorCode.appleTokenInvalid     => s.errorAppleSignIn,
+  ErrorCode.predictNotEnoughData  => s.predictNotEnoughTitle,
   _                               => null,
 };
 

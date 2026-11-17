@@ -288,6 +288,17 @@ def test_predict_and_coach_read_session_json(client, fresh_auth):
     assert r.json()["data_points"] == 2
 
 
+def test_predict_with_too_few_sessions_returns_a_code(client, fresh_auth):
+    # The app translates the code; detail stays as before for older builds.
+    for _ in range(2):   # with 0 and with 1 session
+        r = client.get("/predict?weeks=4", headers=fresh_auth)
+        assert r.status_code == 400, _describe(r)
+        assert r.json() == {"detail": "数据不足，请至少记录 2 次",
+                            "code": "predict_not_enough_data"}
+        r = client.post("/sessions", json=_session_payload(), headers=fresh_auth)
+        assert r.status_code == 200, _describe(r)
+
+
 def test_coach_target_roundtrip_via_users_me(client, fresh_auth):
     target = {k: v for k, v in _session_payload()["avatar_params"].items()
               if k not in ("lighting_profile", "photo_enhanced")}

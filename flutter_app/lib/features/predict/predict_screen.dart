@@ -3,6 +3,7 @@ import 'package:flutter_animate/flutter_animate.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
+import '../../core/l10n/app_localizations.dart';
 import '../../core/theme/design_tokens.dart';
 import '../../core/widgets/animate_widgets.dart';
 import '../../core/widgets/body_viewport.dart';
@@ -21,6 +22,8 @@ class PredictScreen extends ConsumerStatefulWidget {
 
 class _PredictScreenState extends ConsumerState<PredictScreen> {
   int _weeks = 4;
+
+  S get _s => S.of(context);
 
   @override
   Widget build(BuildContext context) {
@@ -45,7 +48,7 @@ class _PredictScreenState extends ConsumerState<PredictScreen> {
         padding: const EdgeInsets.fromLTRB(
             MirrorSpacing.pagePad, 20, MirrorSpacing.pagePad, 12),
         child: Text(
-          'PREDICT',
+          _s.predictMasthead,
           style: MirrorText.overline.copyWith(
             color: MirrorColors.gold,
             fontSize: 11,
@@ -93,11 +96,11 @@ class _PredictScreenState extends ConsumerState<PredictScreen> {
                       const Icon(Icons.arrow_back_ios_new_rounded,
                           size: 13, color: MirrorColors.text3),
                       const SizedBox(width: 4),
-                      Text('返回', style: MirrorText.bodyS.copyWith(
+                      Text(_s.btnBack, style: MirrorText.bodyS.copyWith(
                           color: MirrorColors.text3)),
                     ]),
                   ),
-                  Text('BODY  ·  FUTURE', style: MirrorText.overline),
+                  Text(_s.predictBodyFuture, style: MirrorText.overline),
                 ],
               ),
             ),
@@ -116,7 +119,7 @@ class _PredictScreenState extends ConsumerState<PredictScreen> {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Text('TIME  ·  RANGE', style: MirrorText.overline),
+                  Text(_s.predictTimeRange, style: MirrorText.overline),
                   const SizedBox(height: 16),
                   Row(
                     children: [4, 8, 12].map((w) {
@@ -140,7 +143,7 @@ class _PredictScreenState extends ConsumerState<PredictScreen> {
                                   : TextDecoration.none,
                               decorationColor: MirrorColors.text1,
                             ),
-                            child: Text('$w W'),
+                            child: Text(_s.predictWeeks(w)),
                           ),
                         ),
                       );
@@ -211,7 +214,7 @@ class _PredictScreenState extends ConsumerState<PredictScreen> {
                       borderRadius:
                           BorderRadius.circular(MirrorRadius.lg)),
                 ),
-                child: Text('HISTORY  ·  COMPARE',
+                child: Text(_s.predictHistoryCompare,
                     style: MirrorText.overline.copyWith(
                         color: MirrorColors.text2,
                         letterSpacing: 2.5)),
@@ -237,10 +240,10 @@ class _PredictScreenState extends ConsumerState<PredictScreen> {
         mainAxisSize: MainAxisSize.min,
         children: [
           const SizedBox(height: 24),
-          Text('数据不足', style: MirrorText.body),
+          Text(_s.predictNotEnoughTitle, style: MirrorText.body),
           const SizedBox(height: 8),
           Text(
-            '至少记录 2 次身体数据后\n预测功能将自动开启',
+            _s.predictNotEnoughBody,
             style: MirrorText.caption,
             textAlign: TextAlign.center,
           ),
@@ -251,12 +254,12 @@ class _PredictScreenState extends ConsumerState<PredictScreen> {
       mainAxisSize: MainAxisSize.min,
       children: [
         const SizedBox(height: 24),
-        Text('加载失败', style: MirrorText.body),
+        Text(_s.loadFailed, style: MirrorText.body),
         const SizedBox(height: 12),
         ElevatedButton(
           onPressed: () =>
               ref.invalidate(predictMetricsProvider(_weeks)),
-          child: const Text('重试'),
+          child: Text(_s.retry),
         ),
       ],
     );
@@ -267,7 +270,7 @@ class _PredictScreenState extends ConsumerState<PredictScreen> {
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         // 英雄数字 — 预测体重
-        Text('PREDICTED  ·  WEIGHT', style: MirrorText.overline),
+        Text(_s.predictedWeight, style: MirrorText.overline),
         const SizedBox(height: 12),
         Row(
           crossAxisAlignment: CrossAxisAlignment.end,
@@ -301,7 +304,7 @@ class _PredictScreenState extends ConsumerState<PredictScreen> {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Text('体脂率', style: MirrorText.overline),
+                    Text(_s.labelBodyFat, style: MirrorText.overline),
                     const SizedBox(height: 10),
                     Row(
                       crossAxisAlignment: CrossAxisAlignment.end,
@@ -337,7 +340,7 @@ class _PredictScreenState extends ConsumerState<PredictScreen> {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Text('腰围', style: MirrorText.overline),
+                    Text(_s.labelWaist, style: MirrorText.overline),
                     const SizedBox(height: 8),
                     Row(
                       crossAxisAlignment: CrossAxisAlignment.baseline,
@@ -361,13 +364,13 @@ class _PredictScreenState extends ConsumerState<PredictScreen> {
                       margin: const EdgeInsets.symmetric(vertical: 16),
                     ),
 
-                    Text('置信度', style: MirrorText.overline),
+                    Text(_s.predictConfidence, style: MirrorText.overline),
                     const SizedBox(height: 8),
                     Text(
                       '${(m.confidence * 100).toStringAsFixed(0)}%',
                       style: MirrorText.displayMd,
                     ),
-                    Text('基于 ${m.dataPoints} 条记录',
+                    Text(_s.predictBasedOn(m.dataPoints),
                         style: MirrorText.caption),
                   ],
                 ),

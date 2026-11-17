@@ -2,6 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:flutter_animate/flutter_animate.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
+import '../../core/l10n/app_localizations.dart';
+import '../../core/l10n/session_labels.dart';
 import '../../core/router/app_router.dart';
 import '../../core/theme/design_tokens.dart';
 import '../../core/widgets/animate_widgets.dart';
@@ -24,6 +26,8 @@ class _HistoryScreenState extends ConsumerState<HistoryScreen> {
 
   bool           _selectMode  = false;
   final Set<String> _selectedIds = {};
+
+  S get _s => S.of(context);
 
   @override
   void initState() { super.initState(); _load(); }
@@ -66,7 +70,7 @@ class _HistoryScreenState extends ConsumerState<HistoryScreen> {
               const SizedBox(height: 12),
               ElevatedButton(
                 onPressed: () => context.go(MirrorRoute.input),
-                child: Text('TODAY  ·  RECORD',
+                child: Text(_s.historyTodayRecord,
                     style: MirrorText.overline.copyWith(
                         color: MirrorColors.bg, letterSpacing: 2.5)),
               ),
@@ -91,7 +95,7 @@ class _HistoryScreenState extends ConsumerState<HistoryScreen> {
                       delay: Duration.zero,
                       duration: const Duration(milliseconds: 400),
                       offsetY: 10,
-                      child: Text('TRANSFORMATION',
+                      child: Text(_s.historyEyebrow,
                           style: MirrorText.overline),
                     ),
                     const SizedBox(height: 12),
@@ -101,8 +105,8 @@ class _HistoryScreenState extends ConsumerState<HistoryScreen> {
                       offsetY: 16,
                       child: Text.rich(TextSpan(
                           style: MirrorText.titleSm, children: [
-                        const TextSpan(text: '每一次\n'),
-                        TextSpan(text: '记录',
+                        TextSpan(text: _s.historyTitle),
+                        TextSpan(text: _s.historyItalic,
                             style: MirrorText.titleSm.copyWith(
                                 fontStyle: FontStyle.italic)),
                       ])),
@@ -119,30 +123,30 @@ class _HistoryScreenState extends ConsumerState<HistoryScreen> {
               else if (_error != null)
                 SliverFillRemaining(child: Center(
                   child: Column(mainAxisSize: MainAxisSize.min, children: [
-                    Text('加载失败', style: MirrorText.body),
+                    Text(_s.loadFailed, style: MirrorText.body),
                     const SizedBox(height: 12),
                     ElevatedButton(
                       onPressed: () {
                         setState(() { _loading = true; _error = null; });
                         _load();
                       },
-                      child: const Text('重试'),
+                      child: Text(_s.retry),
                     ),
                   ]),
                 ))
               else if (_sessions.isEmpty)
                 SliverFillRemaining(child: Center(child: Column(
                   mainAxisSize: MainAxisSize.min, children: [
-                    Text('还没有记录',
+                    Text(_s.historyEmpty,
                         style: MirrorText.body.copyWith(
                             color: MirrorColors.text2)),
                     const SizedBox(height: 6),
-                    Text('完成第一次输入开始追踪',
+                    Text(_s.historyEmptySub,
                         style: MirrorText.caption),
                     const SizedBox(height: 24),
                     ElevatedButton(
                       onPressed: () => context.go(MirrorRoute.input),
-                      child: const Text('开始记录'),
+                      child: Text(_s.historyStart),
                     ),
                   ],
                 )))
@@ -178,7 +182,7 @@ class _HistoryScreenState extends ConsumerState<HistoryScreen> {
                       MirrorSpacing.pagePad, 24,
                       MirrorSpacing.pagePad, 6),
                   sliver: SliverToBoxAdapter(
-                    child: Text('RECORDS', style: MirrorText.overline),
+                    child: Text(_s.historyRecordsTitle, style: MirrorText.overline),
                   ),
                 ),
 
@@ -268,7 +272,7 @@ class _HistoryScreenState extends ConsumerState<HistoryScreen> {
         shape: RoundedRectangleBorder(
             borderRadius: BorderRadius.circular(MirrorRadius.lg)),
       ),
-      child: Text('COMPARE  ·  SELECT',
+      child: Text(_s.historyCompareSelect,
           style: MirrorText.overline.copyWith(
               color: MirrorColors.text2, letterSpacing: 2.5)),
     ),
@@ -279,7 +283,9 @@ class _HistoryScreenState extends ConsumerState<HistoryScreen> {
         horizontal: MirrorSpacing.pagePad, vertical: 8),
     child: Row(children: [
       Text(
-        _selectedIds.length == 2 ? '已选 2 项' : '再选 ${2 - _selectedIds.length} 项',
+        _selectedIds.length == 2
+            ? _s.historySelectedTwo
+            : _s.historySelectMore(2 - _selectedIds.length),
         style: MirrorText.bodyS.copyWith(color: MirrorColors.text3),
       ),
       const Spacer(),
@@ -288,7 +294,7 @@ class _HistoryScreenState extends ConsumerState<HistoryScreen> {
           _selectMode = false;
           _selectedIds.clear();
         }),
-        child: Text('取消',
+        child: Text(_s.cancelBtn,
             style: MirrorText.bodyS.copyWith(color: MirrorColors.text3)),
       ),
       const SizedBox(width: 24),
@@ -297,7 +303,7 @@ class _HistoryScreenState extends ConsumerState<HistoryScreen> {
         duration: MirrorDuration.fast,
         child: GestureDetector(
           onTap: _selectedIds.length == 2 ? _goCompare : null,
-          child: Text('对比',
+          child: Text(_s.historyCompareAction,
               style: MirrorText.bodyS.copyWith(
                 color: MirrorColors.text1,
                 fontWeight: FontWeight.w500,
@@ -315,7 +321,7 @@ class _HistoryScreenState extends ConsumerState<HistoryScreen> {
         padding: const EdgeInsets.fromLTRB(
             MirrorSpacing.pagePad, 20, MirrorSpacing.pagePad, 12),
         child: Text(
-          '3D MIRROR',
+          _s.brandMasthead,
           style: MirrorText.overline.copyWith(
             color: MirrorColors.gold,
             fontSize: 11,
@@ -368,6 +374,7 @@ class _SessionRow extends StatelessWidget {
     final bd    = session.bodyData;
     final delta = prevWeight != null ? bd.weightKg - prevWeight! : null;
     final d     = session.createdAt;
+    final s     = S.of(context);
     const monthNames = ['', 'JAN','FEB','MAR','APR','MAY','JUN',
         'JUL','AUG','SEP','OCT','NOV','DEC'];
 
@@ -409,7 +416,7 @@ class _SessionRow extends StatelessWidget {
                   if (session.activityData != null) ...[
                     const SizedBox(height: 3),
                     Text(
-                      _workoutLabel(session.activityData!.workoutType) +
+                      workoutKindLabel(s, session.activityData!.workoutType) +
                           (session.activityData!.durationMin != null
                               ? '  ·  ${session.activityData!.durationMin} min'
                               : ''),
@@ -439,7 +446,7 @@ class _SessionRow extends StatelessWidget {
                               : MirrorColors.text3),
                     ),
                     const SizedBox(height: 2),
-                    Text('vs prev', style: MirrorText.caption),
+                    Text(s.historyVsPrev, style: MirrorText.caption),
                   ],
                 ),
             ]),
@@ -450,14 +457,6 @@ class _SessionRow extends StatelessWidget {
       ),
     );
   }
-
-  String _workoutLabel(WorkoutType t) => {
-    WorkoutType.strength: '力量', WorkoutType.cardio: '有氧',
-    WorkoutType.hiit: 'HIIT',   WorkoutType.walk: '步行',
-    WorkoutType.yoga: '瑜伽',   WorkoutType.swim: '游泳',
-    WorkoutType.cycling: '骑行', WorkoutType.rest: '休息日',
-    WorkoutType.other: '其他',
-  }[t] ?? '其他';
 }
 
 // ── 预测行（ConsumerWidget，读取 predictMetricsProvider） ───────────────────────
@@ -494,9 +493,13 @@ class _PredictRow extends ConsumerWidget {
               SizedBox(width: 44, child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Text('预测',
-                      style: MirrorText.overline.copyWith(
-                          color: MirrorColors.gold, fontSize: 9)),
+                  FittedBox(
+                    fit: BoxFit.scaleDown,
+                    alignment: Alignment.centerLeft,
+                    child: Text(S.of(context).predictTag,
+                        style: MirrorText.overline.copyWith(
+                            color: MirrorColors.gold, fontSize: 9)),
+                  ),
                   Text('${weeks}W',
                       style: MirrorText.overline.copyWith(
                           color: MirrorColors.gold)),

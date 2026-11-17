@@ -131,7 +131,7 @@ class SEn extends S {
   String get inputEyebrow => 'Today\'s log';
 
   @override
-  String get inputTitle => 'Tell me about your';
+  String get inputTitle => 'Tell me\nabout your';
 
   @override
   String get inputItalic => 'body';
@@ -158,13 +158,13 @@ class SEn extends S {
   String get labelIntensity => 'Intensity';
 
   @override
-  String get intensityLow => 'Easy';
+  String get intensityLow => 'Low';
 
   @override
-  String get intensityMed => 'Moderate';
+  String get intensityMed => 'Med';
 
   @override
-  String get intensityHigh => 'Hard';
+  String get intensityHigh => 'High';
 
   @override
   String get workoutStrength => 'Strength';
@@ -230,7 +230,7 @@ class SEn extends S {
   String get metricLeanMass => 'Lean mass';
 
   @override
-  String get compareTitle => 'Compare';
+  String get compareTitle => 'COMPARE';
 
   @override
   String get compareNow => 'Now';
@@ -242,10 +242,10 @@ class SEn extends S {
   String get saveShare => 'Save · Share';
 
   @override
-  String get historyEyebrow => 'Your journey';
+  String get historyEyebrow => 'TRANSFORMATION';
 
   @override
-  String get historyTitle => 'Every';
+  String get historyTitle => 'Every\n';
 
   @override
   String get historyItalic => 'session';
@@ -893,4 +893,134 @@ class SEn extends S {
   @override
   String get analysisStatusFailed =>
       'Body analysis failed. Please retake the photos later';
+
+  @override
+  String get workoutOther => 'Other';
+
+  @override
+  String get inputBodyDataTitle => 'BODY  ·  DATA';
+
+  @override
+  String get inputActivityTitle => 'TODAY\'S ACTIVITY';
+
+  @override
+  String inputDayLabel(int day, String date) {
+    return 'DAY $day  ·  $date';
+  }
+
+  @override
+  String get inputPickWeight => 'Weight (kg)';
+
+  @override
+  String get inputPickBodyFat => 'Body fat (%)';
+
+  @override
+  String get inputPickWaist => 'Waist (cm)';
+
+  @override
+  String get inputPickDuration => 'Workout duration (min)';
+
+  @override
+  String get historyTodayRecord => 'TODAY  ·  RECORD';
+
+  @override
+  String get historyRecordsTitle => 'RECORDS';
+
+  @override
+  String get historyCompareSelect => 'COMPARE  ·  SELECT';
+
+  @override
+  String get historySelectedTwo => '2 selected';
+
+  @override
+  String historySelectMore(int count) {
+    return 'Select $count more';
+  }
+
+  @override
+  String get historyCompareAction => 'Compare';
+
+  @override
+  String get historyVsPrev => 'vs prev';
+
+  @override
+  String get predictTag => 'PREDICT';
+
+  @override
+  String get snapshotMasthead => 'SNAPSHOTS';
+
+  @override
+  String snapshotRecordCount(int count) {
+    return '$count RECORDS';
+  }
+
+  @override
+  String get snapshotWeightTrend => 'WEIGHT  ·  TREND';
+
+  @override
+  String get snapshotSessions => 'SESSIONS';
+
+  @override
+  String get snapshotSessionsUnit => 'total';
+
+  @override
+  String get snapshotWeightChange => 'WEIGHT CHANGE';
+
+  @override
+  String get snapshotDaysActive => 'DAYS ACTIVE';
+
+  @override
+  String get snapshotDaysUnit => 'days';
+
+  @override
+  String get snapshotLatest => 'LATEST';
+
+  @override
+  String get compareBodyCompare => 'BODY  ·  COMPARE';
+
+  @override
+  String get compareOverlay => 'Overlay';
+
+  @override
+  String get compareDelta => 'DELTA';
+
+  @override
+  String comparePredictLabel(int weeks) {
+    return 'Predicted · ${weeks}W';
+  }
+
+  @override
+  String get predictMasthead => 'PREDICT';
+
+  @override
+  String get predictBodyFuture => 'BODY  ·  FUTURE';
+
+  @override
+  String get predictTimeRange => 'TIME  ·  RANGE';
+
+  @override
+  String predictWeeks(int weeks) {
+    return '$weeks W';
+  }
+
+  @override
+  String get predictHistoryCompare => 'HISTORY  ·  COMPARE';
+
+  @override
+  String get predictedWeight => 'PREDICTED  ·  WEIGHT';
+
+  @override
+  String get predictConfidence => 'Confidence';
+
+  @override
+  String predictBasedOn(int count) {
+    return 'Based on $count records';
+  }
+
+  @override
+  String get predictNotEnoughTitle => 'Not enough data';
+
+  @override
+  String get predictNotEnoughBody =>
+      'Log your body data at least twice\nto unlock predictions';
 }

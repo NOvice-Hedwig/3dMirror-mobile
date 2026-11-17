@@ -3,6 +3,8 @@ import 'package:flutter_animate/flutter_animate.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
+import '../../core/l10n/app_localizations.dart';
+import '../../core/l10n/session_labels.dart';
 import '../../core/theme/design_tokens.dart';
 import '../../core/widgets/animate_widgets.dart';
 import '../../core/widgets/body_viewport.dart';
@@ -91,20 +93,16 @@ class _CompareScreenState extends ConsumerState<CompareScreen> {
       ?? _data?.predictB?.predictedWaistCm;
 
   String _labelA() {
-    if (_isPredict(widget.idA)) return '预测 · ${_weeksOf(widget.idA)}W';
+    if (_isPredict(widget.idA)) return S.of(context).comparePredictLabel(_weeksOf(widget.idA));
     final s = _data?.sessionA;
-    return s != null ? _fmtDate(s.createdAt) : '…';
+    return s != null ? dotDate(s.createdAt) : '…';
   }
 
   String _labelB() {
-    if (_isPredict(widget.idB)) return '预测 · ${_weeksOf(widget.idB)}W';
+    if (_isPredict(widget.idB)) return S.of(context).comparePredictLabel(_weeksOf(widget.idB));
     final s = _data?.sessionB;
-    return s != null ? _fmtDate(s.createdAt) : '…';
+    return s != null ? dotDate(s.createdAt) : '…';
   }
-
-  String _fmtDate(DateTime d) =>
-      '${d.year}.${d.month.toString().padLeft(2, '0')}'
-      '.${d.day.toString().padLeft(2, '0')}';
 
   @override
   Widget build(BuildContext context) {
@@ -127,7 +125,7 @@ class _CompareScreenState extends ConsumerState<CompareScreen> {
         padding: const EdgeInsets.fromLTRB(
             MirrorSpacing.pagePad, 20, MirrorSpacing.pagePad, 12),
         child: Text(
-          'COMPARE',
+          S.of(context).compareTitle,
           style: MirrorText.overline.copyWith(
             color: MirrorColors.gold, fontSize: 11, letterSpacing: 4.0),
           textAlign: TextAlign.center,
@@ -155,14 +153,14 @@ class _CompareScreenState extends ConsumerState<CompareScreen> {
     }
     if (_error != null) {
       return Center(child: Column(mainAxisSize: MainAxisSize.min, children: [
-        Text('加载失败', style: MirrorText.body),
+        Text(S.of(context).loadFailed, style: MirrorText.body),
         const SizedBox(height: 12),
         ElevatedButton(
           onPressed: () {
             setState(() { _loading = true; _error = null; });
             _load();
           },
-          child: const Text('重试'),
+          child: Text(S.of(context).retry),
         ),
       ]));
     }
@@ -191,12 +189,12 @@ class _CompareScreenState extends ConsumerState<CompareScreen> {
                     const Icon(Icons.arrow_back_ios_new_rounded,
                         size: 13, color: MirrorColors.text3),
                     const SizedBox(width: 4),
-                    Text('返回',
+                    Text(S.of(context).btnBack,
                         style: MirrorText.bodyS.copyWith(
                             color: MirrorColors.text3)),
                   ]),
                 ),
-                Text('BODY  ·  COMPARE', style: MirrorText.overline),
+                Text(S.of(context).compareBodyCompare, style: MirrorText.overline),
               ],
             ),
           ),
@@ -280,7 +278,7 @@ class _CompareScreenState extends ConsumerState<CompareScreen> {
               Row(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
-                  Text('叠加', style: MirrorText.caption),
+                  Text(S.of(context).compareOverlay, style: MirrorText.caption),
                   Text(_labelA(), style: MirrorText.caption),
                 ],
               ),
@@ -471,27 +469,27 @@ class _MetricCompareGrid extends StatelessWidget {
               child: Text(labelB, style: MirrorText.overline)),
           _divider,
           Expanded(flex: 3,
-              child: Text('DELTA', style: MirrorText.overline)),
+              child: Text(S.of(context).compareDelta, style: MirrorText.overline)),
         ]),
         const SizedBox(height: 16),
 
         // 体重行
         _MetricRow(
-          label: '体重',
+          label: S.of(context).labelWeight,
           valueA: weightA, valueB: weightB, unit: 'kg',
         ),
         const SizedBox(height: 20),
 
         // 体脂率行
         _MetricRow(
-          label: '体脂率',
+          label: S.of(context).labelBodyFat,
           valueA: fatA, valueB: fatB, unit: '%',
         ),
         const SizedBox(height: 20),
 
         // 腰围行
         _MetricRow(
-          label: '腰围',
+          label: S.of(context).labelWaist,
           valueA: waistA, valueB: waistB, unit: 'cm',
         ),
       ],

@@ -438,6 +438,7 @@ Environment variables only (§2.2), read at **import time** as module globals in
     - `phone_empty`, `phone_needs_country_code`, `phone_invalid`, `phone_not_mobile`, `email_empty`, `email_invalid` (422)
     - `rate_limited` (429)
     - `code_invalid`, `apple_token_invalid` (400)
+    - `predict_not_enough_data` (400, `GET /predict` with fewer than 2 sessions; the app shows its own "not enough data" state)
     - `sms_send_failed`, `email_send_failed` (500)
     - `user_not_found` (404, `/auth/me`; not shown by the app)
 - **Stored values stay Chinese:** some values are data, not display text, so translate only how they are shown, never the value sent to the server.
@@ -459,8 +460,9 @@ Environment variables only (§2.2), read at **import time** as module globals in
   - Me;
   - login (screen, validation messages, country picker, server errors) and the expired-session snackbar;
   - the home FAB and the five log sheets;
-  - onboarding and photo capture. Photo-angle labels and the analysis status text moved out of `models/body_photo.dart` into `core/l10n/photo_labels.dart` (`photoAngleLabel`, `photoAngleHint`, `bodyAnalysisStatusLabel`). `PhotoException` messages are now technical English with the HTTP status, because no screen shows them.
-- **Remaining batches:** input, history, snapshot, compare and predict; challenge, coach and exercise library; backend coach suggestion templates (as `code` + `params`). `UnauthorizedException.toString()` in `api_http.dart` is still Chinese and moves with the screens that display exception text.
+  - onboarding and photo capture. Photo-angle labels and the analysis status text moved out of `models/body_photo.dart` into `core/l10n/photo_labels.dart` (`photoAngleLabel`, `photoAngleHint`, `bodyAnalysisStatusLabel`). `PhotoException` messages are now technical English with the HTTP status, because no screen shows them;
+  - records: input, history, snapshot, compare and predict. Session workout types and intensity (`WorkoutType`, `Intensity` in `models/models.dart`, stored by enum name) get their labels from `core/l10n/session_labels.dart`. `PredictApi` recognises the `predict_not_enough_data` code (not every 400). Dates (`2026.11.15`) and month abbreviations (`NOV`) are the same in both languages, as before.
+- **Remaining batches:** challenge, coach and exercise library; backend coach suggestion templates (as `code` + `params`). `UnauthorizedException.toString()` in `api_http.dart` is still Chinese and moves with the screens that display exception text.
 - **Avatar-owned files (not migrated, for the avatar owner):** these files belong to the 3D avatar work and were left untouched. Each string needs an ARB key; `loadFailed` and `retry` already exist.
 
   | File | Strings |
@@ -539,7 +541,7 @@ Environment variables only (§2.2), read at **import time** as module globals in
 | Suite | Location | Status (run 2026-10-12) |
 |---|---|---|
 | Backend unit | `backend/tests/test_auth.py`, 5 tests | **5 pass** with `DEV_MODE=true`. **3 pass, 2 fail** with `DEV_MODE=false` (open, see §8.2) |
-| Backend integration | `backend/tests/integration/test_api_integration.py`, 47 tests | **47 pass** against a live server and a disposable Postgres database |
+| Backend integration | `backend/tests/integration/test_api_integration.py`, 48 tests | **48 pass** against a live server and a disposable Postgres database (2026-11-16: added the `predict_not_enough_data` check) |
 | Backend timezone rules | `backend/tests/integration/test_timezone_rules.py`, 10 tests | **10 pass** in-process with a frozen clock against the same disposable database |
 | Backend login identifiers (unit) | `backend/tests/test_identity.py`, 45 tests | **45 pass**: phone and email rules, legacy forms, SMS routing, rate limiter (no DB) |
 | Backend login identifiers (integration) | `backend/tests/integration/test_auth_identity.py`, 41 tests | **41 pass** in-process against the disposable database: routes, 422/429, legacy rows, collisions |
@@ -549,9 +551,10 @@ Environment variables only (§2.2), read at **import time** as module globals in
 | Flutter | `test/body_analysis_test.dart`, `login_identity_test.dart`, `api_http_test.dart`, `home_provider_error_test.dart`, 41 tests | **41 pass** |
 | Flutter i18n (2026-11-15) | `test/l10n_test.dart` (ARB parity, Chinese-literal check, locale resolution, persistence, runtime switch) and `test/error_text_test.dart` (code → text in both languages, response parsing, fallbacks), 23 tests | **23 pass** |
 | Flutter smoke test (2026-11-15) | `flutter_app/test/widget_test.dart`, 2 tests | **2 pass**: pumps the real app root (`MirrorApp` in a `ProviderScope`) and checks a signed-out start shows the login screen, in Chinese and in English. Replaced the counter template, which didn't compile |
-| Flutter stored log values (2026-11-15) | `test/log_values_test.dart`, 12 tests | **12 pass**: exact stored values, backend CHECK/`coach.py` agreement, labels in both languages, and each log sheet saved in English sends the Chinese value |
+| Flutter stored log values (2026-11-15) | `test/log_values_test.dart`, 13 tests | **13 pass**: exact stored values, backend CHECK/`coach.py` agreement, labels in both languages, and each log sheet saved in English sends the Chinese value |
 | Flutter onboarding and photos (2026-11-15) | `test/onboarding_l10n_test.dart`, 3 tests, plus a photo-angle label test in `body_analysis_test.dart` | **pass**: onboarding walked through in English (goal id still stored), Chinese text unchanged, photo capture in both languages |
-| **Flutter total** | `flutter test` | **82 pass, 0 fail** |
+| Flutter records (2026-11-16) | `test/records_l10n_test.dart`, 9 tests | **9 pass**: workout-type and intensity labels (Chinese unchanged), the predict error code, and the input, history, snapshot and predict screens in English and Chinese with no overflow |
+| **Flutter total** | `flutter test` | **92 pass, 0 fail** |
 | iOS/macOS | `RunnerTests.swift` | Xcode template stubs |
 
 **Run backend unit tests:**
