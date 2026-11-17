@@ -474,10 +474,11 @@ class _PredictRow extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
+    // null while loading or when there's no prediction (e.g. fewer than 2 sessions): '—'.
     final weight = ref
         .watch(predictMetricsProvider(weeks))
         .whenData((m) => m.predictedWeightKg)
-        .value;
+        .valueOrNull;
 
     return GestureDetector(
       onTap:    onToggleSelect,

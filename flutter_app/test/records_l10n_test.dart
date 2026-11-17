@@ -155,8 +155,7 @@ void main() {
         _session('b', '2026-11-10T09:00:00Z', 60.0, 'strength'),
         _session('a', '2026-11-03T09:00:00Z', 61.2, null),
       ];
-      // Selecting shows predict rows. (They must get metrics: with an error they throw in
-      // build, a separate known issue, ONBOARDING §8.2.)
+      // Selecting shows a predict row per range, with the predicted weight.
       respond = (req) => req.url.path == '/predict' ? jsonResponse(_metrics) : jsonResponse(sessions);
       await pumpScreen(tester, const HistoryScreen(), 'en');
       expect(find.text('RECORDS'), findsOneWidget);
@@ -167,10 +166,25 @@ void main() {
       expect(find.text('2 selected'), findsOneWidget);
       expect(find.text('Compare'), findsOneWidget);
       expect(find.text('PREDICT'), findsNWidgets(3));
+      expect(find.text('59.0'), findsNWidgets(3));
       expect(tester.takeException(), isNull);   // no overflow, e.g. the PREDICT tag
 
       await pumpScreen(tester, const HistoryScreen(), 'zh');
       expect(find.text('力量  ·  40 min'), findsOneWidget);
+    });
+
+    testWidgets('history compare mode without a prediction (one session)', (tester) async {
+      // Was ONBOARDING §8.2 #16: the predict rows threw in build when predict failed.
+      respond = (req) => req.url.path == '/predict'
+          ? jsonResponse(_notEnough, 400)
+          : jsonResponse([_session('a', '2026-11-03T09:00:00Z', 61.2, null)]);
+      await pumpScreen(tester, const HistoryScreen(), 'en');
+      await tester.tap(find.text('COMPARE  ·  SELECT'));
+      await tester.pumpAndSettle();
+      expect(tester.takeException(), isNull);
+      expect(find.text('PREDICT'), findsNWidgets(3));
+      expect(find.text('—'), findsNWidgets(3));        // no predicted weight
+      expect(find.text('Select 2 more'), findsOneWidget);
     });
 
     testWidgets('snapshots in English', (tester) async {
