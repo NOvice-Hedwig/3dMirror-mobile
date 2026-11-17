@@ -229,88 +229,66 @@ class _SnapshotScreenState extends ConsumerState<SnapshotScreen> {
     final weightDelta = last.bodyData.weightKg - first.bodyData.weightKg;
     final daySpan     = last.createdAt.difference(first.createdAt).inDays;
 
-    return IntrinsicHeight(
-      child: Row(children: [
-        // 记录次数
-        Expanded(
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Text(_s.snapshotSessions, style: MirrorText.overline),
-              const SizedBox(height: 8),
-              Row(
-                crossAxisAlignment: CrossAxisAlignment.end,
-                children: [
-                  CountUpText(
-                    value: _sessions.length.toDouble(),
-                    style: MirrorText.displayMd,
-                    fractionDigits: 0,
-                    duration: MirrorDuration.xslow,
-                  ),
-                  const SizedBox(width: 3),
-                  Padding(
-                    padding: const EdgeInsets.only(bottom: 4),
-                    child: Text(_s.snapshotSessionsUnit, style: MirrorText.unit),
-                  ),
-                ],
-              ),
-            ],
-          ),
+    // Labels and values are separate rows, so a label that wraps (longer languages) pushes
+    // all values down together and they stay on one baseline. The dividers are drawn over
+    // both rows, at the same column positions.
+    const gap = SizedBox(width: _summaryGap);
+    Widget count(double v, String unit) => Row(
+      crossAxisAlignment: CrossAxisAlignment.baseline,
+      textBaseline: TextBaseline.alphabetic,
+      children: [
+        CountUpText(
+          value: v,
+          style: MirrorText.displayMd,
+          fractionDigits: 0,
+          duration: MirrorDuration.xslow,
         ),
+        const SizedBox(width: 3),
+        Text(unit, style: MirrorText.unit),
+      ],
+    );
 
-        Container(
-          width: 0.5,
-          color: MirrorColors.divider,
-          margin: const EdgeInsets.symmetric(horizontal: 16),
-        ),
-
-        // 体重变化
-        Expanded(
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Text(_s.snapshotWeightChange, style: MirrorText.overline),
-              const SizedBox(height: 8),
-              DeltaText(delta: weightDelta, unit: 'kg'),
-            ],
-          ),
-        ),
-
-        Container(
-          width: 0.5,
-          color: MirrorColors.divider,
-          margin: const EdgeInsets.symmetric(horizontal: 16),
-        ),
-
-        // 坚持天数
-        Expanded(
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Text(_s.snapshotDaysActive, style: MirrorText.overline),
-              const SizedBox(height: 8),
-              Row(
-                crossAxisAlignment: CrossAxisAlignment.end,
-                children: [
-                  CountUpText(
-                    value: daySpan.toDouble(),
-                    style: MirrorText.displayMd,
-                    fractionDigits: 0,
-                    duration: MirrorDuration.xslow,
-                  ),
-                  const SizedBox(width: 3),
-                  Padding(
-                    padding: const EdgeInsets.only(bottom: 4),
-                    child: Text(_s.snapshotDaysUnit, style: MirrorText.unit),
-                  ),
-                ],
-              ),
-            ],
-          ),
+    return Stack(children: [
+      Column(children: [
+        Row(crossAxisAlignment: CrossAxisAlignment.start, children: [
+          Expanded(child: Text(_s.snapshotSessions, style: MirrorText.overline)),
+          gap,
+          Expanded(child: Text(_s.snapshotWeightChange, style: MirrorText.overline)),
+          gap,
+          Expanded(child: Text(_s.snapshotDaysActive, style: MirrorText.overline)),
+        ]),
+        const SizedBox(height: 8),
+        Row(
+          crossAxisAlignment: CrossAxisAlignment.baseline,
+          textBaseline: TextBaseline.alphabetic,
+          children: [
+            Expanded(child: count(_sessions.length.toDouble(), _s.snapshotSessionsUnit)),
+            gap,
+            Expanded(child: DeltaText(delta: weightDelta, unit: 'kg')),
+            gap,
+            Expanded(child: count(daySpan.toDouble(), _s.snapshotDaysUnit)),
+          ],
         ),
       ]),
-    );
+      Positioned.fill(
+        child: Row(children: [
+          const Spacer(),
+          _divider(),
+          const Spacer(),
+          _divider(),
+          const Spacer(),
+        ]),
+      ),
+    ]);
   }
+
+  static const _summaryGap = 32.5;   // 16 + 0.5 divider + 16
+
+  Widget _divider() => Container(
+    width: 0.5,
+    color: MirrorColors.divider,
+    margin: const EdgeInsets.symmetric(horizontal: 16),
+  );
 }
 
 // ── Snapshot Card ─────────────────────────────────────────────────────────────

@@ -131,7 +131,7 @@ class SEn extends S {
   String get inputEyebrow => 'Today\'s log';
 
   @override
-  String get inputTitle => 'Tell me\nabout your';
+  String get inputTitle => 'Tell me\nabout your ';
 
   @override
   String get inputItalic => 'body';

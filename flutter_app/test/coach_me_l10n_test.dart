@@ -157,6 +157,45 @@ void main() {
       expect(find.text('先记录一次身体数据以开启目标设置'), findsOneWidget);
     });
 
+    testWidgets('goal slider labels: English at normal size, Chinese column unchanged',
+        (tester) async {
+      respond = (req) => switch (req.url.path) {
+        '/sessions' => jsonResponse([{
+          'id': 's1', 'user_id': 'u1', 'created_at': '2026-11-10T09:00:00Z',
+          'body_data': {'weight_kg': 60.0},
+          'avatar_params': {'height_norm': .5, 'weight_norm': .5, 'body_fat_norm': .5,
+              'waist_norm': .5, 'hip_norm': .5, 'shoulder_norm': .5, 'muscle_norm': .5,
+              'gender': 'female'},
+        }]),
+        _ => jsonResponse({'data_points': 0, 'generated_at': 'x', 'cards': []}),
+      };
+      // The label column is the SizedBox around the FittedBox around the label.
+      double column(String label) => tester.getSize(find.ancestor(
+          of: find.text(label), matching: find.byType(SizedBox)).first).width;
+      // Rendered width / layout width: 1.0 means the FittedBox didn't shrink the label.
+      double scale(String label) =>
+          tester.getRect(find.text(label)).width / tester.getSize(find.text(label)).width;
+
+      // The column is the widest label's natural width + 8, kept within 52..120; a label
+      // that fits is drawn at normal size. (The test font is wider than the real one, so
+      // "Shoulders" may hit the cap here; the emulator check covers real metrics.)
+      await pumpScreen(tester, const CoachScreen(), 'en');
+      const labels = ['Weight', 'Body fat', 'Waist', 'Hips', 'Shoulders', 'Muscle'];
+      final natural = {for (final l in labels) l: tester.getSize(find.text(l)).width};
+      final widest  = natural.values.reduce((a, b) => a > b ? a : b);
+      final col     = column('Body fat');
+      expect(col, (widest + 8).clamp(52.0, 120.0));
+      expect(col, greaterThan(52));                       // wider than the old fixed column
+      for (final l in labels) {
+        if (natural[l]! <= col) expect(scale(l), closeTo(1.0, 0.001), reason: l);
+      }
+      expect(tester.takeException(), isNull);
+
+      await pumpScreen(tester, const CoachScreen(), 'zh');
+      expect(column('体脂率'), 52);
+      expect(scale('肌肉量'), closeTo(1.0, 0.001));
+    });
+
     testWidgets('exercise library: English filter chips still filter by the stored group',
         (tester) async {
       await pumpScreen(tester, const ExerciseLibraryScreen(), 'en');

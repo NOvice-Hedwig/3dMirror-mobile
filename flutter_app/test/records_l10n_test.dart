@@ -48,6 +48,16 @@ Map<String, dynamic> _session(String id, String createdAt, double kg, String? wo
 http.Response Function(http.Request) respond = (_) => http.Response('{}', 200);
 final fakeClient = MockClient((req) async => respond(req));
 
+/// Global y of the alphabetic baseline of the single Text matched by [f].
+double baselineY(WidgetTester tester, Finder f) {
+  final box = tester.renderObject<RenderBox>(f);
+  final top = box.getDryBaseline(box.constraints, TextBaseline.alphabetic)!;
+  return box.localToGlobal(Offset(0, top)).dy;
+}
+
+Finder richText(String text) => find.byWidgetPredicate(
+    (w) => w is RichText && w.text.toPlainText() == text);
+
 http.Response jsonResponse(Object body, [int status = 200]) => http.Response.bytes(
     utf8.encode(json.encode(body)), status,
     headers: {'content-type': 'application/json; charset=utf-8'});
@@ -187,12 +197,15 @@ void main() {
       expect(find.text('Select 2 more'), findsOneWidget);
     });
 
-    testWidgets('snapshots in English', (tester) async {
+    testWidgets('snapshots in English; the summary values share one baseline', (tester) async {
       respond = (_) => jsonResponse([
         _session('b', '2026-11-10T09:00:00Z', 60.0, 'yoga'),
         _session('a', '2026-11-03T09:00:00Z', 61.2, null),
       ]);
       await pumpScreen(tester, const SnapshotScreen(), 'en');
+      // "WEIGHT CHANGE" / "DAYS ACTIVE" may wrap; the values must still line up.
+      final values = [find.text('2'), find.text('-1.2 kg'), find.text('7')];
+      expect(values.map((f) => baselineY(tester, f)).toSet(), hasLength(1));
       expect(find.text('2 RECORDS'), findsOneWidget);
       expect(find.text('SESSIONS'), findsOneWidget);
       expect(find.text('WEIGHT CHANGE'), findsOneWidget);
@@ -200,11 +213,16 @@ void main() {
       expect(find.text('Yoga'), findsOneWidget);
       expect(find.text('LATEST'), findsOneWidget);
       expect(tester.takeException(), isNull);
+
+      await pumpScreen(tester, const SnapshotScreen(), 'zh');
+      expect(values.map((f) => baselineY(tester, f)).toSet(), hasLength(1));
+      expect(find.text('次'), findsOneWidget);
     });
 
     testWidgets('input in English and Chinese', (tester) async {
       await pumpScreen(tester, const InputScreen(), 'en');
       expect(find.text('BODY  ·  DATA'), findsOneWidget);
+      expect(richText('Tell me\nabout your body'), findsOneWidget);   // space before the italic word
       expect(find.text('Body fat'), findsOneWidget);
       expect(find.text('Rest day'), findsOneWidget);
       await tester.tap(find.text('Strength'));
@@ -218,6 +236,7 @@ void main() {
       expect(tester.takeException(), isNull);
 
       await pumpScreen(tester, const InputScreen(), 'zh');
+      expect(richText('告诉我\n你的身体'), findsOneWidget);
       expect(find.text('体脂率'), findsOneWidget);
       expect(find.text('休息日'), findsOneWidget);
       expect(find.text('生成角色'), findsOneWidget);

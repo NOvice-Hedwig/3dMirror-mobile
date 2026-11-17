@@ -1,3 +1,5 @@
+import 'dart:math' as math;
+
 import 'package:flutter/material.dart';
 import 'package:flutter_animate/flutter_animate.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -167,36 +169,7 @@ class _CoachScreenState extends ConsumerState<CoachScreen> {
                     style: MirrorText.caption),
               )
             else ...[
-              _GoalSlider(
-                label: _s.labelWeight,
-                value: _targetParams!.weightNorm,
-                onChanged: (v) => _onSliderChanged(v, 'weight'),
-              ),
-              _GoalSlider(
-                label: _s.labelBodyFat,
-                value: _targetParams!.bodyFatNorm,
-                onChanged: (v) => _onSliderChanged(v, 'bodyFat'),
-              ),
-              _GoalSlider(
-                label: _s.labelWaist,
-                value: _targetParams!.waistNorm,
-                onChanged: (v) => _onSliderChanged(v, 'waist'),
-              ),
-              _GoalSlider(
-                label: _s.labelHip,
-                value: _targetParams!.hipNorm,
-                onChanged: (v) => _onSliderChanged(v, 'hip'),
-              ),
-              _GoalSlider(
-                label: _s.labelShoulder,
-                value: _targetParams!.shoulderNorm,
-                onChanged: (v) => _onSliderChanged(v, 'shoulder'),
-              ),
-              _GoalSlider(
-                label: _s.labelMuscle,
-                value: _targetParams!.muscleNorm,
-                onChanged: (v) => _onSliderChanged(v, 'muscle'),
-              ),
+              ..._goalSliders(_targetParams!),
               const SizedBox(height: 16),
               AnimatedOpacity(
                 opacity: _isDirty ? 1.0 : 0.0,
@@ -231,6 +204,27 @@ class _CoachScreenState extends ConsumerState<CoachScreen> {
       ),
     ),
   );
+
+  List<Widget> _goalSliders(AvatarParams p) {
+    final rows = [
+      (_s.labelWeight,   p.weightNorm,   'weight'),
+      (_s.labelBodyFat,  p.bodyFatNorm,  'bodyFat'),
+      (_s.labelWaist,    p.waistNorm,    'waist'),
+      (_s.labelHip,      p.hipNorm,      'hip'),
+      (_s.labelShoulder, p.shoulderNorm, 'shoulder'),
+      (_s.labelMuscle,   p.muscleNorm,   'muscle'),
+    ];
+    final labelWidth = _sliderLabelWidth(context, [for (final r in rows) r.$1]);
+    return [
+      for (final (label, value, field) in rows)
+        _GoalSlider(
+          label: label,
+          labelWidth: labelWidth,
+          value: value,
+          onChanged: (v) => _onSliderChanged(v, field),
+        ),
+    ];
+  }
 
   Widget _buildSuggestionsSection() => SliverPadding(
     padding: const EdgeInsets.fromLTRB(
@@ -299,14 +293,38 @@ class _CoachScreenState extends ConsumerState<CoachScreen> {
 
 // ── Goal Slider ───────────────────────────────────────────────────────────────
 
+/// Label column width for the goal sliders: the widest label at its normal size plus a
+/// gap, at least the original 52 (so Chinese is unchanged) and at most 120 so the sliders
+/// keep most of the row. English needs about 100.
+double _sliderLabelWidth(BuildContext context, List<String> labels) {
+  final scaler = MediaQuery.textScalerOf(context);
+  // Same style the label Text resolves to (it inherits the default text style).
+  final style  = DefaultTextStyle.of(context).style.merge(MirrorText.overline);
+  var widest = 0.0;
+  for (final l in labels) {
+    final tp = TextPainter(
+      text: TextSpan(text: l, style: style),
+      textDirection: TextDirection.ltr,
+      textScaler: scaler,
+      maxLines: 1,
+    )..layout();
+    widest = math.max(widest, tp.width);
+    tp.dispose();
+  }
+  return (widest + 8).clamp(52.0, 120.0);
+}
+
+
 class _GoalSlider extends StatelessWidget {
   const _GoalSlider({
     required this.label,
+    required this.labelWidth,
     required this.value,
     required this.onChanged,
   });
 
   final String                 label;
+  final double                 labelWidth;
   final double                 value;
   final ValueChanged<double>   onChanged;
 
@@ -316,8 +334,8 @@ class _GoalSlider extends StatelessWidget {
       padding: const EdgeInsets.only(bottom: 12),
       child: Row(children: [
         SizedBox(
-          width: 52,
-          child: FittedBox(   // English labels are longer than the 2-3 Chinese characters
+          width: labelWidth,
+          child: FittedBox(   // only shrinks past the width cap (very large system font)
             fit: BoxFit.scaleDown,
             alignment: Alignment.centerLeft,
             child: Text(label, style: MirrorText.overline),
