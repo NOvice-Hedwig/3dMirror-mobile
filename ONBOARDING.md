@@ -449,9 +449,9 @@ Environment variables only (§2.2), read at **import time** as module globals in
   |---|---|---|
   | `MealValue` (`diet_logs.meal`) | 早餐 Breakfast, 午餐 Lunch, 晚餐 Dinner, 加餐 Snack | DB CHECK constraint |
   | `WorkoutLogType` (`type`) | 有氧 Cardio, 无氧 Strength, 普拉提 Pilates, 球类 Ball sports, 其他 Other | `coach.py` compares `无氧` |
-  | `WorkoutSubType` (`sub_type`) | 跑步 Running, 跳绳 Jump rope, 跳操 Dance aerobics, HIIT, 游泳 Swimming, 爬山 Hiking, 骑行 Cycling, 其他 Other, 垫上普拉提 Mat Pilates, 器械普拉提 Reformer Pilates, 篮球 Basketball, 羽毛球 Badminton, 网球 Tennis, 乒乓球 Table tennis, 足球 Football | calorie estimate compares 跑步/跳绳/HIIT; stored data |
+  | `WorkoutSubType` (`sub_type`) | 跑步 Running, 跳绳 Jump rope, 跳操 Dance aerobics, HIIT, 游泳 Swimming, 爬山 Hiking, 骑行 Cycling, 其他 Other, 垫上普拉提 Mat Pilates, 器械普拉提 Reformer Pilates, 篮球 Basketball, 羽毛球 Badminton, 网球 Tennis, 乒乓球 Table tennis, 足球 Soccer | calorie estimate compares 跑步/跳绳/HIIT; stored data |
   | `MuscleGroupValue` (`muscle_group`) | 胸 Chest, 背 Back, 腿 Legs, 肩 Shoulders, 手臂 Arms, 核心 Core | keys of `exercise_library.dart`; stored data |
-  | `SymptomValue` (`period_logs.symptoms`) | 痛经 Cramps, 情绪波动 Mood swings, 水肿 Swelling, 长痘 Acne, 疲劳 Fatigue, 腰酸 Lower back pain | stored data |
+  | `SymptomValue` (`period_logs.symptoms`) | 痛经 Cramps, 情绪波动 Mood swings, 水肿 Bloating, 长痘 Acne, 疲劳 Fatigue, 腰酸 Lower back pain | stored data |
   | `SupplementValue` (`supplement_logs.name`) | 蛋白粉 Protein powder, 肌酸 Creatine, 维生素D Vitamin D, 胶原蛋白 Collagen, 鱼油 Fish oil, 维生素C Vitamin C, 铁 Iron, 叶酸 Folic acid, 镁 Magnesium, 锌 Zinc | stored data; custom names are stored as typed |
 
   Workout intensity (`low`/`medium`/`high`) and period phase (`start`/`ongoing`/`end`) were already English codes, so only their labels moved to the ARB files.

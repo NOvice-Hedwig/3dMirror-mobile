@@ -122,6 +122,11 @@ void main() {
       expect(workoutSubTypeLabel(en, '攀岩'), '攀岩');
       expect(supplementLabel(en, 'Glutamine'), 'Glutamine');
     });
+
+    test('English wording chosen for 水肿 and 足球', () {
+      expect(symptomLabel(en, SymptomValue.swelling), 'Bloating');
+      expect(workoutSubTypeLabel(en, WorkoutSubType.football), 'Soccer');
+    });
   });
 
   group('log sheets in English send the stored Chinese values', () {
@@ -196,12 +201,12 @@ void main() {
       expect(body['sub_type'], '乒乓球');
     });
 
-    testWidgets('health: "Cramps" and "Swelling" send 痛经 and 水肿', (tester) async {
+    testWidgets('health: "Cramps" and "Bloating" send 痛经 and 水肿', (tester) async {
       await openSheet(tester, const HealthLogSheet());
       await tester.tap(find.text('Period started'));
       await tester.pumpAndSettle();
       await tester.tap(find.text('Cramps'));
-      await tester.tap(find.text('Swelling'));
+      await tester.tap(find.text('Bloating'));
       await tester.pump();
       final body = await saveAndCapture(tester, '/logs/period');
       expect(body['phase'], 'start');

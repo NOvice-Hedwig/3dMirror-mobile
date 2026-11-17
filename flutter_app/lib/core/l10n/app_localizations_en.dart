@@ -544,7 +544,7 @@ class SEn extends S {
   String get subTypeTableTennis => 'Table tennis';
 
   @override
-  String get subTypeFootball => 'Football';
+  String get subTypeFootball => 'Soccer';
 
   @override
   String get muscleChest => 'Chest';
@@ -670,7 +670,7 @@ class SEn extends S {
   String get symptomMoodSwings => 'Mood swings';
 
   @override
-  String get symptomSwelling => 'Swelling';
+  String get symptomSwelling => 'Bloating';
 
   @override
   String get symptomAcne => 'Acne';
